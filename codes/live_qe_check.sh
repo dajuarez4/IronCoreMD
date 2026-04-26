@@ -1,14 +1,16 @@
 #!/bin/bash
 
 # Usage:
-#   bash plot_qe_live.sh fe1.out
+#   bash live_qe_check.sh fe1.out
+#   bash live_qe_check.sh fe1.out 5
 
 if [ $# -lt 1 ]; then
-    echo "Usage: bash plot_qe_live.sh QE_output_file"
+    echo "Usage: bash live_qe_check.sh QE_output_file [update_seconds]"
     exit 1
 fi
 
 OUTFILE="$1"
+UPDATE_SEC="${2:-10}"
 
 if [ ! -f "$OUTFILE" ]; then
     echo "Error: file '$OUTFILE' not found."
@@ -29,7 +31,6 @@ FORCE_DAT="total_force_vs_step.dat"
 PNG_OUT="qe_live_dashboard.png"
 TEMP_DAT="temperature_vs_step.dat"
 
-UPDATE_SEC=10
 RY_TO_EV=13.605693009
 KBAR_TO_GPA=0.1
 
