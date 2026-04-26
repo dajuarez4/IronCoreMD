@@ -15,6 +15,7 @@ At the moment the repository is still in an early, script-first stage rather tha
 
 - parsing QE `.out` files from AIMD runs,
 - extracting per-step structures, forces, energies, temperatures, pressures, and magnetization data,
+- rendering No-Vito-style trajectory GIFs directly from compressed QE `.npz` archives,
 - saving compact archives as `.npz` or `.pkl.xz`,
 - and quickly inspecting the saved datasets.
 
@@ -72,12 +73,14 @@ IronCoreMD/
 ├── README.md
 └── codes/
     ├── data_compress.py
+    ├── live_qe_check.sh
+    ├── qe_npz_to_gif.py
     └── load_data.py
 ```
 
 ## Current Repository State
 
-Right now, the repository contains only the archive-generation utilities listed below. The relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are part of the intended workflow, but they are not yet fully implemented in this repository.
+Right now, the repository contains early utilities for output inspection and archive generation. The relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are part of the intended workflow, but they are not yet fully implemented in this repository.
 
 ## What The Current Scripts Do
 
@@ -115,12 +118,47 @@ Minimal inspection helper for a saved `.npz` archive.
 
 It loads one archive, prints the stored keys, and shows the shapes/units of the main arrays. This is useful for a quick sanity check after compression.
 
+### `codes/live_qe_check.sh`
+
+Lightweight live monitor for a running QE calculation.
+
+It repeatedly parses a QE `.out` file and uses `gnuplot` to update a dashboard image in real time. This is useful while running relaxations or MD because it gives a quick live view of:
+
+- SCF convergence,
+- total energy per atom,
+- total magnetization components,
+- absolute magnetization,
+- pressure,
+- total force,
+- and temperature.
+
+The script writes intermediate `.dat` files plus a `qe_live_dashboard.png` image that refreshes every few seconds.
+
+### `codes/qe_npz_to_gif.py`
+
+Standalone renderer for creating animated GIFs directly from QE MD archives saved as `.npz`.
+
+It follows the same lightweight visual idea used in the `No-Vito` project, but it reads the QE parser output from this repository instead of LAMMPS dumps. For each frame it:
+
+- reads atomic positions from the compressed archive,
+- reconstructs Cartesian coordinates from QE units,
+- draws the simulation cell,
+- renders the atoms in a dark 3D scene,
+- and overlays a boxed legend with timestep, time, temperature, and pressure.
+
+This is useful for quickly inspecting MD trajectories without opening OVITO or writing a separate conversion pipeline.
+
 ## Requirements
 
-The current scripts only need a small Python stack:
+The current scripts need a small Python stack plus standard shell tools:
 
 - Python 3.9+
 - `numpy`
+- `matplotlib`
+- `Pillow`
+- `bash`
+- `awk`
+- `gnuplot`
 
 Standard-library modules used:
 
@@ -173,6 +211,43 @@ Edit the path in `codes/load_data.py`, then run:
 python3 codes/load_data.py
 ```
 
+### 4. Monitor a running QE job live
+
+From the repository root:
+
+```bash
+bash codes/live_qe_check.sh /path/to/qe_output.out
+```
+
+Optional refresh interval in seconds:
+
+```bash
+bash codes/live_qe_check.sh /path/to/qe_output.out 5
+```
+
+This updates `qe_live_dashboard.png` continuously while the QE output file grows.
+
+### 5. Render a GIF from a QE `.npz` archive
+
+From the repository root:
+
+```bash
+python3 codes/qe_npz_to_gif.py /path/to/trajectory.npz
+```
+
+Example with lighter sampling and slower playback:
+
+```bash
+python3 codes/qe_npz_to_gif.py /path/to/trajectory.npz --every 5 --fps 5
+```
+
+Optional controls include:
+
+- `--start` and `--stop` to select a frame range,
+- `--every` to subsample frames,
+- `--fps` to control animation speed,
+- and `--output` to choose the GIF filename.
+
 ## Output Archive Contents
 
 The saved archives are designed to preserve the QE trajectory as printed, with minimal postprocessing.
@@ -222,6 +297,8 @@ If a matching QE input file with the same stem exists beside the output file, th
 - No automated tests yet.
 - The parser is tuned for the QE formats currently used in this project and may need adjustment for other output styles.
 - `load_data.py` also uses a hardcoded archive path and is only a lightweight inspection script.
+- `live_qe_check.sh` currently assumes QE text patterns similar to the outputs used in this project and writes its `.dat` files and PNG to the current working directory.
+- `qe_npz_to_gif.py` assumes the `.npz` archive follows the schema produced by `data_compress.py`.
 
 ## Suggested Next Steps
 
