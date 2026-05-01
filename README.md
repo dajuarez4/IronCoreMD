@@ -86,6 +86,10 @@ Right now, the repository contains early utilities for output inspection and arc
 
 The figures below summarize the current non-magnetic `bcc` and `hcp` Fe datasets generated from QE AIMD and TDEP postprocessing.
 
+`Reference pressure-temperature window` used to contextualize the present iron simulations:
+
+![Reference phase-diagram range](assets/phase-diag-range-geot.png)
+
 ### BCC Fe
 
 The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K` and `5000 K`, plus phonon and trajectory visualization products.
