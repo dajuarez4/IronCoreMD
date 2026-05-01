@@ -82,6 +82,48 @@ IronCoreMD/
 
 Right now, the repository contains early utilities for output inspection and archive generation. The relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are part of the intended workflow, but they are not yet fully implemented in this repository.
 
+## Current Results
+
+The figures below summarize the current non-magnetic `bcc` and `hcp` Fe datasets generated from QE AIMD and TDEP postprocessing.
+
+### BCC Fe
+
+The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K` and `5000 K`, plus phonon and trajectory visualization products.
+
+`Free Helmholtz energy vs volume`, with separate Birch-Murnaghan fits for `4500 K` and `5000 K`:
+
+![BCC free energy comparison](../dataset/bcc/non-mag/free_energy_vs_volume_4500K_5000K.png)
+
+`Pressure vs volume`, using separate Birch-Murnaghan fits to the AIMD mean pressures for `4500 K` and `5000 K`:
+
+![BCC pressure-volume comparison](../dataset/bcc/non-mag/volume_vs_pressure_4500K_5000K_bcc.png)
+
+`Phonon dispersion overlay` for the current `bcc` volume set:
+
+![BCC phonon dispersion overlay](../dataset/bcc/non-mag/phonon_dispersion_overlay.png)
+
+`QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
+
+![BCC 2.40 A 5000 K trajectory](../dataset/bcc/non-mag/2.40_5000K_qe_md_slow.gif)
+
+### HCP Fe
+
+The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure-volume results together with the phonon dispersion comparison across the sampled volumes.
+
+`Free Helmholtz energy vs volume` at `5000 K`:
+
+![HCP free energy](../dataset/hcp/free_energy_vs_volume.png)
+
+`Pressure vs volume` at `5000 K`, using the same EOS-style presentation as the `bcc` plot:
+
+![HCP pressure-volume EOS](../dataset/hcp/volume_vs_pressure_5000K_hcp_eos_std.png)
+
+`Phonon dispersion overlay` for the current `hcp` volume set:
+
+![HCP phonon dispersion overlay](../dataset/hcp/phonon_dispersion_overlay_hcp.png)
+
+One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstable. It is kept in the phonon-dispersion comparison for reference, but it is excluded from the `hcp` free-energy and pressure-volume thermodynamic plots.
+
 ## What The Current Scripts Do
 
 ### `codes/data_compress.py`
