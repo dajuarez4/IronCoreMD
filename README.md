@@ -92,19 +92,19 @@ The `bcc` dataset currently includes finite-temperature thermodynamic comparison
 
 `Free Helmholtz energy vs volume`, with separate Birch-Murnaghan fits for `4500 K` and `5000 K`:
 
-![BCC free energy comparison](../dataset/bcc/non-mag/free_energy_vs_volume_4500K_5000K.png)
+![BCC free energy comparison](assets/bcc_free_energy_vs_volume_4500K_5000K.png)
 
 `Pressure vs volume`, using separate Birch-Murnaghan fits to the AIMD mean pressures for `4500 K` and `5000 K`:
 
-![BCC pressure-volume comparison](../dataset/bcc/non-mag/volume_vs_pressure_4500K_5000K_bcc.png)
+![BCC pressure-volume comparison](assets/bcc_volume_vs_pressure_4500K_5000K.png)
 
 `Phonon dispersion overlay` for the current `bcc` volume set:
 
-![BCC phonon dispersion overlay](../dataset/bcc/non-mag/phonon_dispersion_overlay.png)
+![BCC phonon dispersion overlay](assets/bcc_phonon_dispersion_overlay.png)
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
-![BCC 2.40 A 5000 K trajectory](../dataset/bcc/non-mag/2.40_5000K_qe_md_slow.gif)
+![BCC 2.40 A 5000 K trajectory](assets/bcc_2.40_5000K_qe_md_slow.gif)
 
 ### HCP Fe
 
@@ -112,15 +112,15 @@ The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure
 
 `Free Helmholtz energy vs volume` at `5000 K`:
 
-![HCP free energy](../dataset/hcp/free_energy_vs_volume.png)
+![HCP free energy](assets/hcp_free_energy_vs_volume.png)
 
 `Pressure vs volume` at `5000 K`, using the same EOS-style presentation as the `bcc` plot:
 
-![HCP pressure-volume EOS](../dataset/hcp/volume_vs_pressure_5000K_hcp_eos_std.png)
+![HCP pressure-volume EOS](assets/hcp_volume_vs_pressure_5000K_eos_std.png)
 
 `Phonon dispersion overlay` for the current `hcp` volume set:
 
-![HCP phonon dispersion overlay](../dataset/hcp/phonon_dispersion_overlay_hcp.png)
+![HCP phonon dispersion overlay](assets/hcp_phonon_dispersion_overlay.png)
 
 One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstable. It is kept in the phonon-dispersion comparison for reference, but it is excluded from the `hcp` free-energy and pressure-volume thermodynamic plots.
 
