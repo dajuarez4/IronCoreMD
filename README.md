@@ -75,7 +75,9 @@ IronCoreMD/
     ├── data_compress.py
     ├── live_qe_check.sh
     ├── qe_npz_to_gif.py
-    └── load_data.py
+    ├── load_data.py
+    └── generate_structures.ipynb
+
 ```
 
 ## Current Repository State
