@@ -104,9 +104,11 @@ The `bcc` dataset currently includes finite-temperature thermodynamic comparison
 
 ![BCC pressure-volume comparison](assets/bcc_volume_vs_pressure_4500K_5000K.png)
 
-`Phonon dispersion overlay` for the current `bcc` volume set:
+`Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4500 K` and `5000 K`:
 
 ![BCC phonon dispersion overlay](assets/bcc_phonon_dispersion_overlay.png)
+
+![BCC phonon dispersion overlay 4500 K](assets/bcc_phonon_dispersion_overlay_4500K.png)
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
