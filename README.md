@@ -374,6 +374,25 @@ Natural extensions for this repository would be:
 - supporting additional engines or archive backends,
 - and adding dataset assembly tools for graph-kernel-based ML interatomic potential training.
 
+## References
+
+The Temperature Dependent Effective Potential (TDEP) method was used in this work to extract finite-temperature interatomic force constants and evaluate anharmonic lattice dynamics. The theoretical and computational framework follows the original TDEP formalism and its modern software implementation:
+
+1. Hellman, O., Steneteg, P., Abrikosov, I. A., & Simak, S. I.  
+   **Temperature dependent effective potential method for accurate free energy calculations of solids**.  
+   *Physical Review B* **87**, 104111 (2013).  
+   https://doi.org/10.1103/PhysRevB.87.104111
+
+2. Hellman, O., & Abrikosov, I. A.  
+   **Temperature-dependent effective third-order interatomic force constants from first principles**.  
+   *Physical Review B* **88**, 144301 (2013).  
+   https://doi.org/10.1103/PhysRevB.88.144301
+
+3. Knoop, F., Shulumba, N., Castellano, A., Batista, J. P. A., Farris, R., Verdi, C., Fransson, E., Abrikosov, I. A., Simak, S. I., & Hellman, O.  
+   **TDEP: Temperature Dependent Effective Potentials**.  
+   *Journal of Open Source Software* **9**, 6150 (2024).  
+   https://doi.org/10.21105/joss.06150
+
 ## License
 
 This project is distributed under the terms in [LICENSE](LICENSE).
