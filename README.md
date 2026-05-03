@@ -132,9 +132,13 @@ One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstabl
 
 ### FCC Fe
 
-The `fcc` dataset currently contains an initial `5000 K` phonon calculation for the `a = 3.05 Å` structure.
+The `fcc` dataset currently contains an initial `5000 K` two-point free-energy summary together with phonon calculations for `a = 3.00 Å` and `a = 3.05 Å`.
 
-`Phonon dispersion and total DOS` for the current `fcc` point:
+`Free Helmholtz energy vs volume` at `5000 K` for the currently available `fcc` points:
+
+![FCC free energy](assets/fcc_free_energy_vs_volume.png)
+
+`Phonon dispersion and total DOS` for the current `fcc` set:
 
 ![FCC phonon dispersion overlay](assets/fcc_phonon_dispersion_overlay.png)
 
