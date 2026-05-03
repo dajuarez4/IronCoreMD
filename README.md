@@ -130,6 +130,14 @@ The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure
 
 One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstable. It is kept in the phonon-dispersion comparison for reference, but it is excluded from the `hcp` free-energy and pressure-volume thermodynamic plots.
 
+### FCC Fe
+
+The `fcc` dataset currently contains an initial `5000 K` phonon calculation for the `a = 3.05 Å` structure.
+
+`Phonon dispersion and total DOS` for the current `fcc` point:
+
+![FCC phonon dispersion overlay](assets/fcc_phonon_dispersion_overlay.png)
+
 ## What The Current Scripts Do
 
 ### `codes/data_compress.py`
