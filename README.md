@@ -196,6 +196,10 @@ It repeatedly parses a QE `.out` file and uses `gnuplot` to update a dashboard i
 
 The script writes intermediate `.dat` files plus a `qe_live_dashboard.png` image that refreshes every few seconds.
 
+Example dashboard output from `codes/live_qe_check.sh`:
+
+![QE live dashboard example](assets/qe_live_dashboard.png)
+
 ### `codes/qe_npz_to_gif.py`
 
 Standalone renderer for creating animated GIFs directly from QE MD archives saved as `.npz`.
