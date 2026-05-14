@@ -45,6 +45,7 @@ The intended scientific workflow is therefore:
 
 The intended workflow for this repository is:
 
+
 1. Build reference iron structures for `bcc`, `fcc`, and `hcp`.
 2. Generate QE inputs for different magnetic states:
    - non-magnetic
