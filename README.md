@@ -13,6 +13,7 @@ In practical terms, the repository is meant to document and eventually automate 
 
 At the moment the repository is still in an early, script-first stage rather than a packaged Python library. The code currently included focuses on:
 
+
 - parsing QE `.out` files from AIMD runs,
 - extracting per-step structures, forces, energies, temperatures, pressures, and magnetization data,
 - rendering No-Vito-style trajectory GIFs directly from compressed QE `.npz` archives,
