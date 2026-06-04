@@ -1,0 +1,170 @@
+# BCC TDEP Workflow
+
+This directory packages the non-magnetic `bcc` TDEP postprocessing workflow that was previously living as ad hoc scripts in the working dataset tree.
+
+The workflow starts from compressed QE AIMD archives in `dataset/bcc/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
+
+## Included Scripts
+
+- `npz_to_tdep_bcc.py`
+  Converts QE AIMD `.npz` archives into TDEP input folders with:
+  - `infile.ucposcar`
+  - `infile.ssposcar`
+  - `infile.positions`
+  - `infile.forces`
+  - `infile.stat`
+  - `infile.meta`
+  - `infile.qpoints_dispersion`
+  - `source_npz.txt`
+
+- `run_bcc_harmonic_tdep.py`
+  End-to-end driver for:
+  - rebuilding selected `tdep_*` folders from NPZ archives,
+  - running `extract_forceconstants`,
+  - running phonon dispersion and DOS/free-energy calculations,
+  - refreshing the single-temperature plots,
+  - and optionally refreshing the multi-temperature comparison figures.
+
+- `summarize_free_energy.py`
+  Prints a CSV-style summary of `outfile.free_energy` plus `outfile.U0`.
+
+- `plot_free_energy_vs_volume.py`
+  Writes:
+  - free energy vs volume,
+  - relative free energy vs volume,
+  - free energy vs lattice parameter,
+  - relative free energy vs lattice parameter,
+  - and the thermodynamic CSV used by the pressure plot.
+
+- `plot_volume_vs_pressure.py`
+  Fits a Birch-Murnaghan EOS to the TDEP free energies and to the AIMD mean pressures, then writes:
+  - a comparison pressure-volume figure,
+  - an EOS-only pressure-volume figure,
+  - and a CSV with the derived pressure values.
+
+- `plot_combined_dispersion.py`
+  Writes a combined phonon-dispersion and total-DOS overlay for one temperature.
+
+- `plot_temperature_comparison.py`
+  Overlays free-energy and pressure-volume curves across multiple temperatures.
+
+- `tdep_common.py`
+  Shared helper functions for folder discovery, duplicate handling, thermodynamic parsing, and default output naming.
+
+## Data Layout
+
+The scripts assume the repository layout:
+
+```text
+IronCoreMD/
+├── codes/
+│   └── tdep_workflow/
+└── dataset/
+    └── bcc/
+        ├── 2.29_5000K.npz
+        ├── 2.52_5000-new.npz
+        ├── 2.51_5500K.npz
+        ├── ...
+        └── tdep_2.29_5000K/
+```
+
+The current defaults target `dataset/bcc` relative to the repository root, but every script accepts `--dataset-dir`.
+
+## Requirements
+
+Python-side requirements:
+
+- `numpy`
+- `scipy`
+- `matplotlib`
+
+External requirements:
+
+- a built TDEP checkout with:
+  - `extract_forceconstants`
+  - `phonon_dispersion_relations`
+
+The driver script auto-detects TDEP in either:
+
+- `IronCoreMD/tdep/build/src`
+- or a sibling checkout at `../tdep/build/src`
+
+You can also pass `--tdep-root` explicitly.
+
+## Quick Start
+
+Rebuild all `5000 K` BCC TDEP folders from the NPZ archives:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/npz_to_tdep_bcc.py --temperature-K 5000
+```
+
+Run the full harmonic TDEP workflow for one temperature:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_bcc_harmonic_tdep.py --temperature-label 5000
+```
+
+## Targeted Reruns
+
+Rebuild and rerun only the updated `5500 K` high-volume subset:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_bcc_harmonic_tdep.py \
+  --temperature-label 5500 \
+  2.51_5500K 2.52_5500K 2.53_5500K 2.54_5500K 2.55_5500K
+```
+
+Refresh only the plots after manually editing or rerunning existing `tdep_*` folders:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_bcc_harmonic_tdep.py \
+  --temperature-label 5500 \
+  --no-convert \
+  --no-tdep \
+  --no-comparison-plots
+```
+
+## Plot and CSV Outputs
+
+For `5000 K`, the scripts keep the existing repository naming:
+
+- `free_energy_vs_volume.csv`
+- `free_energy_vs_volume.png`
+- `relative_free_energy_vs_volume.png`
+- `free_energy_vs_lattice.png`
+- `relative_free_energy_vs_lattice.png`
+- `volume_vs_pressure_5000K_bcc.csv`
+- `volume_vs_pressure_5000K_bcc.png`
+- `volume_vs_pressure_5000K_bcc_eos_std.png`
+- `phonon_dispersion_overlay.png`
+
+For other temperatures, the temperature is included in the file name, for example:
+
+- `free_energy_vs_volume_5500K.csv`
+- `volume_vs_pressure_5500K_bcc.csv`
+- `phonon_dispersion_overlay_5500K.png`
+
+The multi-temperature comparison script writes:
+
+- `free_energy_vs_volume_4500K_5000K_5500K.png`
+- `volume_vs_pressure_4500K_5000K_5500K_bcc.png`
+
+## Duplicate and Unstable Point Handling
+
+Two workflow rules are built into the discovery helpers:
+
+1. Duplicate lattice points prefer a suffixed replacement folder over the bare folder.
+   Example:
+   `tdep_2.52_5000-new` is preferred over `tdep_2.52_5000K` when both exist.
+
+2. Thermodynamic plots skip dynamically unstable TDEP points automatically.
+   A folder is excluded from the thermodynamic plots when `outfile.free_energy` is non-finite or clearly pathological, such as the large positive values produced by imaginary modes.
+
+## Recommended Commit Scope
+
+If you want to keep repository history clean, treat this directory as the reusable workflow layer and keep large generated `tdep_*` folders or refreshed plot products in separate commits.
