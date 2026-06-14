@@ -1,13 +1,16 @@
-# BCC TDEP Workflow
+# Phase-Aware TDEP Workflow
 
-This directory packages the non-magnetic `bcc` TDEP postprocessing workflow that was previously living as ad hoc scripts in the working dataset tree.
+This directory packages the reusable TDEP postprocessing workflow for the non-magnetic iron datasets in the repository.
 
-The workflow starts from compressed QE AIMD archives in `dataset/bcc/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
+The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz` or `dataset/fcc/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
 
 ## Included Scripts
 
-- `npz_to_tdep_bcc.py`
-  Converts QE AIMD `.npz` archives into TDEP input folders with:
+- `npz_to_tdep.py`
+  Generic NPZ-to-TDEP converter for the supported phases:
+  - `bcc`
+  - `fcc`
+  It writes:
   - `infile.ucposcar`
   - `infile.ssposcar`
   - `infile.positions`
@@ -17,13 +20,25 @@ The workflow starts from compressed QE AIMD archives in `dataset/bcc/*.npz`, bui
   - `infile.qpoints_dispersion`
   - `source_npz.txt`
 
-- `run_bcc_harmonic_tdep.py`
-  End-to-end driver for:
+- `npz_to_tdep_bcc.py`
+  Backward-compatible wrapper for `npz_to_tdep.py --phase bcc`.
+
+- `npz_to_tdep_fcc.py`
+  Convenience wrapper for `npz_to_tdep.py --phase fcc`.
+
+- `run_harmonic_tdep.py`
+  Generic end-to-end driver for:
   - rebuilding selected `tdep_*` folders from NPZ archives,
   - running `extract_forceconstants`,
   - running phonon dispersion and DOS/free-energy calculations,
   - refreshing the single-temperature plots,
   - and optionally refreshing the multi-temperature comparison figures.
+
+- `run_bcc_harmonic_tdep.py`
+  Backward-compatible wrapper for `run_harmonic_tdep.py --phase bcc`.
+
+- `run_fcc_harmonic_tdep.py`
+  Convenience wrapper for `run_harmonic_tdep.py --phase fcc`.
 
 - `summarize_free_energy.py`
   Prints a CSV-style summary of `outfile.free_energy` plus `outfile.U0`.
@@ -60,15 +75,20 @@ IronCoreMD/
 ├── codes/
 │   └── tdep_workflow/
 └── dataset/
-    └── bcc/
-        ├── 2.29_5000K.npz
-        ├── 2.52_5000-new.npz
-        ├── 2.51_5500K.npz
+    ├── bcc/
+    │   ├── 2.29_5000K.npz
+    │   ├── 2.52_5000-new.npz
+    │   ├── 2.51_5500K.npz
+    │   ├── ...
+    │   └── tdep_2.29_5000K/
+    └── fcc/
+        ├── 3.00_5000K.npz
+        ├── 3.05_5000K.npz
         ├── ...
-        └── tdep_2.29_5000K/
+        └── tdep_3.00_5000K/
 ```
 
-The current defaults target `dataset/bcc` relative to the repository root, but every script accepts `--dataset-dir`.
+The current defaults target `dataset/<phase>` relative to the repository root, and every script accepts both `--phase` and `--dataset-dir`.
 
 ## Requirements
 
@@ -100,11 +120,25 @@ cd /Users/dajuarez4/Documents/Fe/IronCoreMD
 python codes/tdep_workflow/npz_to_tdep_bcc.py --temperature-K 5000
 ```
 
-Run the full harmonic TDEP workflow for one temperature:
+Run the full harmonic TDEP workflow for one BCC temperature:
 
 ```bash
 cd /Users/dajuarez4/Documents/Fe/IronCoreMD
 python codes/tdep_workflow/run_bcc_harmonic_tdep.py --temperature-label 5000
+```
+
+Run the FCC workflow with the generic phase-aware entrypoint:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_harmonic_tdep.py --phase fcc --temperature-label 5000
+```
+
+or with the FCC convenience wrapper:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_fcc_harmonic_tdep.py --temperature-label 5000
 ```
 
 ## Targeted Reruns
@@ -131,7 +165,7 @@ python codes/tdep_workflow/run_bcc_harmonic_tdep.py \
 
 ## Plot and CSV Outputs
 
-For `5000 K`, the scripts keep the existing repository naming:
+For `5000 K`, the free-energy and dispersion scripts keep the existing dataset-local naming:
 
 - `free_energy_vs_volume.csv`
 - `free_energy_vs_volume.png`
@@ -142,6 +176,12 @@ For `5000 K`, the scripts keep the existing repository naming:
 - `volume_vs_pressure_5000K_bcc.png`
 - `volume_vs_pressure_5000K_bcc_eos_std.png`
 - `phonon_dispersion_overlay.png`
+
+For other phases, the pressure outputs use the phase suffix, for example:
+
+- `volume_vs_pressure_5000K_fcc.csv`
+- `volume_vs_pressure_5000K_fcc.png`
+- `volume_vs_pressure_5000K_fcc_eos_std.png`
 
 For other temperatures, the temperature is included in the file name, for example:
 

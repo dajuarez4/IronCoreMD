@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot BCC TDEP free energy versus volume and lattice parameter."""
+"""Plot TDEP free energy versus volume and lattice parameter."""
 
 from __future__ import annotations
 
@@ -32,16 +32,18 @@ from tdep_common import (
     relative_free_energy_plot_name,
     resolve_path,
 )
+from tdep_phases import PHASE_SPECS, get_phase_spec
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Plot BCC TDEP free energy vs volume and lattice parameter.")
+    parser = argparse.ArgumentParser(description="Plot TDEP free energy vs volume and lattice parameter.")
     parser.add_argument("folders", nargs="*", type=Path, help="TDEP folders. Default: all folders at temperature-label.")
+    parser.add_argument("--phase", choices=sorted(PHASE_SPECS), default="bcc", help="Crystal phase. Default: bcc.")
     parser.add_argument(
         "--dataset-dir",
         type=Path,
-        default=default_dataset_dir(),
-        help="Directory containing the BCC TDEP folders. Default: <repo>/dataset/bcc.",
+        default=None,
+        help="Directory containing the TDEP folders. Default: <repo>/dataset/<phase>.",
     )
     parser.add_argument("--output", type=Path, default=None, help="Absolute or dataset-relative output PNG path.")
     parser.add_argument("--relative-output", type=Path, default=None, help="Relative free-energy output PNG path.")
@@ -109,11 +111,11 @@ def fit_birch_murnaghan(volumes: np.ndarray, free_energies: np.ndarray) -> tuple
     return tuple(float(value) for value in params)
 
 
-def collect_rows(folders: list[Path]) -> tuple[list[dict[str, float | str]], list[tuple[str, str]]]:
+def collect_rows(folders: list[Path], phase: str) -> tuple[list[dict[str, float | str]], list[tuple[str, str]]]:
     rows: list[dict[str, float | str]] = []
     skipped: list[tuple[str, str]] = []
     for folder in folders:
-        lattice_a, volume_per_atom, total_volume = read_uc_volume_per_atom(folder / "infile.ucposcar")
+        lattice_a, volume_per_atom, total_volume = read_uc_volume_per_atom(folder / "infile.ucposcar", phase=phase)
         temperature, f_vib, entropy, cv = read_free_energy(folder / "outfile.free_energy")
         u0 = read_u0_second_order(folder / "outfile.U0")
         status = classify_free_energy(temperature, f_vib, entropy, cv, u0)
@@ -169,7 +171,14 @@ def save_single_panel(
     plt.close(fig)
 
 
-def plot_vs_volume(path: Path, relative_path: Path, rows: list[dict[str, float | str]], temperature_label: str) -> None:
+def plot_vs_volume(
+    path: Path,
+    relative_path: Path,
+    rows: list[dict[str, float | str]],
+    temperature_label: str,
+    phase: str,
+) -> None:
+    spec = get_phase_spec(phase)
     volumes = np.array([float(row["total_volume_A3"]) for row in rows], dtype=float)
     free_energies = np.array([float(row["F_total_eV_atom"]) for row in rows], dtype=float)
     e0_fit, v0_fit, b0_fit, b0_prime_fit = fit_birch_murnaghan(volumes, free_energies)
@@ -186,7 +195,7 @@ def plot_vs_volume(path: Path, relative_path: Path, rows: list[dict[str, float |
         y_fit=fit_free_energies,
         xlabel=r"Volume ($\AA^3$)",
         ylabel="Free Helmholtz energy (eV)",
-        title=f"BCC Fe Free Energy vs Volume at {temperature_label} K",
+        title=f"{spec.title} Fe Free Energy vs Volume at {temperature_label} K",
         point_color="#1f6f5b",
         fit_color="#c24b2a",
     )
@@ -198,19 +207,26 @@ def plot_vs_volume(path: Path, relative_path: Path, rows: list[dict[str, float |
         y_fit=fit_relative,
         xlabel=r"Volume ($\AA^3$)",
         ylabel="Relative free energy (meV/atom)",
-        title=f"BCC Fe Relative Free Energy vs Volume at {temperature_label} K",
+        title=f"{spec.title} Fe Relative Free Energy vs Volume at {temperature_label} K",
         point_color="#1f6f5b",
         fit_color="#c24b2a",
     )
 
 
-def plot_vs_lattice(path: Path, relative_path: Path, rows: list[dict[str, float | str]], temperature_label: str) -> None:
+def plot_vs_lattice(
+    path: Path,
+    relative_path: Path,
+    rows: list[dict[str, float | str]],
+    temperature_label: str,
+    phase: str,
+) -> None:
+    spec = get_phase_spec(phase)
     lattice_a = np.array([float(row["lattice_a_A"]) for row in rows], dtype=float)
     free_energies = np.array([float(row["F_total_eV_atom"]) for row in rows], dtype=float)
     volumes = np.array([float(row["volume_per_atom_A3"]) for row in rows], dtype=float)
     e0_fit, v0_fit, b0_fit, b0_prime_fit = fit_birch_murnaghan(volumes, free_energies)
     fit_volumes = np.linspace(volumes.min(), volumes.max(), 400)
-    fit_lattice_a = (2.0 * fit_volumes) ** (1.0 / 3.0)
+    fit_lattice_a = spec.lattice_parameter_from_volume_per_atom(fit_volumes)
     fit_free_energies = birch_murnaghan_energy(fit_volumes, e0_fit, v0_fit, b0_fit, b0_prime_fit)
     relative = (free_energies - e0_fit) * 1000.0
     fit_relative = (fit_free_energies - e0_fit) * 1000.0
@@ -223,7 +239,7 @@ def plot_vs_lattice(path: Path, relative_path: Path, rows: list[dict[str, float 
         y_fit=fit_free_energies,
         xlabel="Lattice parameter, a (A)",
         ylabel="Free Helmholtz energy (eV)",
-        title=f"BCC Fe Free Energy vs Lattice Parameter at {temperature_label} K",
+        title=f"{spec.title} Fe Free Energy vs Lattice Parameter at {temperature_label} K",
         point_color="#305c9b",
         fit_color="#b6572d",
     )
@@ -235,7 +251,7 @@ def plot_vs_lattice(path: Path, relative_path: Path, rows: list[dict[str, float 
         y_fit=fit_relative,
         xlabel="Lattice parameter, a (A)",
         ylabel="Relative free energy (meV/atom)",
-        title=f"BCC Fe Relative Free Energy vs Lattice Parameter at {temperature_label} K",
+        title=f"{spec.title} Fe Relative Free Energy vs Lattice Parameter at {temperature_label} K",
         point_color="#305c9b",
         fit_color="#b6572d",
     )
@@ -243,7 +259,7 @@ def plot_vs_lattice(path: Path, relative_path: Path, rows: list[dict[str, float 
 
 def main() -> None:
     args = parse_args()
-    dataset_dir = args.dataset_dir.resolve()
+    dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     folders = [path.resolve() if path.is_absolute() else (dataset_dir / path).resolve() for path in args.folders]
     if not folders:
         folders = default_tdep_folders(dataset_dir, args.temperature_label)
@@ -268,10 +284,10 @@ def main() -> None:
         else relative_free_energy_lattice_plot_name(args.temperature_label),
     )
 
-    rows, skipped = collect_rows(folders)
+    rows, skipped = collect_rows(folders, args.phase)
     write_csv(csv_path, rows)
-    plot_vs_volume(output, relative_output, rows, args.temperature_label)
-    plot_vs_lattice(lattice_output, relative_lattice_output, rows, args.temperature_label)
+    plot_vs_volume(output, relative_output, rows, args.temperature_label, args.phase)
+    plot_vs_lattice(lattice_output, relative_lattice_output, rows, args.temperature_label, args.phase)
 
     for folder_name, status in skipped:
         print(f"Skipped {folder_name}: {status}")

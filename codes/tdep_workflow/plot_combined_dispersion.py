@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Overlay non-displaced BCC TDEP phonon dispersions and DOS in one figure."""
+"""Overlay phase-resolved TDEP phonon dispersions and DOS in one figure."""
 
 from __future__ import annotations
 
@@ -30,16 +30,18 @@ from tdep_common import (
     read_u0_second_order,
     resolve_path,
 )
+from tdep_phases import PHASE_SPECS, get_phase_spec
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Overlay BCC TDEP phonon dispersions from several folders.")
+    parser = argparse.ArgumentParser(description="Overlay TDEP phonon dispersions from several folders.")
     parser.add_argument("folders", nargs="*", type=Path, help="TDEP folders. Default: all valid folders at temperature-label.")
+    parser.add_argument("--phase", choices=sorted(PHASE_SPECS), default="bcc", help="Crystal phase. Default: bcc.")
     parser.add_argument(
         "--dataset-dir",
         type=Path,
-        default=default_dataset_dir(),
-        help="Directory containing the BCC TDEP folders. Default: <repo>/dataset/bcc.",
+        default=None,
+        help="Directory containing the TDEP folders. Default: <repo>/dataset/<phase>.",
     )
     parser.add_argument("--output", type=Path, default=None, help="Output PNG path.")
     parser.add_argument("--temperature-label", default="5000", help="Temperature label, e.g. 4500, 5000, 5500.")
@@ -47,10 +49,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def choose_reference_folder(folders: list[Path], temperature_label: str) -> Path:
-    for folder in folders:
-        if f"2.40_{temperature_label}K" in folder.name:
-            return folder
-    return folders[0]
+    del temperature_label
+    ordered = sorted(folders, key=lattice_parameter_from_folder)
+    return ordered[len(ordered) // 2]
 
 
 def read_dispersion(path: Path) -> np.ndarray:
@@ -93,7 +94,8 @@ def folder_has_valid_free_energy(folder: Path) -> bool:
     return classify_free_energy(temperature, f_vib, entropy, cv, u0) == "ok"
 
 
-def plot(output: Path, folders: list[Path], temperature_label: str) -> None:
+def plot(output: Path, folders: list[Path], temperature_label: str, phase: str) -> None:
+    spec = get_phase_spec(phase)
     reference_folder = choose_reference_folder(folders, temperature_label)
     ref_labels, ref_ticks = read_xticks(reference_folder / "outfile.dispersion_relations.gnuplot")
     lattice_parameters = np.array([lattice_parameter_from_folder(folder) for folder in folders], dtype=float)
@@ -139,7 +141,7 @@ def plot(output: Path, folders: list[Path], temperature_label: str) -> None:
     ymin = min_frequency * 1.08 if min_frequency < 0.0 else 0.0
     ax.set_ylim(ymin, max_frequency * 1.03)
     ax.set_ylabel("Frequency (THz)")
-    ax.set_title(f"BCC Fe Phonon Dispersion and DOS at {temperature_label} K")
+    ax.set_title(f"{spec.title} Fe Phonon Dispersion and DOS at {temperature_label} K")
     ax.grid(axis="y", alpha=0.25)
 
     ax_dos.set_xlim(0.0, max_dos * 1.08)
@@ -159,7 +161,7 @@ def plot(output: Path, folders: list[Path], temperature_label: str) -> None:
 
 def main() -> None:
     args = parse_args()
-    dataset_dir = args.dataset_dir.resolve()
+    dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     folders = [path.resolve() if path.is_absolute() else (dataset_dir / path).resolve() for path in args.folders]
     if not folders:
         folders = default_tdep_folders(dataset_dir, args.temperature_label)
@@ -178,7 +180,7 @@ def main() -> None:
         raise ValueError(f"No valid TDEP folders remained after filtering for {args.temperature_label} K")
 
     output = resolve_path(dataset_dir, args.output if args.output is not None else dispersion_plot_name(args.temperature_label))
-    plot(output, valid_folders, args.temperature_label)
+    plot(output, valid_folders, args.temperature_label, args.phase)
 
     for folder_name in skipped:
         print(f"Skipped {folder_name}: invalid free energy / imaginary modes")

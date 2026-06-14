@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Backward-compatible BCC wrapper for the generic harmonic TDEP driver."""
+"""Convenience FCC wrapper for the generic harmonic TDEP driver."""
 
 from __future__ import annotations
 
@@ -7,4 +7,4 @@ from run_harmonic_tdep import main
 
 
 if __name__ == "__main__":
-    main(default_phase="bcc")
+    main(default_phase="fcc")

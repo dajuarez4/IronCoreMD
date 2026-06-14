@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared helpers for the BCC TDEP workflow scripts."""
+"""Shared helpers for the TDEP workflow scripts."""
 
 from __future__ import annotations
 
@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 
 import numpy as np
+
+from tdep_phases import get_phase_spec
 
 FOLDER_RE = re.compile(r"tdep_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
 NPZ_RE = re.compile(r"([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
@@ -18,8 +20,8 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def default_dataset_dir() -> Path:
-    return repo_root() / "dataset" / "bcc"
+def default_dataset_dir(phase: str = "bcc") -> Path:
+    return get_phase_spec(phase).dataset_dir(repo_root())
 
 
 def normalize_temperature_label(label: str | int | float) -> str:
@@ -40,7 +42,7 @@ def folder_match(folder: Path) -> re.Match[str]:
 def npz_match(path: Path) -> re.Match[str]:
     match = NPZ_RE.fullmatch(path.stem)
     if not match:
-        raise ValueError(f"Could not parse BCC NPZ file name: {path}")
+        raise ValueError(f"Could not parse NPZ file name: {path}")
     return match
 
 
@@ -81,11 +83,15 @@ def prefer_unique_lattice_points(folders: list[Path]) -> list[Path]:
     return sorted(selected.values(), key=lambda item: (lattice_parameter_from_folder(item), item.name))
 
 
-def discover_bcc_npz_files(dataset_dir: Path, temperature_label: str | None = None) -> list[Path]:
+def discover_npz_files(dataset_dir: Path, temperature_label: str | None = None) -> list[Path]:
     files = [path for path in dataset_dir.glob("*.npz") if NPZ_RE.fullmatch(path.stem)]
     if temperature_label is not None:
         files = [path for path in files if npz_matches_temperature(path, temperature_label)]
     return sorted(files, key=lambda item: (lattice_parameter_from_npz(item), item.stem))
+
+
+def discover_bcc_npz_files(dataset_dir: Path, temperature_label: str | None = None) -> list[Path]:
+    return discover_npz_files(dataset_dir, temperature_label)
 
 
 def default_tdep_folders(dataset_dir: Path, temperature_label: str) -> list[Path]:
@@ -132,7 +138,7 @@ def classify_free_energy(temperature: float, f_vib: float, entropy: float, cv: f
     return "ok"
 
 
-def read_uc_volume_per_atom(path: Path) -> tuple[float, float, float]:
+def read_uc_volume_per_atom(path: Path, phase: str = "bcc") -> tuple[float, float, float]:
     lines = path.read_text().splitlines()
     scale = float(lines[1].split()[0])
     cell = np.array([[float(value) for value in lines[index].split()[:3]] for index in range(2, 5)], dtype=float) * scale
@@ -140,8 +146,9 @@ def read_uc_volume_per_atom(path: Path) -> tuple[float, float, float]:
     natoms = sum(counts)
     volume = abs(float(np.linalg.det(cell)))
     volume_per_atom = volume / natoms
-    lattice_a = float((2.0 * volume_per_atom) ** (1.0 / 3.0))
-    total_volume = 2.0 * volume_per_atom
+    spec = get_phase_spec(phase)
+    lattice_a = float(spec.lattice_parameter_from_volume_per_atom(volume_per_atom))
+    total_volume = spec.conventional_cell_volume(volume_per_atom)
     return lattice_a, volume_per_atom, total_volume
 
 
@@ -189,19 +196,19 @@ def relative_free_energy_lattice_plot_name(temperature_label: str) -> Path:
     return Path(f"relative_free_energy_vs_lattice_{temperature_label}K.png")
 
 
-def pressure_plot_name(temperature_label: str) -> Path:
+def pressure_plot_name(temperature_label: str, phase: str = "bcc") -> Path:
     temperature_label = normalize_temperature_label(temperature_label)
-    return Path(f"volume_vs_pressure_{temperature_label}K_bcc.png")
+    return Path(f"volume_vs_pressure_{temperature_label}K_{get_phase_spec(phase).key}.png")
 
 
-def pressure_csv_name(temperature_label: str) -> Path:
+def pressure_csv_name(temperature_label: str, phase: str = "bcc") -> Path:
     temperature_label = normalize_temperature_label(temperature_label)
-    return Path(f"volume_vs_pressure_{temperature_label}K_bcc.csv")
+    return Path(f"volume_vs_pressure_{temperature_label}K_{get_phase_spec(phase).key}.csv")
 
 
-def pressure_eos_plot_name(temperature_label: str) -> Path:
+def pressure_eos_plot_name(temperature_label: str, phase: str = "bcc") -> Path:
     temperature_label = normalize_temperature_label(temperature_label)
-    return Path(f"volume_vs_pressure_{temperature_label}K_bcc_eos_std.png")
+    return Path(f"volume_vs_pressure_{temperature_label}K_{get_phase_spec(phase).key}_eos_std.png")
 
 
 def dispersion_plot_name(temperature_label: str) -> Path:
@@ -216,12 +223,12 @@ def comparison_output_name(prefix: str, temperatures: list[str], suffix: str) ->
     return Path(f"{prefix}_{labels}{suffix}")
 
 
-def discover_temperature_series(dataset_dir: Path) -> list[str]:
+def discover_temperature_series(dataset_dir: Path, phase: str = "bcc") -> list[str]:
     available = [
         temperature
         for temperature in DEFAULT_COMPARISON_TEMPERATURES
         if resolve_path(dataset_dir, free_energy_csv_name(temperature)).exists()
-        and resolve_path(dataset_dir, pressure_csv_name(temperature)).exists()
+        and resolve_path(dataset_dir, pressure_csv_name(temperature, phase)).exists()
     ]
     if not available:
         raise FileNotFoundError(f"No free-energy/pressure CSV pairs found in {dataset_dir}")
@@ -246,4 +253,3 @@ def find_tdep_root(explicit: Path | None = None) -> Path:
             return candidate
     searched = ", ".join(str(path) for path in candidates)
     raise FileNotFoundError(f"Could not locate the TDEP build/src directory. Searched: {searched}")
-

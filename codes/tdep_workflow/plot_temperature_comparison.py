@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Overlay BCC free-energy and pressure-volume curves for multiple temperatures."""
+"""Overlay phase-resolved free-energy and pressure-volume curves for multiple temperatures."""
 
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ from tdep_common import (
     read_csv_rows,
     resolve_path,
 )
+from tdep_phases import PHASE_SPECS, get_phase_spec
 
 SERIES_STYLES = {
     "4500": {"point_color": "#c65f1a", "line_color": "#8f3d05", "box_color": "#f0c9b2", "marker": "s"},
@@ -39,12 +40,13 @@ FALLBACK_STYLES = [
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Overlay BCC free-energy and pressure-volume curves.")
+    parser = argparse.ArgumentParser(description="Overlay phase-resolved free-energy and pressure-volume curves.")
+    parser.add_argument("--phase", choices=sorted(PHASE_SPECS), default="bcc", help="Crystal phase. Default: bcc.")
     parser.add_argument(
         "--dataset-dir",
         type=Path,
-        default=default_dataset_dir(),
-        help="Directory containing BCC thermodynamic CSVs. Default: <repo>/dataset/bcc.",
+        default=None,
+        help="Directory containing thermodynamic CSVs. Default: <repo>/dataset/<phase>.",
     )
     parser.add_argument(
         "--temperatures",
@@ -76,7 +78,7 @@ def style_for_temperature(temperature_label: str, fallback_index: int) -> dict[s
     return FALLBACK_STYLES[-1]
 
 
-def build_series(dataset_dir: Path, temperatures: list[str]) -> list[dict[str, object]]:
+def build_series(dataset_dir: Path, temperatures: list[str], phase: str) -> list[dict[str, object]]:
     series = []
     for fallback_index, temperature in enumerate(temperatures):
         style = style_for_temperature(temperature, fallback_index)
@@ -85,7 +87,7 @@ def build_series(dataset_dir: Path, temperatures: list[str]) -> list[dict[str, o
                 "temperature_label": temperature,
                 "label": f"{temperature} K",
                 "free_energy_rows": read_csv_rows(resolve_path(dataset_dir, free_energy_csv_name(temperature))),
-                "pressure_rows": read_csv_rows(resolve_path(dataset_dir, pressure_csv_name(temperature))),
+                "pressure_rows": read_csv_rows(resolve_path(dataset_dir, pressure_csv_name(temperature, phase))),
                 **style,
             }
         )
@@ -150,7 +152,8 @@ def fit_birch_murnaghan_pressure(volumes: np.ndarray, pressures_gpa: np.ndarray)
     return tuple(float(value) for value in params)
 
 
-def plot_free_energy(path: Path, series: list[dict[str, object]]) -> None:
+def plot_free_energy(path: Path, series: list[dict[str, object]], phase: str) -> None:
+    spec = get_phase_spec(phase)
     plt.rcParams.update({"font.family": "serif", "font.size": 12.5})
     fig, ax = plt.subplots(figsize=(7.3, 6.1), constrained_layout=True)
 
@@ -187,7 +190,7 @@ def plot_free_energy(path: Path, series: list[dict[str, object]]) -> None:
     xpad = 0.03 * xspan if xspan > 0.0 else 0.2
     ypad = 0.05 * yspan if yspan > 0.0 else 0.02
 
-    ax.set_title("BCC Fe Free Helmholtz Energy vs Volume")
+    ax.set_title(f"{spec.title} Fe Free Helmholtz Energy vs Volume")
     ax.set_xlabel(r"Conventional-cell volume ($\AA^3$)", fontsize=18)
     ax.set_ylabel("Free Helmholtz energy (eV/atom)", fontsize=18)
     ax.set_xlim(volumes_all.min() - xpad, volumes_all.max() + xpad)
@@ -254,7 +257,8 @@ def add_pressure_series(
     )
 
 
-def plot_pressure(path: Path, series: list[dict[str, object]]) -> None:
+def plot_pressure(path: Path, series: list[dict[str, object]], phase: str) -> None:
+    spec = get_phase_spec(phase)
     fig, ax = plt.subplots(figsize=(7.0, 6.2), constrained_layout=True)
     marker_size = 7.0
 
@@ -288,7 +292,7 @@ def plot_pressure(path: Path, series: list[dict[str, object]]) -> None:
         add_pressure_series(
             ax,
             item["pressure_rows"],
-            label=f"Iron body centered cubic at {item['temperature_label']}K",
+            label=f"Iron {spec.long_name} at {item['temperature_label']}K",
             point_face=item["point_color"],
             point_edge=item["line_color"],
             box_color=item["box_color"],
@@ -306,11 +310,11 @@ def plot_pressure(path: Path, series: list[dict[str, object]]) -> None:
 
 def main() -> None:
     args = parse_args()
-    dataset_dir = args.dataset_dir.resolve()
+    dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     temperatures = (
         normalize_temperatures(args.temperatures)
         if args.temperatures is not None
-        else discover_temperature_series(dataset_dir)
+        else discover_temperature_series(dataset_dir, args.phase)
     )
     if not temperatures:
         temperatures = list(DEFAULT_COMPARISON_TEMPERATURES)
@@ -324,12 +328,12 @@ def main() -> None:
         dataset_dir,
         args.pressure_output
         if args.pressure_output is not None
-        else comparison_output_name("volume_vs_pressure", temperatures, "_bcc.png"),
+        else comparison_output_name("volume_vs_pressure", temperatures, f"_{args.phase}.png"),
     )
 
-    series = build_series(dataset_dir, temperatures)
-    plot_free_energy(free_energy_output, series)
-    plot_pressure(pressure_output, series)
+    series = build_series(dataset_dir, temperatures, args.phase)
+    plot_free_energy(free_energy_output, series, args.phase)
+    plot_pressure(pressure_output, series, args.phase)
     print(f"Wrote {free_energy_output}")
     print(f"Wrote {pressure_output}")
 

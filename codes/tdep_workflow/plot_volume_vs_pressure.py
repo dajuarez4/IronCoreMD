@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot BCC Fe volume versus pressure using TDEP free energies and QE MD pressures."""
+"""Plot phase-resolved volume versus pressure using TDEP free energies and QE MD pressures."""
 
 from __future__ import annotations
 
@@ -27,17 +27,19 @@ from tdep_common import (
     resolve_path,
     source_npz_for_folder,
 )
+from tdep_phases import PHASE_SPECS, get_phase_spec
 
 EV_A3_TO_GPA = 160.21766208
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Plot BCC Fe volume vs pressure from TDEP free energies.")
+    parser = argparse.ArgumentParser(description="Plot phase-resolved volume vs pressure from TDEP free energies.")
+    parser.add_argument("--phase", choices=sorted(PHASE_SPECS), default="bcc", help="Crystal phase. Default: bcc.")
     parser.add_argument(
         "--dataset-dir",
         type=Path,
-        default=default_dataset_dir(),
-        help="Directory containing BCC NPZ/TDEP data. Default: <repo>/dataset/bcc.",
+        default=None,
+        help="Directory containing NPZ/TDEP data. Default: <repo>/dataset/<phase>.",
     )
     parser.add_argument("--free-energy-csv", type=Path, default=None, help="CSV written by plot_free_energy_vs_volume.py.")
     parser.add_argument("--output", type=Path, default=None, help="Output PNG path.")
@@ -47,7 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--eos-label",
         default=None,
-        help="Legend label for the EOS-only plot. Default: Iron body centered cubic at <temperature>K.",
+        help="Legend label for the EOS-only plot. Default: Iron <phase> at <temperature>K.",
     )
     return parser.parse_args()
 
@@ -202,7 +204,15 @@ def write_csv(path: Path, rows: list[dict[str, float | str]]) -> None:
         writer.writerows(rows)
 
 
-def plot(path: Path, rows: list[dict[str, float | str]], dense_curve: np.ndarray, dense_md_curve: np.ndarray, temperature_label: str) -> None:
+def plot(
+    path: Path,
+    rows: list[dict[str, float | str]],
+    dense_curve: np.ndarray,
+    dense_md_curve: np.ndarray,
+    temperature_label: str,
+    phase: str,
+) -> None:
+    spec = get_phase_spec(phase)
     fit_pressure = np.array([float(row["pressure_from_fit_GPa"]) for row in rows], dtype=float)
     md_pressure = np.array([float(row["mean_md_pressure_GPa"]) for row in rows], dtype=float)
     md_std = np.array([float(row["std_md_pressure_GPa"]) for row in rows], dtype=float)
@@ -246,7 +256,7 @@ def plot(path: Path, rows: list[dict[str, float | str]], dense_curve: np.ndarray
     )
     ax.set_xlabel("Pressure (GPa)")
     ax.set_ylabel(r"Volume ($\AA^3$)")
-    ax.set_title(f"BCC Fe Volume vs Pressure at {temperature_label} K")
+    ax.set_title(f"{spec.title} Fe Volume vs Pressure at {temperature_label} K")
     ax.grid(True, alpha=0.25)
     ax.legend(frameon=False, loc="best")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -319,22 +329,29 @@ def plot_eos_only(path: Path, rows: list[dict[str, float | str]], dense_md_curve
 
 def main() -> None:
     args = parse_args()
-    dataset_dir = args.dataset_dir.resolve()
+    spec = get_phase_spec(args.phase)
+    dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     free_energy_csv = resolve_path(
         dataset_dir,
         args.free_energy_csv if args.free_energy_csv is not None else free_energy_csv_name(args.temperature_label),
     )
-    output = resolve_path(dataset_dir, args.output if args.output is not None else pressure_plot_name(args.temperature_label))
-    csv_path = resolve_path(dataset_dir, args.csv if args.csv is not None else pressure_csv_name(args.temperature_label))
+    output = resolve_path(
+        dataset_dir,
+        args.output if args.output is not None else pressure_plot_name(args.temperature_label, args.phase),
+    )
+    csv_path = resolve_path(
+        dataset_dir,
+        args.csv if args.csv is not None else pressure_csv_name(args.temperature_label, args.phase),
+    )
     eos_output = resolve_path(
         dataset_dir,
-        args.eos_only_output if args.eos_only_output is not None else pressure_eos_plot_name(args.temperature_label),
+        args.eos_only_output if args.eos_only_output is not None else pressure_eos_plot_name(args.temperature_label, args.phase),
     )
-    eos_label = args.eos_label if args.eos_label else f"Iron body centered cubic at {args.temperature_label}K"
+    eos_label = args.eos_label if args.eos_label else f"Iron {spec.long_name} at {args.temperature_label}K"
 
     rows, dense_curve, dense_md_curve = collect_rows(dataset_dir, free_energy_csv)
     write_csv(csv_path, rows)
-    plot(output, rows, dense_curve, dense_md_curve, args.temperature_label)
+    plot(output, rows, dense_curve, dense_md_curve, args.temperature_label, args.phase)
     plot_eos_only(eos_output, rows, dense_md_curve, eos_label)
 
     print(f"Wrote {csv_path}")
