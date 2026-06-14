@@ -3,6 +3,7 @@ import time
 import os
 import re
 import glob
+import shutil
 import sys
 import numpy as np
 import pandas as pd
@@ -42,6 +43,18 @@ DEFAULT_DATASET_PATTERNS = {
     "fcc": str(PROJECT_ROOT / "dataset" / "fcc" / "non-mag" / "*.npz"),
     "hcp": str(PROJECT_ROOT / "dataset" / "hcp" / "*.npz"),
 }
+
+
+def ensure_cuda_compiler_available():
+    nvcc_path = shutil.which("nvcc")
+    if nvcc_path:
+        return nvcc_path
+
+    raise RuntimeError(
+        "GraphDot training requires CUDA and the 'nvcc' compiler, but 'nvcc' was not found in PATH. "
+        "Load a CUDA module or activate an environment where nvcc is available, then rerun the training step. "
+        "If you only want the dataset split/preview files, use preview_only=True or the plot_ml_dataset_split.py workflow."
+    )
 
 
 def plot(mu, test_data, target, out_dir, base_name):
@@ -670,6 +683,9 @@ def training_graphdot_all(file_list, args, base_name, out_dir):
     if args.preview_only:
         print("Preview-only mode enabled. Skipping model fitting.")
         return None
+
+    nvcc_path = ensure_cuda_compiler_available()
+    print("nvcc found at:", nvcc_path)
 
     N_test = len(test_sel)
     N_train = len(train_sel)

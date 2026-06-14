@@ -96,6 +96,9 @@ IronCoreMD/
     ├── build_bcc_qe_md_inputs.py
     ├── live_qe_check.sh
     ├── load_data.py
+    ├── ml_gpr.py
+    ├── ml_gpr_dataset_workflow.ipynb
+    ├── plot_ml_dataset_split.py
     ├── plot_bcc_hcp_volume_vs_pressure.py
     ├── qe_npz_to_gif.py
     └── tdep_workflow/
@@ -270,6 +273,200 @@ It follows the same lightweight visual idea used in the `No-Vito` project, but i
 
 This is useful for quickly inspecting MD trajectories without opening OVITO or writing a separate conversion pipeline.
 
+### `codes/ml_gpr.py`
+
+GraphDot-based Gaussian-process-regression helper for building an ML-ready dataset from the repository NPZ archives and then fitting the model.
+
+The dataset-loading part of this script now supports:
+
+- direct selection of the repository `bcc`, `fcc`, and `hcp` NPZ datasets,
+- explicit file or glob selection when you want to train on only part of the archive set,
+- mixed datasets built from any combination of `bcc`, `fcc`, and `hcp`,
+- and backward compatibility with the older QE text-output reader.
+
+For NPZ inputs, the script reconstructs `ase.Atoms` frame by frame from:
+
+- `symbols`,
+- `positions`,
+- `positions_unit`,
+- `input_cell_parameters`,
+- optional per-frame `cell_parameters`,
+- and `energy_ry`.
+
+The GPR model section was left unchanged in spirit, but the dataset-entry stage now adds a pre-model preview workflow so you can inspect what will go into training and testing before the fit starts.
+
+Current command-line controls include:
+
+- `--phase bcc fcc hcp` to choose phase groups from the repository dataset tree,
+- `--inputs` to pass explicit NPZ paths or glob patterns,
+- `--run-name` to label the current dataset/model run without hardcoding a fixed name,
+- `--output-root` to choose where preview files, models, and plots are written,
+- `--seed` to control the train/test split,
+- and `--preview-only` to stop after writing the dataset preview and split files.
+
+`Preview-only` mode is useful when you want to verify the dataset before spending time on the GPR fit.
+
+Example: preview the default mixed `bcc` + `fcc` + `hcp` NPZ selection:
+
+```bash
+python3 codes/ml_gpr.py --preview-only
+```
+
+Example: preview only `bcc` and `fcc`:
+
+```bash
+python3 codes/ml_gpr.py --phase bcc fcc --run-name bcc_fcc_preview --preview-only
+```
+
+Example: use explicit files or glob patterns:
+
+```bash
+python3 codes/ml_gpr.py \
+  --inputs \
+  "dataset/bcc/non-mag/2.29_5000K.npz" \
+  "dataset/fcc/non-mag/3.0*_5000K.npz" \
+  "dataset/hcp/a_2.16_c_*.npz" \
+  --run-name mixed_selected_set \
+  --preview-only
+```
+
+Before training, the script writes:
+
+- `<run_name>_dataset_preview.csv`: full dataset table for all accepted frames,
+- `<run_name>_train_split.csv`: the subset selected for training,
+- `<run_name>_test_split.csv`: the subset selected for testing,
+- `<run_name>_dataset_preview.png`: a pre-model figure showing energy distribution, train/test assignment, and frames per source file.
+
+When the fit is actually run, it also writes:
+
+- `<run_name>_gpr_DFT_EperAtom_<Ntrain>.pkl`: saved GraphDot GPR model,
+- `<run_name>_parity_plot.png`: parity plot comparing predicted and ground-truth energy per atom.
+
+### `codes/plot_ml_dataset_split.py`
+
+Standalone pre-model visualization helper for the same dataset-selection logic used by `codes/ml_gpr.py`, but without importing `graphdot` or starting the GPR fit.
+
+This script is useful when you only want to inspect the train/test split in thermodynamic space before running the model. It reads the same `bcc`, `fcc`, and `hcp` NPZ archives or explicit input patterns, applies the same random split logic, and writes:
+
+- `<run_name>_energy_volume_dataset.csv`
+- `<run_name>_energy_volume_train.csv`
+- `<run_name>_energy_volume_test.csv`
+- `<run_name>_energy_vs_volume_train_test.png`
+
+The plot shows `energy per atom` vs `volume per atom` for the training and testing subsets in separate panels, with phase-specific markers for `bcc`, `fcc`, and `hcp`.
+
+Example:
+
+```bash
+python3 codes/plot_ml_dataset_split.py --phase bcc fcc --run-name bcc_fcc_pre_model
+```
+
+Example with explicit inputs:
+
+```bash
+python3 codes/plot_ml_dataset_split.py \
+  --inputs \
+  "dataset/bcc/non-mag/2.29_5000K.npz" \
+  "dataset/fcc/non-mag/3.0*_5000K.npz" \
+  "dataset/hcp/a_2.16_c_*.npz" \
+  --run-name mixed_pre_model
+```
+
+### `codes/ml_gpr_dataset_workflow.ipynb`
+
+Notebook wrapper for the same pre-model and training workflow.
+
+Use this notebook when you want:
+
+- interactive dataset selection with `PHASES` or `INPUTS`,
+- preview plots and split tables inside Jupyter,
+- and an optional path to launch the actual `ml_gpr.py` training job.
+
+For Stampede3, the safe workflow is:
+
+1. Request an H100 node from a login shell:
+
+```bash
+idev -p h100 -N 1 -n 1 -t 02:00:00
+```
+
+2. After the shell moves to the compute node, load the NVIDIA/CUDA modules and your Python environment:
+
+```bash
+module reset
+module load nvidia/26.1
+module load cuda/13.1
+source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
+conda activate py36_env
+```
+
+3. Confirm that the session is really on the GPU node and that `nvcc` is available:
+
+```bash
+hostname
+which nvcc
+nvidia-smi
+```
+
+Expected result:
+
+- `hostname` should be a compute node such as `c562-002...`, not `login1` or `login2`,
+- `which nvcc` should print a CUDA compiler path,
+- `nvidia-smi` should list the H100 GPUs.
+
+Inside the notebook, a quick preflight cell is:
+
+```python
+!hostname
+!echo $SLURM_JOB_ID
+!echo $SLURMD_NODENAME
+!which nvcc
+!nvidia-smi
+```
+
+Important: loading modules with `!module load ...` or `!bash -lc ...` only affects that shell command. It does not permanently update the Python kernel environment. Because `graphdot` needs `nvcc` during the fit, the most reliable notebook workflow is to launch the training script from one `%%bash` cell so the module state and the Python process live in the same shell.
+
+Example: run the full HCP training from a notebook cell:
+
+```bash
+%%bash
+module reset
+module load nvidia/26.1
+module load cuda/13.1
+source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
+conda activate py36_env
+
+python /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
+  --inputs /home1/11381/dajuarez4/IronCoreMD/dataset/hcp/a_2.16_c_3.42_5000K.npz \
+  --run-name hcp_a2.16_c3.42_5000K \
+  --output-root /home1/11381/dajuarez4/IronCoreMD/ml-results
+```
+
+Example: preview only, without fitting:
+
+```bash
+%%bash
+module reset
+module load nvidia/26.1
+module load cuda/13.1
+source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
+conda activate py36_env
+
+python /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
+  --inputs /home1/11381/dajuarez4/IronCoreMD/dataset/hcp/a_2.16_c_3.42_5000K.npz \
+  --run-name hcp_a2.16_c3.42_5000K_preview \
+  --output-root /home1/11381/dajuarez4/IronCoreMD/ml-results \
+  --preview-only
+```
+
+If you want to keep using the Python-level notebook call:
+
+```python
+result = ml_gpr.run_ml_gpr(...)
+```
+
+then the notebook kernel itself must inherit the CUDA-enabled environment. In practice that means launching Jupyter from the already configured `idev` shell or restarting the kernel after opening the notebook from that environment.
+
 ### `codes/tdep_workflow/`
 
 Reusable phase-aware non-magnetic TDEP postprocessing workflow.
@@ -298,8 +495,11 @@ The current scripts need a small Python stack plus standard shell tools:
 
 - Python 3.9+
 - `numpy`
+- `pandas`
 - `scipy`
 - `matplotlib`
+- `ase`
+- `graphdot`
 - `Pillow`
 - `bash`
 - `awk`
