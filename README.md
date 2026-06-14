@@ -75,16 +75,28 @@ IronCoreMD/
 ├── README.md
 └── codes/
     ├── data_compress.py
+    ├── generate_stochastic_bcc_configs.py
+    ├── build_bcc_qe_md_inputs.py
     ├── live_qe_check.sh
-    ├── qe_npz_to_gif.py
     ├── load_data.py
-    └── generate_structures.ipynb
+    ├── plot_bcc_hcp_volume_vs_pressure.py
+    ├── qe_npz_to_gif.py
+    └── tdep_workflow/
+        ├── README.md
+        ├── npz_to_tdep_bcc.py
+        ├── run_bcc_harmonic_tdep.py
+        ├── summarize_free_energy.py
+        ├── plot_free_energy_vs_volume.py
+        ├── plot_volume_vs_pressure.py
+        ├── plot_combined_dispersion.py
+        ├── plot_temperature_comparison.py
+        └── tdep_common.py
 
 ```
 
 ## Current Repository State
 
-Right now, the repository contains early utilities for output inspection and archive generation. The relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are part of the intended workflow, but they are not yet fully implemented in this repository.
+Right now, the repository contains early utilities for output inspection and archive generation together with a reusable non-magnetic `bcc` TDEP postprocessing workflow under `codes/tdep_workflow/`. The broader relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are still evolving and are not yet fully implemented as a single end-to-end packaged workflow.
 
 ## Current Results
 
@@ -216,12 +228,33 @@ It follows the same lightweight visual idea used in the `No-Vito` project, but i
 
 This is useful for quickly inspecting MD trajectories without opening OVITO or writing a separate conversion pipeline.
 
+### `codes/tdep_workflow/`
+
+Reusable BCC non-magnetic TDEP postprocessing workflow.
+
+This directory collects the scripts used to:
+
+- convert QE AIMD `.npz` archives into `tdep_*` folders,
+- run harmonic TDEP force-constant, phonon-dispersion, and free-energy calculations,
+- summarize the resulting thermodynamics,
+- regenerate free-energy, pressure-volume, and phonon-dispersion figures,
+- and handle duplicate replacement points such as `tdep_2.52_5000-new`.
+
+The entry point for the full workflow is:
+
+- `codes/tdep_workflow/run_bcc_harmonic_tdep.py`
+
+The workflow-specific documentation lives in:
+
+- `codes/tdep_workflow/README.md`
+
 ## Requirements
 
 The current scripts need a small Python stack plus standard shell tools:
 
 - Python 3.9+
 - `numpy`
+- `scipy`
 - `matplotlib`
 - `Pillow`
 - `bash`
