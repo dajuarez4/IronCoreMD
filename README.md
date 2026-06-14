@@ -73,6 +73,15 @@ This means the repository is meant to grow beyond simple compression scripts int
 IronCoreMD/
 ├── LICENSE
 ├── README.md
+├── assets/
+│   ├── phase-diag-range-geot.png
+│   ├── bcc_free_energy_vs_volume_4500K_5000K.png
+│   ├── bcc_volume_vs_pressure_4500K_5000K.png
+│   ├── bcc_phonon_dispersion_overlay.png
+│   ├── hcp_free_energy_vs_volume.png
+│   ├── fcc_free_energy_vs_volume.png
+│   ├── qe_live_dashboard.png
+│   └── ...
 └── codes/
     ├── data_compress.py
     ├── generate_stochastic_bcc_configs.py
@@ -100,49 +109,54 @@ Right now, the repository contains early utilities for output inspection and arc
 
 ## Current Results
 
-The figures below summarize the current non-magnetic `bcc` and `hcp` Fe datasets generated from QE AIMD and TDEP postprocessing.
+The figures below summarize the current `bcc`, `hcp`, and early `fcc` Fe datasets generated from QE AIMD and TDEP postprocessing.
 
 `Reference pressure-temperature window` used to contextualize the present iron simulations:
 
-![Reference phase-diagram range](assets/phase-diag-range-geot.png)
+<p align="center">
+  <img src="assets/phase-diag-range-geot.png" alt="Reference phase-diagram range" width="520" />
+</p>
 
 ### BCC Fe
 
 The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K` and `5000 K`, plus phonon and trajectory visualization products.
 
-`Free Helmholtz energy vs volume`, with separate Birch-Murnaghan fits for `4500 K` and `5000 K`:
+`Free Helmholtz energy vs volume` and `pressure vs volume`, with separate Birch-Murnaghan fits for `4500 K` and `5000 K`:
 
-![BCC free energy comparison](assets/bcc_free_energy_vs_volume_4500K_5000K.png)
-
-`Pressure vs volume`, using separate Birch-Murnaghan fits to the AIMD mean pressures for `4500 K` and `5000 K`:
-
-![BCC pressure-volume comparison](assets/bcc_volume_vs_pressure_4500K_5000K.png)
+<p align="center">
+  <img src="assets/bcc_free_energy_vs_volume_4500K_5000K.png" alt="BCC free energy comparison" width="48%" />
+  <img src="assets/bcc_volume_vs_pressure_4500K_5000K.png" alt="BCC pressure-volume comparison" width="48%" />
+</p>
 
 `Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4500 K` and `5000 K`:
 
-![BCC phonon dispersion overlay](assets/bcc_phonon_dispersion_overlay.png)
-
-![BCC phonon dispersion overlay 4500 K](assets/bcc_phonon_dispersion_overlay_4500K.png)
+<p align="center">
+  <img src="assets/bcc_phonon_dispersion_overlay.png" alt="BCC phonon dispersion overlay" width="48%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_4500K.png" alt="BCC phonon dispersion overlay 4500 K" width="48%" />
+</p>
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
-![BCC 2.40 A 5000 K trajectory](assets/bcc_2.40_5000K_qe_md_slow.gif)
+<p align="center">
+  <img src="assets/bcc_2.40_5000K_qe_md_slow.gif" alt="BCC 2.40 A 5000 K trajectory" width="420" />
+</p>
 
 ### HCP Fe
 
 The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure-volume results together with the phonon dispersion comparison across the sampled volumes.
 
-`Free Helmholtz energy vs volume` at `5000 K`:
+`Free Helmholtz energy vs volume` and `pressure vs volume` at `5000 K`, using the same EOS-style presentation as the `bcc` plot:
 
-![HCP free energy](assets/hcp_free_energy_vs_volume.png)
-
-`Pressure vs volume` at `5000 K`, using the same EOS-style presentation as the `bcc` plot:
-
-![HCP pressure-volume EOS](assets/hcp_volume_vs_pressure_5000K_eos_std.png)
+<p align="center">
+  <img src="assets/hcp_free_energy_vs_volume.png" alt="HCP free energy" width="48%" />
+  <img src="assets/hcp_volume_vs_pressure_5000K_eos_std.png" alt="HCP pressure-volume EOS" width="48%" />
+</p>
 
 `Phonon dispersion overlay` for the current `hcp` volume set:
 
-![HCP phonon dispersion overlay](assets/hcp_phonon_dispersion_overlay.png)
+<p align="center">
+  <img src="assets/hcp_phonon_dispersion_overlay.png" alt="HCP phonon dispersion overlay" width="78%" />
+</p>
 
 One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstable. It is kept in the phonon-dispersion comparison for reference, but it is excluded from the `hcp` free-energy and pressure-volume thermodynamic plots.
 
@@ -150,13 +164,12 @@ One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstabl
 
 The `fcc` dataset currently contains an initial `5000 K` two-point free-energy summary together with phonon calculations for `a = 3.00 Å` and `a = 3.05 Å`.
 
-`Free Helmholtz energy vs volume` at `5000 K` for the currently available `fcc` points:
+`Free Helmholtz energy vs volume` at `5000 K` for the currently available `fcc` points, together with the current `fcc` phonon-dispersion and total-DOS result:
 
-![FCC free energy](assets/fcc_free_energy_vs_volume.png)
-
-`Phonon dispersion and total DOS` for the current `fcc` set:
-
-![FCC phonon dispersion overlay](assets/fcc_phonon_dispersion_overlay.png)
+<p align="center">
+  <img src="assets/fcc_free_energy_vs_volume.png" alt="FCC free energy" width="48%" />
+  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay" width="48%" />
+</p>
 
 ## What The Current Scripts Do
 
@@ -212,7 +225,9 @@ The script writes intermediate `.dat` files plus a `qe_live_dashboard.png` image
 
 Example dashboard output from `codes/live_qe_check.sh`:
 
-![QE live dashboard example](assets/qe_live_dashboard.png)
+<p align="center">
+  <img src="assets/qe_live_dashboard.png" alt="QE live dashboard example" width="760" />
+</p>
 
 ### `codes/qe_npz_to_gif.py`
 
