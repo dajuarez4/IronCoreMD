@@ -96,7 +96,11 @@ IronCoreMD/
     └── tdep_workflow/
         ├── README.md
         ├── npz_to_tdep_bcc.py
+        ├── npz_to_tdep_fcc.py
+        ├── npz_to_tdep_hcp.py
         ├── run_bcc_harmonic_tdep.py
+        ├── run_fcc_harmonic_tdep.py
+        ├── run_hcp_harmonic_tdep.py
         ├── summarize_free_energy.py
         ├── plot_free_energy_vs_volume.py
         ├── plot_volume_vs_pressure.py
@@ -108,7 +112,7 @@ IronCoreMD/
 
 ## Current Repository State
 
-Right now, the repository contains early utilities for output inspection and archive generation together with a reusable non-magnetic `bcc` TDEP postprocessing workflow under `codes/tdep_workflow/`. The broader relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are still evolving and are not yet fully implemented as a single end-to-end packaged workflow.
+Right now, the repository contains early utilities for output inspection and archive generation together with a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp` datasets. The broader relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are still evolving and are not yet fully implemented as a single end-to-end packaged workflow.
 
 ## Current Results
 
@@ -249,7 +253,7 @@ This is useful for quickly inspecting MD trajectories without opening OVITO or w
 
 ### `codes/tdep_workflow/`
 
-Reusable BCC non-magnetic TDEP postprocessing workflow.
+Reusable phase-aware non-magnetic TDEP postprocessing workflow.
 
 This directory collects the scripts used to:
 
@@ -262,6 +266,8 @@ This directory collects the scripts used to:
 The entry point for the full workflow is:
 
 - `codes/tdep_workflow/run_bcc_harmonic_tdep.py`
+- `codes/tdep_workflow/run_fcc_harmonic_tdep.py`
+- `codes/tdep_workflow/run_hcp_harmonic_tdep.py`
 
 The workflow-specific documentation lives in:
 
