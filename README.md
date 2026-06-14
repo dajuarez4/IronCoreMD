@@ -82,7 +82,12 @@ IronCoreMD/
 │   ├── bcc_phonon_dispersion_overlay_5000K.png
 │   ├── bcc_phonon_dispersion_overlay_5500K.png
 │   ├── hcp_free_energy_vs_volume.png
+│   ├── hcp_volume_vs_pressure_5000K_eos_std.png
+│   ├── hcp_phonon_dispersion_overlay.png
+│   ├── hcp_phonon_dos_overlay.png
 │   ├── fcc_free_energy_vs_volume.png
+│   ├── fcc_volume_vs_pressure_5000K_eos_std.png
+│   ├── fcc_phonon_dispersion_overlay.png
 │   ├── qe_live_dashboard.png
 │   └── ...
 └── codes/
@@ -116,7 +121,7 @@ Right now, the repository contains early utilities for output inspection and arc
 
 ## Current Results
 
-The figures below summarize the current `bcc`, `hcp`, and early `fcc` Fe datasets generated from QE AIMD and TDEP postprocessing.
+The figures below summarize the current `bcc`, `hcp`, and `fcc` Fe datasets generated from QE AIMD and TDEP postprocessing.
 
 `Reference pressure-temperature window` used to contextualize the present iron simulations:
 
@@ -151,7 +156,7 @@ The `bcc` dataset currently includes finite-temperature thermodynamic comparison
 
 ### HCP Fe
 
-The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure-volume results together with the phonon dispersion comparison across the sampled volumes.
+The `hcp` dataset currently includes a `5000 K` thermodynamic summary across the present volume scan together with updated phonon-dispersion and DOS overlays.
 
 `Free Helmholtz energy vs volume` and `pressure vs volume` at `5000 K`, using the same EOS-style presentation as the `bcc` plot:
 
@@ -160,24 +165,38 @@ The `hcp` dataset currently includes `5000 K` Helmholtz free-energy and pressure
   <img src="assets/hcp_volume_vs_pressure_5000K_eos_std.png" alt="HCP pressure-volume EOS" width="48%" />
 </p>
 
-`Phonon dispersion overlay` for the current `hcp` volume set:
+`Phonon dispersion and total DOS overlay` for the current `hcp` volume set:
 
 <p align="center">
   <img src="assets/hcp_phonon_dispersion_overlay.png" alt="HCP phonon dispersion overlay" width="78%" />
 </p>
 
-One `hcp` configuration, `tdep_a_2.20_c_3.42_5000K`, remains dynamically unstable. It is kept in the phonon-dispersion comparison for reference, but it is excluded from the `hcp` free-energy and pressure-volume thermodynamic plots.
+`Standalone total DOS overlay` for the same `hcp` set:
+
+<p align="center">
+  <img src="assets/hcp_phonon_dos_overlay.png" alt="HCP phonon DOS overlay" width="62%" />
+</p>
+
+The current `hcp` thermodynamic summary uses `13` accepted points. Four configurations are dynamically unstable on the sampled path, `tdep_a_2.12_c_3.38_5000K`, `tdep_a_2.14_c_3.46_5000K`, `tdep_a_2.18_c_3.46_5000K`, and `tdep_a_2.20_c_3.42_5000K`. One additional case, `tdep_a_2.14_c_3.44_5000K`, is excluded because the Brillouin-zone free-energy step returned an unphysical value. These rejected cases are still visible in the phonon overlays for reference.
 
 ### FCC Fe
 
-The `fcc` dataset currently contains an initial `5000 K` two-point free-energy summary together with phonon calculations for `a = 3.00 Å` and `a = 3.05 Å`.
+The `fcc` dataset now includes an `8`-point `5000 K` thermodynamic summary spanning `a = 2.85-3.20 Å`, together with updated pressure-volume and phonon results for the same set.
 
-`Free Helmholtz energy vs volume` at `5000 K` for the currently available `fcc` points, together with the current `fcc` phonon-dispersion and total-DOS result:
+`Free Helmholtz energy vs volume` and `pressure vs volume` at `5000 K`:
 
 <p align="center">
   <img src="assets/fcc_free_energy_vs_volume.png" alt="FCC free energy" width="48%" />
-  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay" width="48%" />
+  <img src="assets/fcc_volume_vs_pressure_5000K_eos_std.png" alt="FCC pressure-volume EOS" width="48%" />
 </p>
+
+`Phonon dispersion and total DOS overlay` for the current `fcc` volume set:
+
+<p align="center">
+  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay" width="78%" />
+</p>
+
+All eight current `fcc` runs are included in the present thermodynamic and phonon summaries.
 
 ## What The Current Scripts Do
 
