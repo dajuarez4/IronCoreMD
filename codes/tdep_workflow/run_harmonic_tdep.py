@@ -23,7 +23,7 @@ from tdep_common import (
     relative_free_energy_lattice_plot_name,
     relative_free_energy_plot_name,
 )
-from tdep_phases import PHASE_SPECS
+from tdep_phases import PHASE_SPECS, get_phase_spec
 
 
 def parse_args(argv: list[str] | None = None, *, default_phase: str = "bcc") -> argparse.Namespace:
@@ -82,9 +82,9 @@ def parse_args(argv: list[str] | None = None, *, default_phase: str = "bcc") -> 
     return parser.parse_args(argv)
 
 
-def resolve_targets(dataset_dir: Path, targets: list[str], temperature_label: str) -> list[Path]:
+def resolve_targets(dataset_dir: Path, targets: list[str], temperature_label: str, phase: str) -> list[Path]:
     if not targets:
-        return discover_npz_files(dataset_dir, temperature_label)
+        return discover_npz_files(dataset_dir, temperature_label, phase=phase)
 
     resolved: list[Path] = []
     for target in targets:
@@ -121,27 +121,35 @@ def run_logged(command: list[str], cwd: Path, log_path: Path) -> None:
 
 def refresh_single_temperature_plots(dataset_dir: Path, phase: str, temperature_label: str) -> None:
     script_dir = Path(__file__).resolve().parent
+    spec = get_phase_spec(phase)
+    free_energy_command = [
+        sys.executable,
+        str(script_dir / "plot_free_energy_vs_volume.py"),
+        "--phase",
+        phase,
+        "--dataset-dir",
+        str(dataset_dir),
+        "--temperature-label",
+        temperature_label,
+        "--output",
+        str(free_energy_plot_name(temperature_label)),
+        "--relative-output",
+        str(relative_free_energy_plot_name(temperature_label)),
+        "--csv",
+        str(free_energy_csv_name(temperature_label)),
+    ]
+    if spec.supports_lattice_plots:
+        free_energy_command.extend(
+            [
+                "--lattice-output",
+                str(free_energy_lattice_plot_name(temperature_label)),
+                "--relative-lattice-output",
+                str(relative_free_energy_lattice_plot_name(temperature_label)),
+            ]
+        )
+
     commands = [
-        [
-            sys.executable,
-            str(script_dir / "plot_free_energy_vs_volume.py"),
-            "--phase",
-            phase,
-            "--dataset-dir",
-            str(dataset_dir),
-            "--temperature-label",
-            temperature_label,
-            "--output",
-            str(free_energy_plot_name(temperature_label)),
-            "--relative-output",
-            str(relative_free_energy_plot_name(temperature_label)),
-            "--csv",
-            str(free_energy_csv_name(temperature_label)),
-            "--lattice-output",
-            str(free_energy_lattice_plot_name(temperature_label)),
-            "--relative-lattice-output",
-            str(relative_free_energy_lattice_plot_name(temperature_label)),
-        ],
+        free_energy_command,
         [
             sys.executable,
             str(script_dir / "plot_volume_vs_pressure.py"),
@@ -201,7 +209,7 @@ def main(argv: list[str] | None = None, *, default_phase: str = "bcc") -> None:
     )
     temperature_override = args.temperature_K if args.temperature_K is not None else float(temperature_label)
     requested_supercell = tuple(args.supercell) if args.supercell is not None else None
-    npz_files = resolve_targets(dataset_dir, args.targets, temperature_label)
+    npz_files = resolve_targets(dataset_dir, args.targets, temperature_label, args.phase)
     tdep_folders = [tdep_folder_for_npz(dataset_dir, npz_path) for npz_path in npz_files]
 
     if not args.no_convert:

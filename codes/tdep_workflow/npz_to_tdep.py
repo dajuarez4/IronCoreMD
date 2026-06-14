@@ -77,6 +77,34 @@ def write_poscar(path: Path, comment: str, cell: np.ndarray, positions: np.ndarr
     path.write_text("\n".join(lines) + "\n")
 
 
+def hcp_supercell_positions(supercell: tuple[int, int, int]) -> np.ndarray:
+    nx, ny, nz = supercell
+    basis = np.array([[0.0, 0.0, 0.0], [2.0 / 3.0, 1.0 / 3.0, 0.5]], dtype=float)
+    positions = []
+    for ix in range(nx):
+        for iy in range(ny):
+            for iz in range(nz):
+                for basis_pos in basis:
+                    positions.append(
+                        [
+                            (ix + basis_pos[0]) / nx,
+                            (iy + basis_pos[1]) / ny,
+                            (iz + basis_pos[2]) / nz,
+                        ]
+                    )
+    return np.array(positions, dtype=float)
+
+
+def hcp_supercell_cell(primitive_cell: np.ndarray, supercell: tuple[int, int, int]) -> np.ndarray:
+    nx, ny, nz = supercell
+    return np.array([primitive_cell[0] * nx, primitive_cell[1] * ny, primitive_cell[2] * nz], dtype=float)
+
+
+def max_wrapped_difference(a: np.ndarray, b: np.ndarray) -> float:
+    wrapped = ((np.asarray(a, dtype=float) - np.asarray(b, dtype=float) + 0.5) % 1.0) - 0.5
+    return float(np.max(np.abs(wrapped)))
+
+
 def matching_ideal_npz(path: Path) -> Path:
     if not path.name.endswith("-disp.npz"):
         return path
@@ -181,12 +209,12 @@ def write_tdep_folder(
 
     resolved_supercell = resolve_supercell(phase, cell_ang, natoms, supercell)
 
-    ideal_frac = positions_alat_to_fractional(
+    ideal_frac_from_npz = positions_alat_to_fractional(
         np.asarray(ideal_data["initial_positions_alat"], dtype=float),
         np.asarray(ideal_data["initial_cell_alat"], dtype=float),
     )
-    if ideal_frac.shape != (natoms, 3):
-        raise ValueError(f"Ideal reference has shape {ideal_frac.shape}, expected {(natoms, 3)}")
+    if ideal_frac_from_npz.shape != (natoms, 3):
+        raise ValueError(f"Ideal reference has shape {ideal_frac_from_npz.shape}, expected {(natoms, 3)}")
 
     positions_frac = frame_positions_fractional(data, cell_ang, selected)
     forces_ev_ang = np.asarray(data["forces_ry_au"], dtype=float)[selected] * RY_PER_BOHR_TO_EV_PER_ANG
@@ -205,11 +233,22 @@ def write_tdep_folder(
     temperatures_for_stat = np.full(len(selected), temperature_meta) if temperature_override is not None else temperatures
     dt_fs = infer_dt_fs(time_ps, selected)
 
-    uc_cell, uc_positions = spec.primitive_cell(cell_ang, natoms)
+    uc_cell, uc_positions = spec.primitive_cell(cell_ang, natoms, supercell=resolved_supercell)
+    ss_cell = cell_ang
+    ideal_frac = ideal_frac_from_npz
+    if spec.key == "hcp":
+        ss_cell = hcp_supercell_cell(uc_cell, resolved_supercell)
+        ideal_frac = hcp_supercell_positions(resolved_supercell)
+        mismatch = max_wrapped_difference(ideal_frac_from_npz, ideal_frac)
+        if mismatch > 1.0e-3:
+            raise ValueError(
+                f"Generated HCP supercell ordering does not match NPZ ideal positions for {npz_path.name}; "
+                f"max wrapped fractional difference = {mismatch:.6g}"
+            )
 
     outdir.mkdir(parents=True, exist_ok=True)
-    write_poscar(outdir / "infile.ucposcar", f"Fe {spec.key} primitive unit cell", uc_cell, uc_positions)
-    write_poscar(outdir / "infile.ssposcar", f"Fe {spec.key} ideal supercell", cell_ang, ideal_frac)
+    write_poscar(outdir / "infile.ucposcar", f"Fe {spec.key} primitive cell", uc_cell, uc_positions)
+    write_poscar(outdir / "infile.ssposcar", f"Fe {spec.key} ideal supercell", ss_cell, ideal_frac)
     write_qpoints_dispersion(outdir / "infile.qpoints_dispersion", phase)
 
     with (outdir / "infile.positions").open("w") as handle:
@@ -226,13 +265,14 @@ def write_tdep_folder(
     with (outdir / "infile.stat").open("w") as handle:
         for iframe in range(len(selected)):
             handle.write(
-                f"{times_fs[iframe]: .6f} "
-                f"{internal_ev[iframe]: .12f} "
-                f"{ekin_ev[iframe]: .12f} "
-                f"{energies_ev[iframe]: .12f} "
+                f"{int(iterations[iframe]):d} "
+                f"{times_fs[iframe]: .8f} "
+                f"{energies_ev[iframe]: .12e} "
+                f"{internal_ev[iframe]: .12e} "
+                f"{ekin_ev[iframe]: .12e} "
                 f"{temperatures_for_stat[iframe]: .6f} "
                 f"{pressure_gpa[iframe]: .8f} "
-                "0.0 0.0 0.0 0.0 0.0 0.0\n"
+                "0 0 0 0 0 0\n"
             )
 
     meta_lines = [
@@ -277,7 +317,7 @@ def main(argv: list[str] | None = None, *, default_phase: str = "bcc") -> None:
     requested_supercell = tuple(args.supercell) if args.supercell is not None else None
     npz_files = [path.resolve() if path.is_absolute() else (dataset_dir / path).resolve() for path in args.npz]
     if not npz_files:
-        npz_files = discover_npz_files(dataset_dir, None)
+        npz_files = discover_npz_files(dataset_dir, None, phase=args.phase)
 
     for npz_path in npz_files:
         outdir = out_root / f"tdep_{sanitize_stem(npz_path.stem)}"

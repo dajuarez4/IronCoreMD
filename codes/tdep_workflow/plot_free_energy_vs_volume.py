@@ -26,8 +26,8 @@ from tdep_common import (
     free_energy_plot_name,
     prefer_unique_lattice_points,
     read_free_energy,
+    read_uc_geometry,
     read_u0_second_order,
-    read_uc_volume_per_atom,
     relative_free_energy_lattice_plot_name,
     relative_free_energy_plot_name,
     resolve_path,
@@ -63,6 +63,8 @@ def write_csv(path: Path, rows: list[dict[str, float | str]]) -> None:
     fieldnames = [
         "folder",
         "lattice_a_A",
+        "lattice_c_A",
+        "c_over_a",
         "volume_per_atom_A3",
         "total_volume_A3",
         "T_K",
@@ -115,7 +117,7 @@ def collect_rows(folders: list[Path], phase: str) -> tuple[list[dict[str, float 
     rows: list[dict[str, float | str]] = []
     skipped: list[tuple[str, str]] = []
     for folder in folders:
-        lattice_a, volume_per_atom, total_volume = read_uc_volume_per_atom(folder / "infile.ucposcar", phase=phase)
+        geometry = read_uc_geometry(folder / "infile.ucposcar", phase=phase)
         temperature, f_vib, entropy, cv = read_free_energy(folder / "outfile.free_energy")
         u0 = read_u0_second_order(folder / "outfile.U0")
         status = classify_free_energy(temperature, f_vib, entropy, cv, u0)
@@ -125,9 +127,11 @@ def collect_rows(folders: list[Path], phase: str) -> tuple[list[dict[str, float 
         rows.append(
             {
                 "folder": folder.name,
-                "lattice_a_A": lattice_a,
-                "volume_per_atom_A3": volume_per_atom,
-                "total_volume_A3": total_volume,
+                "lattice_a_A": float(geometry["lattice_a_A"]),
+                "lattice_c_A": float(geometry["lattice_c_A"]) if "lattice_c_A" in geometry else "",
+                "c_over_a": float(geometry["c_over_a"]) if "c_over_a" in geometry else "",
+                "volume_per_atom_A3": float(geometry["volume_per_atom_A3"]),
+                "total_volume_A3": float(geometry["total_volume_A3"]),
                 "T_K": temperature,
                 "F_vib_eV_atom": f_vib,
                 "U0_2nd_eV_atom": u0,
@@ -259,11 +263,12 @@ def plot_vs_lattice(
 
 def main() -> None:
     args = parse_args()
+    spec = get_phase_spec(args.phase)
     dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     folders = [path.resolve() if path.is_absolute() else (dataset_dir / path).resolve() for path in args.folders]
     if not folders:
-        folders = default_tdep_folders(dataset_dir, args.temperature_label)
-    folders = prefer_unique_lattice_points(folders)
+        folders = default_tdep_folders(dataset_dir, args.temperature_label, phase=args.phase)
+    folders = prefer_unique_lattice_points(folders, phase=args.phase)
     if not folders:
         raise FileNotFoundError(f"No TDEP folders found for {args.temperature_label} K in {dataset_dir}")
 
@@ -273,29 +278,32 @@ def main() -> None:
         args.relative_output if args.relative_output is not None else relative_free_energy_plot_name(args.temperature_label),
     )
     csv_path = resolve_path(dataset_dir, args.csv if args.csv is not None else free_energy_csv_name(args.temperature_label))
-    lattice_output = resolve_path(
-        dataset_dir,
-        args.lattice_output if args.lattice_output is not None else free_energy_lattice_plot_name(args.temperature_label),
-    )
-    relative_lattice_output = resolve_path(
-        dataset_dir,
-        args.relative_lattice_output
-        if args.relative_lattice_output is not None
-        else relative_free_energy_lattice_plot_name(args.temperature_label),
-    )
-
     rows, skipped = collect_rows(folders, args.phase)
     write_csv(csv_path, rows)
     plot_vs_volume(output, relative_output, rows, args.temperature_label, args.phase)
-    plot_vs_lattice(lattice_output, relative_lattice_output, rows, args.temperature_label, args.phase)
+    lattice_output = None
+    relative_lattice_output = None
+    if spec.supports_lattice_plots:
+        lattice_output = resolve_path(
+            dataset_dir,
+            args.lattice_output if args.lattice_output is not None else free_energy_lattice_plot_name(args.temperature_label),
+        )
+        relative_lattice_output = resolve_path(
+            dataset_dir,
+            args.relative_lattice_output
+            if args.relative_lattice_output is not None
+            else relative_free_energy_lattice_plot_name(args.temperature_label),
+        )
+        plot_vs_lattice(lattice_output, relative_lattice_output, rows, args.temperature_label, args.phase)
 
     for folder_name, status in skipped:
         print(f"Skipped {folder_name}: {status}")
     print(f"Wrote {csv_path}")
     print(f"Wrote {output}")
     print(f"Wrote {relative_output}")
-    print(f"Wrote {lattice_output}")
-    print(f"Wrote {relative_lattice_output}")
+    if lattice_output is not None and relative_lattice_output is not None:
+        print(f"Wrote {lattice_output}")
+        print(f"Wrote {relative_lattice_output}")
 
 
 if __name__ == "__main__":

@@ -11,8 +11,10 @@ import numpy as np
 
 from tdep_phases import get_phase_spec
 
-FOLDER_RE = re.compile(r"tdep_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
-NPZ_RE = re.compile(r"([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
+CUBIC_FOLDER_RE = re.compile(r"tdep_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
+HCP_FOLDER_RE = re.compile(r"tdep_a_([0-9.]+)_c_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
+CUBIC_NPZ_RE = re.compile(r"([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
+HCP_NPZ_RE = re.compile(r"a_([0-9.]+)_c_([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
 DEFAULT_COMPARISON_TEMPERATURES = ("4500", "5000", "5500")
 
 
@@ -32,75 +34,115 @@ def resolve_path(dataset_dir: Path, path: Path) -> Path:
     return path if path.is_absolute() else dataset_dir / path
 
 
-def folder_match(folder: Path) -> re.Match[str]:
-    match = FOLDER_RE.fullmatch(folder.name)
+def folder_match(folder: Path, phase: str = "bcc") -> re.Match[str]:
+    pattern = HCP_FOLDER_RE if get_phase_spec(phase).key == "hcp" else CUBIC_FOLDER_RE
+    match = pattern.fullmatch(folder.name)
     if not match:
         raise ValueError(f"Could not parse TDEP folder name: {folder}")
     return match
 
 
-def npz_match(path: Path) -> re.Match[str]:
-    match = NPZ_RE.fullmatch(path.stem)
+def npz_match(path: Path, phase: str = "bcc") -> re.Match[str]:
+    pattern = HCP_NPZ_RE if get_phase_spec(phase).key == "hcp" else CUBIC_NPZ_RE
+    match = pattern.fullmatch(path.stem)
     if not match:
         raise ValueError(f"Could not parse NPZ file name: {path}")
     return match
 
 
-def lattice_parameter_from_folder(folder: Path) -> float:
-    return float(folder_match(folder).group(1))
+def lattice_parameter_from_folder(folder: Path, phase: str = "bcc") -> float:
+    return float(folder_match(folder, phase).group(1))
 
 
-def lattice_parameter_from_npz(path: Path) -> float:
-    return float(npz_match(path).group(1))
+def lattice_parameters_from_folder(folder: Path, phase: str = "bcc") -> tuple[float, float | None]:
+    match = folder_match(folder, phase)
+    if get_phase_spec(phase).key == "hcp":
+        return float(match.group(1)), float(match.group(2))
+    return float(match.group(1)), None
 
 
-def folder_matches_temperature(folder: Path, temperature_label: str) -> bool:
-    match = folder_match(folder)
+def lattice_parameter_from_npz(path: Path, phase: str = "bcc") -> float:
+    return float(npz_match(path, phase).group(1))
+
+
+def npz_sort_key(path: Path, phase: str = "bcc") -> tuple[float, ...] | tuple[float, str]:
+    match = npz_match(path, phase)
+    if get_phase_spec(phase).key == "hcp":
+        return (float(match.group(1)), float(match.group(2)), path.stem)
+    return (float(match.group(1)), path.stem)
+
+
+def folder_sort_key(folder: Path, phase: str = "bcc") -> tuple[float, ...] | tuple[float, str]:
+    match = folder_match(folder, phase)
+    if get_phase_spec(phase).key == "hcp":
+        return (float(match.group(1)), float(match.group(2)), folder.name)
+    return (float(match.group(1)), folder.name)
+
+
+def folder_case_label(folder: Path, phase: str = "bcc") -> str:
+    a_lat, c_lat = lattice_parameters_from_folder(folder, phase)
+    if c_lat is None:
+        return f"a={a_lat:.2f} A"
+    return f"a={a_lat:.2f}, c={c_lat:.2f} A"
+
+
+def folder_matches_temperature(folder: Path, temperature_label: str, phase: str = "bcc") -> bool:
+    match = folder_match(folder, phase)
     if "-disp" in folder.name:
         return False
-    return match.group(2) == normalize_temperature_label(temperature_label)
+    temp_group = 3 if get_phase_spec(phase).key == "hcp" else 2
+    return match.group(temp_group) == normalize_temperature_label(temperature_label)
 
 
-def npz_matches_temperature(path: Path, temperature_label: str) -> bool:
-    match = npz_match(path)
-    return match.group(2).startswith(f"{normalize_temperature_label(temperature_label)}K")
+def npz_matches_temperature(path: Path, temperature_label: str, phase: str = "bcc") -> bool:
+    match = npz_match(path, phase)
+    temp_group = 3 if get_phase_spec(phase).key == "hcp" else 2
+    return match.group(temp_group).startswith(f"{normalize_temperature_label(temperature_label)}K")
 
 
-def folder_preference(folder: Path) -> tuple[int, str]:
-    match = folder_match(folder)
-    exact_name = f"tdep_{match.group(1)}_{match.group(2)}K"
+def folder_preference(folder: Path, phase: str = "bcc") -> tuple[int, str]:
+    match = folder_match(folder, phase)
+    if get_phase_spec(phase).key == "hcp":
+        exact_name = f"tdep_a_{match.group(1)}_c_{match.group(2)}_{match.group(3)}K"
+    else:
+        exact_name = f"tdep_{match.group(1)}_{match.group(2)}K"
     has_suffix = folder.name != exact_name
     return (1 if has_suffix else 0, folder.name)
 
 
-def prefer_unique_lattice_points(folders: list[Path]) -> list[Path]:
-    selected: dict[float, Path] = {}
+def prefer_unique_lattice_points(folders: list[Path], phase: str = "bcc") -> list[Path]:
+    selected: dict[tuple[float, ...], Path] = {}
     for folder in folders:
-        lattice = lattice_parameter_from_folder(folder)
-        current = selected.get(lattice)
-        if current is None or folder_preference(folder) > folder_preference(current):
-            selected[lattice] = folder
-    return sorted(selected.values(), key=lambda item: (lattice_parameter_from_folder(item), item.name))
+        if get_phase_spec(phase).key == "hcp":
+            a_lat, c_lat = lattice_parameters_from_folder(folder, phase)
+            key = (a_lat, float(c_lat))
+        else:
+            key = (lattice_parameter_from_folder(folder, phase),)
+        current = selected.get(key)
+        if current is None or folder_preference(folder, phase) > folder_preference(current, phase):
+            selected[key] = folder
+    return sorted(selected.values(), key=lambda item: folder_sort_key(item, phase))
 
 
-def discover_npz_files(dataset_dir: Path, temperature_label: str | None = None) -> list[Path]:
-    files = [path for path in dataset_dir.glob("*.npz") if NPZ_RE.fullmatch(path.stem)]
+def discover_npz_files(dataset_dir: Path, temperature_label: str | None = None, phase: str = "bcc") -> list[Path]:
+    pattern = HCP_NPZ_RE if get_phase_spec(phase).key == "hcp" else CUBIC_NPZ_RE
+    files = [path for path in dataset_dir.glob("*.npz") if pattern.fullmatch(path.stem)]
     if temperature_label is not None:
-        files = [path for path in files if npz_matches_temperature(path, temperature_label)]
-    return sorted(files, key=lambda item: (lattice_parameter_from_npz(item), item.stem))
+        files = [path for path in files if npz_matches_temperature(path, temperature_label, phase)]
+    return sorted(files, key=lambda item: npz_sort_key(item, phase))
 
 
 def discover_bcc_npz_files(dataset_dir: Path, temperature_label: str | None = None) -> list[Path]:
-    return discover_npz_files(dataset_dir, temperature_label)
+    return discover_npz_files(dataset_dir, temperature_label, phase="bcc")
 
 
-def default_tdep_folders(dataset_dir: Path, temperature_label: str) -> list[Path]:
+def default_tdep_folders(dataset_dir: Path, temperature_label: str, phase: str = "bcc") -> list[Path]:
     folders = [
         path
         for path in dataset_dir.glob(f"tdep_*_{normalize_temperature_label(temperature_label)}*")
-        if path.is_dir() and folder_matches_temperature(path, temperature_label)
+        if path.is_dir() and folder_matches_temperature(path, temperature_label, phase)
     ]
-    return prefer_unique_lattice_points(folders)
+    return prefer_unique_lattice_points(folders, phase)
 
 
 def read_csv_rows(path: Path) -> list[dict[str, str]]:
@@ -138,7 +180,7 @@ def classify_free_energy(temperature: float, f_vib: float, entropy: float, cv: f
     return "ok"
 
 
-def read_uc_volume_per_atom(path: Path, phase: str = "bcc") -> tuple[float, float, float]:
+def read_uc_geometry(path: Path, phase: str = "bcc") -> dict[str, float]:
     lines = path.read_text().splitlines()
     scale = float(lines[1].split()[0])
     cell = np.array([[float(value) for value in lines[index].split()[:3]] for index in range(2, 5)], dtype=float) * scale
@@ -147,9 +189,29 @@ def read_uc_volume_per_atom(path: Path, phase: str = "bcc") -> tuple[float, floa
     volume = abs(float(np.linalg.det(cell)))
     volume_per_atom = volume / natoms
     spec = get_phase_spec(phase)
+    if spec.key == "hcp":
+        lattice_a = float(np.linalg.norm(cell[0]))
+        lattice_c = float(np.linalg.norm(cell[2]))
+        total_volume = volume
+        return {
+            "lattice_a_A": lattice_a,
+            "lattice_c_A": lattice_c,
+            "c_over_a": lattice_c / lattice_a,
+            "volume_per_atom_A3": volume_per_atom,
+            "total_volume_A3": total_volume,
+        }
     lattice_a = float(spec.lattice_parameter_from_volume_per_atom(volume_per_atom))
     total_volume = spec.conventional_cell_volume(volume_per_atom)
-    return lattice_a, volume_per_atom, total_volume
+    return {
+        "lattice_a_A": lattice_a,
+        "volume_per_atom_A3": volume_per_atom,
+        "total_volume_A3": total_volume,
+    }
+
+
+def read_uc_volume_per_atom(path: Path, phase: str = "bcc") -> tuple[float, float, float]:
+    geometry = read_uc_geometry(path, phase=phase)
+    return float(geometry["lattice_a_A"]), float(geometry["volume_per_atom_A3"]), float(geometry["total_volume_A3"])
 
 
 def source_npz_for_folder(folder: Path) -> Path:
@@ -211,8 +273,13 @@ def pressure_eos_plot_name(temperature_label: str, phase: str = "bcc") -> Path:
     return Path(f"volume_vs_pressure_{temperature_label}K_{get_phase_spec(phase).key}_eos_std.png")
 
 
-def dispersion_plot_name(temperature_label: str) -> Path:
+def dispersion_plot_name(temperature_label: str, phase: str = "bcc") -> Path:
     temperature_label = normalize_temperature_label(temperature_label)
+    phase_key = get_phase_spec(phase).key
+    if phase_key == "hcp":
+        if temperature_label == "5000":
+            return Path("phonon_dispersion_overlay_hcp.png")
+        return Path(f"phonon_dispersion_overlay_{temperature_label}K_hcp.png")
     if temperature_label == "5000":
         return Path("phonon_dispersion_overlay.png")
     return Path(f"phonon_dispersion_overlay_{temperature_label}K.png")

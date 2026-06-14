@@ -10,6 +10,7 @@ The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz`
   Generic NPZ-to-TDEP converter for the supported phases:
   - `bcc`
   - `fcc`
+  - `hcp`
   It writes:
   - `infile.ucposcar`
   - `infile.ssposcar`
@@ -26,6 +27,9 @@ The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz`
 - `npz_to_tdep_fcc.py`
   Convenience wrapper for `npz_to_tdep.py --phase fcc`.
 
+- `npz_to_tdep_hcp.py`
+  Convenience wrapper for `npz_to_tdep.py --phase hcp`.
+
 - `run_harmonic_tdep.py`
   Generic end-to-end driver for:
   - rebuilding selected `tdep_*` folders from NPZ archives,
@@ -40,6 +44,9 @@ The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz`
 - `run_fcc_harmonic_tdep.py`
   Convenience wrapper for `run_harmonic_tdep.py --phase fcc`.
 
+- `run_hcp_harmonic_tdep.py`
+  Convenience wrapper for `run_harmonic_tdep.py --phase hcp`.
+
 - `summarize_free_energy.py`
   Prints a CSV-style summary of `outfile.free_energy` plus `outfile.U0`.
 
@@ -47,9 +54,8 @@ The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz`
   Writes:
   - free energy vs volume,
   - relative free energy vs volume,
-  - free energy vs lattice parameter,
-  - relative free energy vs lattice parameter,
-  - and the thermodynamic CSV used by the pressure plot.
+  - the thermodynamic CSV used by the pressure plot,
+  - and, for cubic phases (`bcc` and `fcc`), free energy vs lattice parameter plus the corresponding relative-energy plot.
 
 - `plot_volume_vs_pressure.py`
   Fits a Birch-Murnaghan EOS to the TDEP free energies and to the AIMD mean pressures, then writes:
@@ -86,6 +92,11 @@ IronCoreMD/
         ├── 3.05_5000K.npz
         ├── ...
         └── tdep_3.00_5000K/
+    └── hcp/
+        ├── a_2.12_c_3.42_5000K.npz
+        ├── a_2.18_c_3.42_5000K.npz
+        ├── ...
+        └── tdep_a_2.12_c_3.42_5000K/
 ```
 
 The current defaults target `dataset/<phase>` relative to the repository root, and every script accepts both `--phase` and `--dataset-dir`.
@@ -141,6 +152,44 @@ cd /Users/dajuarez4/Documents/Fe/IronCoreMD
 python codes/tdep_workflow/run_fcc_harmonic_tdep.py --temperature-label 5000
 ```
 
+Run the HCP workflow with the HCP convenience wrapper:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_hcp_harmonic_tdep.py --temperature-label 5000
+```
+
+Run the HCP workflow with the generic phase-aware entrypoint:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_harmonic_tdep.py --phase hcp --temperature-label 5000
+```
+
+## Phase Notes
+
+- `bcc` and `fcc` use the cubic NPZ/TDEP naming scheme:
+  - NPZ: `<a>_<temperature>K.npz`
+  - TDEP folder: `tdep_<a>_<temperature>K`
+
+- `hcp` uses the two-parameter naming scheme:
+  - NPZ: `a_<a>_c_<c>_<temperature>K.npz`
+  - TDEP folder: `tdep_a_<a>_c_<c>_<temperature>K`
+
+- `hcp` thermodynamic plots are volume-based only.
+  There is no single `a(V)` mapping for `hcp`, so the generic workflow does not write `free_energy_vs_lattice*.png` for that phase.
+
+- `hcp` keeps the historical dispersion-output naming:
+  - `phonon_dispersion_overlay_hcp.png`
+
+- The generic scripts now support all three non-magnetic phases directly:
+  - `python codes/tdep_workflow/npz_to_tdep.py --phase bcc`
+  - `python codes/tdep_workflow/npz_to_tdep.py --phase fcc`
+  - `python codes/tdep_workflow/npz_to_tdep.py --phase hcp`
+  - `python codes/tdep_workflow/run_harmonic_tdep.py --phase bcc`
+  - `python codes/tdep_workflow/run_harmonic_tdep.py --phase fcc`
+  - `python codes/tdep_workflow/run_harmonic_tdep.py --phase hcp`
+
 ## Targeted Reruns
 
 Rebuild and rerun only the updated `5500 K` high-volume subset:
@@ -182,6 +231,15 @@ For other phases, the pressure outputs use the phase suffix, for example:
 - `volume_vs_pressure_5000K_fcc.csv`
 - `volume_vs_pressure_5000K_fcc.png`
 - `volume_vs_pressure_5000K_fcc_eos_std.png`
+- `volume_vs_pressure_5000K_hcp.csv`
+- `volume_vs_pressure_5000K_hcp.png`
+- `volume_vs_pressure_5000K_hcp_eos_std.png`
+
+For HCP, the dispersion overlay keeps the existing explicit phase suffix:
+
+- `phonon_dispersion_overlay_hcp.png`
+
+For `hcp`, the generic workflow does not emit lattice-parameter free-energy plots.
 
 For other temperatures, the temperature is included in the file name, for example:
 

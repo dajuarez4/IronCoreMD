@@ -24,6 +24,8 @@ from tdep_common import (
     default_dataset_dir,
     default_tdep_folders,
     dispersion_plot_name,
+    folder_case_label,
+    folder_sort_key,
     lattice_parameter_from_folder,
     prefer_unique_lattice_points,
     read_free_energy,
@@ -48,9 +50,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def choose_reference_folder(folders: list[Path], temperature_label: str) -> Path:
+def choose_reference_folder(folders: list[Path], temperature_label: str, phase: str) -> Path:
     del temperature_label
-    ordered = sorted(folders, key=lattice_parameter_from_folder)
+    ordered = sorted(folders, key=lambda folder: folder_sort_key(folder, phase))
     return ordered[len(ordered) // 2]
 
 
@@ -96,20 +98,35 @@ def folder_has_valid_free_energy(folder: Path) -> bool:
 
 def plot(output: Path, folders: list[Path], temperature_label: str, phase: str) -> None:
     spec = get_phase_spec(phase)
-    reference_folder = choose_reference_folder(folders, temperature_label)
+    reference_folder = choose_reference_folder(folders, temperature_label, phase)
     ref_labels, ref_ticks = read_xticks(reference_folder / "outfile.dispersion_relations.gnuplot")
-    lattice_parameters = np.array([lattice_parameter_from_folder(folder) for folder in folders], dtype=float)
-    norm = Normalize(vmin=float(np.min(lattice_parameters)), vmax=float(np.max(lattice_parameters)))
 
     plt.rcParams.update({"font.family": "serif", "font.size": 12.5})
-    fig = plt.figure(figsize=(10.9, 6.5), constrained_layout=True)
-    grid = GridSpec(1, 3, figure=fig, width_ratios=[4.9, 1.35, 0.14], wspace=0.08)
-    ax = fig.add_subplot(grid[0, 0])
-    ax_dos = fig.add_subplot(grid[0, 1], sharey=ax)
-    ax_cbar = fig.add_subplot(grid[0, 2])
+    if spec.key == "hcp":
+        fig = plt.figure(figsize=(10.6, 6.5), constrained_layout=True)
+        grid = GridSpec(1, 2, figure=fig, width_ratios=[4.9, 1.35], wspace=0.06)
+        ax = fig.add_subplot(grid[0, 0])
+        ax_dos = fig.add_subplot(grid[0, 1], sharey=ax)
+        ax_cbar = None
+    else:
+        fig = plt.figure(figsize=(10.9, 6.5), constrained_layout=True)
+        grid = GridSpec(1, 3, figure=fig, width_ratios=[4.9, 1.35, 0.14], wspace=0.08)
+        ax = fig.add_subplot(grid[0, 0])
+        ax_dos = fig.add_subplot(grid[0, 1], sharey=ax)
+        ax_cbar = fig.add_subplot(grid[0, 2])
 
     cmap = plt.get_cmap("viridis")
-    folder_colors = {folder: cmap(norm(lattice_parameter_from_folder(folder))) for folder in folders}
+    if spec.key == "hcp":
+        folder_colors = {
+            folder: cmap(index / max(1, len(folders) - 1))
+            for index, folder in enumerate(sorted(folders, key=lambda folder: folder_sort_key(folder, phase)))
+        }
+        norm = None
+        lattice_parameters = None
+    else:
+        lattice_parameters = np.array([lattice_parameter_from_folder(folder, phase=phase) for folder in folders], dtype=float)
+        norm = Normalize(vmin=float(np.min(lattice_parameters)), vmax=float(np.max(lattice_parameters)))
+        folder_colors = {folder: cmap(norm(lattice_parameter_from_folder(folder, phase=phase))) for folder in folders}
     min_frequency = 0.0
     max_frequency = 0.0
     max_dos = 0.0
@@ -123,7 +140,14 @@ def plot(output: Path, folders: list[Path], temperature_label: str, phase: str) 
         max_frequency = max(max_frequency, float(np.max(data[:, 1:])))
 
         for band_index in range(1, data.shape[1]):
-            ax.plot(x_aligned, data[:, band_index], color=color, linewidth=1.15, alpha=0.9)
+            ax.plot(
+                x_aligned,
+                data[:, band_index],
+                color=color,
+                linewidth=1.45 if spec.key == "hcp" else 1.15,
+                alpha=0.94 if spec.key == "hcp" else 0.9,
+                label=folder_case_label(folder, phase) if spec.key == "hcp" and band_index == 1 else None,
+            )
 
         dos_frequency, total_dos = read_total_dos(folder / "outfile.phonon_dos")
         max_frequency = max(max_frequency, float(np.max(dos_frequency)))
@@ -150,9 +174,12 @@ def plot(output: Path, folders: list[Path], temperature_label: str, phase: str) 
     ax_dos.grid(axis="y", alpha=0.2)
     ax_dos.tick_params(axis="y", which="both", left=False, labelleft=False)
 
-    colorbar = fig.colorbar(ScalarMappable(norm=norm, cmap=cmap), cax=ax_cbar)
-    colorbar.set_label("a (Å)")
-    colorbar.set_ticks(np.linspace(lattice_parameters[0], lattice_parameters[-1], 6))
+    if spec.key == "hcp":
+        ax.legend(frameon=False, loc="upper right")
+    else:
+        colorbar = fig.colorbar(ScalarMappable(norm=norm, cmap=cmap), cax=ax_cbar)
+        colorbar.set_label("a (Å)")
+        colorbar.set_ticks(np.linspace(lattice_parameters[0], lattice_parameters[-1], 6))
 
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=220)
@@ -164,22 +191,29 @@ def main() -> None:
     dataset_dir = args.dataset_dir.resolve() if args.dataset_dir is not None else default_dataset_dir(args.phase).resolve()
     folders = [path.resolve() if path.is_absolute() else (dataset_dir / path).resolve() for path in args.folders]
     if not folders:
-        folders = default_tdep_folders(dataset_dir, args.temperature_label)
-    folders = prefer_unique_lattice_points(folders)
+        folders = default_tdep_folders(dataset_dir, args.temperature_label, phase=args.phase)
+    folders = prefer_unique_lattice_points(folders, phase=args.phase)
     if not folders:
         raise FileNotFoundError(f"No TDEP folders found for {args.temperature_label} K in {dataset_dir}")
 
-    valid_folders: list[Path] = []
-    skipped: list[str] = []
-    for folder in folders:
-        if folder_has_valid_free_energy(folder):
-            valid_folders.append(folder)
-        else:
-            skipped.append(folder.name)
-    if not valid_folders:
-        raise ValueError(f"No valid TDEP folders remained after filtering for {args.temperature_label} K")
+    if get_phase_spec(args.phase).key == "hcp":
+        valid_folders = folders
+        skipped: list[str] = []
+    else:
+        valid_folders = []
+        skipped = []
+        for folder in folders:
+            if folder_has_valid_free_energy(folder):
+                valid_folders.append(folder)
+            else:
+                skipped.append(folder.name)
+        if not valid_folders:
+            raise ValueError(f"No valid TDEP folders remained after filtering for {args.temperature_label} K")
 
-    output = resolve_path(dataset_dir, args.output if args.output is not None else dispersion_plot_name(args.temperature_label))
+    output = resolve_path(
+        dataset_dir,
+        args.output if args.output is not None else dispersion_plot_name(args.temperature_label, phase=args.phase),
+    )
     plot(output, valid_folders, args.temperature_label, args.phase)
 
     for folder_name in skipped:

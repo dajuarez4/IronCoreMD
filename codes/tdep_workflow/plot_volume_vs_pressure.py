@@ -169,6 +169,8 @@ def collect_rows(dataset_dir: Path, free_energy_csv: Path) -> tuple[list[dict[st
             {
                 "folder": row_in["folder"],
                 "lattice_a_A": float(row_in["lattice_a_A"]),
+                "lattice_c_A": float(row_in["lattice_c_A"]) if row_in.get("lattice_c_A") not in {"", None} else "",
+                "c_over_a": float(row_in["c_over_a"]) if row_in.get("c_over_a") not in {"", None} else "",
                 "volume_per_atom_A3": float(row_in["volume_per_atom_A3"]),
                 "total_volume_A3": float(total_volume),
                 "F_total_eV_atom": float(row_in["F_total_eV_atom"]),
@@ -190,6 +192,8 @@ def write_csv(path: Path, rows: list[dict[str, float | str]]) -> None:
     fieldnames = [
         "folder",
         "lattice_a_A",
+        "lattice_c_A",
+        "c_over_a",
         "volume_per_atom_A3",
         "total_volume_A3",
         "F_total_eV_atom",
