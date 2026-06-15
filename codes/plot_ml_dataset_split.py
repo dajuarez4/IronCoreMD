@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from ase import Atoms
+from matplotlib.lines import Line2D
 
 RY_TO_EV = 13.605693009
 BOHR_TO_ANG = 0.529177210903
@@ -389,6 +390,47 @@ def split_dataset(data, seed):
     return train_sel, test_sel
 
 
+def plot_dataset_preview(data, out_dir, base_name):
+    split_colors = {"train": "#1f6f5b", "test": "#c24b2a"}
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5.6), dpi=180)
+
+    energy_all = data["energy_eV_atom"].to_numpy(dtype=float)
+    energy_train = data.loc[data["split"] == "train", "energy_eV_atom"].to_numpy(dtype=float)
+    energy_test = data.loc[data["split"] == "test", "energy_eV_atom"].to_numpy(dtype=float)
+    bins = min(60, max(12, len(data) // 20))
+
+    axes[0].hist(energy_all, bins=bins, alpha=0.35, color="#8a8a8a", label="all")
+    axes[0].hist(energy_train, bins=bins, alpha=0.65, color=split_colors["train"], label="train")
+    axes[0].hist(energy_test, bins=bins, alpha=0.65, color=split_colors["test"], label="test")
+    axes[0].set_xlabel("Energy (eV/atom)")
+    axes[0].set_ylabel("Count")
+    axes[0].set_title("Energy Distribution")
+    axes[0].grid(True, alpha=0.25)
+    axes[0].legend(frameon=False)
+
+    colors = [split_colors[split] for split in data["split"]]
+    axes[1].scatter(data["sample_index"], data["energy_eV_atom"], c=colors, s=18, alpha=0.8)
+    axes[1].set_xlabel("Sample index")
+    axes[1].set_ylabel("Energy (eV/atom)")
+    axes[1].set_title("Train/Test Split")
+    axes[1].grid(True, alpha=0.25)
+    axes[1].legend(
+        handles=[
+            Line2D([0], [0], marker="o", color="w", markerfacecolor=split_colors["train"], label="train", markersize=8),
+            Line2D([0], [0], marker="o", color="w", markerfacecolor=split_colors["test"], label="test", markersize=8),
+        ],
+        frameon=False,
+    )
+
+    fig.suptitle(f"Dataset Preview: {base_name}", fontsize=16)
+    fig.tight_layout()
+
+    output_png = out_dir / f"{base_name}_dataset_preview.png"
+    fig.savefig(output_png, bbox_inches="tight")
+    plt.close(fig)
+    print("saved dataset preview figure to:", output_png)
+
+
 def plot_split(data, out_dir, base_name):
     split_colors = {"train": "#1f6f5b", "test": "#c24b2a"}
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), dpi=180, sharex=True, sharey=True)
@@ -470,6 +512,7 @@ def execute_pre_model_plot(args):
     print("saved training csv to:", train_csv)
     print("saved test csv to:", test_csv)
 
+    plot_dataset_preview(data, out_dir, base_name)
     plot_split(data, out_dir, base_name)
     return data
 

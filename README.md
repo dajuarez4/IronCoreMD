@@ -96,6 +96,7 @@ IronCoreMD/
     ├── build_bcc_qe_md_inputs.py
     ├── live_qe_check.sh
     ├── load_data.py
+    ├── ml_cpu_regression.py
     ├── ml_gpr.py
     ├── ml_gpr_dataset_workflow.ipynb
     ├── plot_ml_dataset_split.py
@@ -342,6 +343,76 @@ When the fit is actually run, it also writes:
 - `<run_name>_gpr_DFT_EperAtom_<Ntrain>.pkl`: saved GraphDot GPR model,
 - `<run_name>_parity_plot.png`: parity plot comparing predicted and ground-truth energy per atom.
 
+### `codes/ml_cpu_regression.py`
+
+CPU-only regression baseline for the same NPZ/QE dataset-selection workflow, designed for systems where `graphdot` and CUDA are not available.
+
+This script reuses the same dataset-selection pattern as `ml_gpr.py`, but replaces the CUDA-dependent graph kernel with lightweight structural descriptors and a scikit-learn ensemble regressor. The descriptor includes:
+
+- cell metrics (`a`, `b`, `c`, `alpha`, `beta`, `gamma`),
+- volume per atom and density,
+- averaged nearest-neighbor shell distances,
+- and one-hot phase labels for `bcc`, `fcc`, `hcp`, or `mixed`.
+
+Current model options are:
+
+- `random_forest`
+- `extra_trees`
+
+Useful command-line controls include:
+
+- `--phase` or `--inputs` for dataset selection,
+- `--preview-only` to generate the split and preview files without training,
+- `--model` to choose the CPU regressor,
+- `--n-estimators` to control ensemble size,
+- `--n-neighbors` to control the structural descriptor size,
+- `--max-frames-per-file` for quick smoke tests.
+
+Example: preview only, CPU path:
+
+```bash
+python3 codes/ml_cpu_regression.py --phase fcc --run-name fcc_cpu_preview --preview-only
+```
+
+Example: full CPU training on one HCP archive:
+
+```bash
+python3 codes/ml_cpu_regression.py \
+  --inputs "dataset/hcp/a_2.16_c_3.42_5000K.npz" \
+  --run-name hcp_cpu_rf \
+  --model random_forest \
+  --n-estimators 400 \
+  --n-neighbors 12
+```
+
+Example: fast smoke test with fewer frames and trees:
+
+```bash
+python3 codes/ml_cpu_regression.py \
+  --inputs "dataset/hcp/a_2.16_c_3.42_5000K.npz" \
+  --run-name hcp_cpu_smoke \
+  --model random_forest \
+  --n-estimators 20 \
+  --n-neighbors 8 \
+  --max-frames-per-file 120
+```
+
+The script writes:
+
+- `<run_name>_dataset_preview.csv`
+- `<run_name>_train_split.csv`
+- `<run_name>_test_split.csv`
+- `<run_name>_feature_columns.txt`
+- `<run_name>_dataset_preview.png`
+
+When the fit runs, it also writes:
+
+- `<run_name>_<model>_EperAtom_<Ntrain>.pkl`
+- `<run_name>_test_predictions.csv`
+- `<run_name>_parity_plot.png`
+- `<run_name>_feature_importance.csv`
+- `<run_name>_feature_importance.png`
+
 ### `codes/plot_ml_dataset_split.py`
 
 Standalone pre-model visualization helper for the same dataset-selection logic used by `codes/ml_gpr.py`, but without importing `graphdot` or starting the GPR fit.
@@ -390,14 +461,12 @@ For Stampede3, the safe workflow is:
 idev -p h100 -N 1 -n 1 -t 02:00:00
 ```
 
-2. After the shell moves to the compute node, load the NVIDIA/CUDA modules and your Python environment:
+2. After the shell moves to the compute node, load the NVIDIA/CUDA modules:
 
 ```bash
 module reset
 module load nvidia/26.1
 module load cuda/13.1
-source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
-conda activate py36_env
 ```
 
 3. Confirm that the session is really on the GPU node and that `nvcc` is available:
@@ -426,17 +495,19 @@ Inside the notebook, a quick preflight cell is:
 
 Important: loading modules with `!module load ...` or `!bash -lc ...` only affects that shell command. It does not permanently update the Python kernel environment. Because `graphdot` needs `nvcc` during the fit, the most reliable notebook workflow is to launch the training script from one `%%bash` cell so the module state and the Python process live in the same shell.
 
+Also note: `conda activate py36_env` can fail inside `%%bash` if you use `set -u`, because some activation hooks reference unset variables. The robust notebook-safe pattern is to call the environment directly with `conda run -n py36_env ...` instead of activating it first.
+
 Example: run the full HCP training from a notebook cell:
 
 ```bash
 %%bash
+set -eo pipefail
 module reset
 module load nvidia/26.1
 module load cuda/13.1
-source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
-conda activate py36_env
 
-python /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
+/work2/11381/dajuarez4/stampede3/apps/miniforge3/bin/conda run -n py36_env \
+python -u /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
   --inputs /home1/11381/dajuarez4/IronCoreMD/dataset/hcp/a_2.16_c_3.42_5000K.npz \
   --run-name hcp_a2.16_c3.42_5000K \
   --output-root /home1/11381/dajuarez4/IronCoreMD/ml-results
@@ -446,13 +517,13 @@ Example: preview only, without fitting:
 
 ```bash
 %%bash
+set -eo pipefail
 module reset
 module load nvidia/26.1
 module load cuda/13.1
-source /work2/11381/dajuarez4/stampede3/apps/miniforge3/etc/profile.d/conda.sh
-conda activate py36_env
 
-python /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
+/work2/11381/dajuarez4/stampede3/apps/miniforge3/bin/conda run -n py36_env \
+python -u /home1/11381/dajuarez4/IronCoreMD/codes/ml_gpr.py \
   --inputs /home1/11381/dajuarez4/IronCoreMD/dataset/hcp/a_2.16_c_3.42_5000K.npz \
   --run-name hcp_a2.16_c3.42_5000K_preview \
   --output-root /home1/11381/dajuarez4/IronCoreMD/ml-results \
