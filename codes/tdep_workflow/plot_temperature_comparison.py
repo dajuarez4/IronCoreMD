@@ -32,10 +32,11 @@ SERIES_STYLES = {
     "4500": {"point_color": "#c65f1a", "line_color": "#8f3d05", "box_color": "#f0c9b2", "marker": "s"},
     "5000": {"point_color": "#1f5aa6", "line_color": "#123b73", "box_color": "#bfd1ec", "marker": "o"},
     "5500": {"point_color": "#2f7d4a", "line_color": "#1c5732", "box_color": "#bfdcbc", "marker": "^"},
+    "6000": {"point_color": "#7a3fc0", "line_color": "#4f2285", "box_color": "#d7c0ef", "marker": "D"},
 }
 FALLBACK_STYLES = [
-    {"point_color": "#7a3fc0", "line_color": "#4f2285", "box_color": "#d7c0ef", "marker": "D"},
     {"point_color": "#b04b30", "line_color": "#7d2f1c", "box_color": "#e9c0b6", "marker": "v"},
+    {"point_color": "#4e8a2d", "line_color": "#2f5c18", "box_color": "#cee4be", "marker": "P"},
 ]
 
 

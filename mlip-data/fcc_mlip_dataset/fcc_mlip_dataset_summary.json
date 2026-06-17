@@ -1,0 +1,48 @@
+{
+  "run_name": "fcc_mlip_dataset",
+  "output_dir": "/Users/dajuarez4/Documents/Fe/IronCoreMD/mlip-data/fcc_mlip_dataset",
+  "input_files": [
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/2.85_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/2.90_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/2.95_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/3.00_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/3.05_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/3.10_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/3.15_5000K.npz",
+    "/Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag/3.20_5000K.npz"
+  ],
+  "num_input_files": 8,
+  "num_frames_total": 3192,
+  "split_counts": {
+    "train": 2553,
+    "test": 320,
+    "val": 319
+  },
+  "phase_counts": {
+    "fcc": 3192
+  },
+  "source_counts": {
+    "2.85_5000K.npz": 399,
+    "2.90_5000K.npz": 399,
+    "2.95_5000K.npz": 399,
+    "3.00_5000K.npz": 399,
+    "3.05_5000K.npz": 399,
+    "3.10_5000K.npz": 399,
+    "3.15_5000K.npz": 399,
+    "3.20_5000K.npz": 399
+  },
+  "train_fraction": 0.8,
+  "val_fraction": 0.1,
+  "seed": 0,
+  "max_frames_per_file": null,
+  "dataset_root": "/Users/dajuarez4/Documents/Fe/dataset",
+  "repo_root": "/Users/dajuarez4/Documents/Fe/IronCoreMD",
+  "units": {
+    "positions": "angstrom",
+    "cell": "angstrom",
+    "energy": "eV",
+    "forces": "eV/angstrom",
+    "pressure": "GPa",
+    "time": "ps"
+  }
+}

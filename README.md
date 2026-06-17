@@ -75,11 +75,12 @@ IronCoreMD/
 ├── assets/
 │   ├── phase-diag-range-geot.png
 │   ├── bcc_2.40_5000K_qe_md_slow.gif
-│   ├── bcc_free_energy_vs_volume_4500K_5000K_5500K.png
-│   ├── bcc_volume_vs_pressure_4500K_5000K_5500K.png
+│   ├── bcc_free_energy_vs_volume_4500K_5000K_5500K_6000K.png
+│   ├── bcc_volume_vs_pressure_4500K_5000K_5500K_6000K.png
 │   ├── bcc_phonon_dispersion_overlay_4500K.png
 │   ├── bcc_phonon_dispersion_overlay_5000K.png
 │   ├── bcc_phonon_dispersion_overlay_5500K.png
+│   ├── bcc_phonon_dispersion_overlay_6000K.png
 │   ├── hcp_free_energy_vs_volume.png
 │   ├── hcp_volume_vs_pressure_5000K_eos_std.png
 │   ├── hcp_phonon_dispersion_overlay.png
@@ -98,6 +99,7 @@ IronCoreMD/
     ├── ml_cpu_regression.py
     ├── ml_gpr.py
     ├── ml_gpr_dataset_workflow.ipynb
+    ├── npz_to_extxyz.py
     ├── plot_ml_dataset_split.py
     ├── plot_bcc_hcp_volume_vs_pressure.py
     ├── qe_npz_to_gif.py
@@ -134,21 +136,22 @@ The figures below summarize the current `bcc`, `hcp`, and `fcc` Fe datasets gene
 
 ### BCC Fe
 
-The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K`, `5000 K`, and `5500 K`, plus phonon and trajectory visualization products.
+The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K`, `5000 K`, `5500 K`, and `6000 K`, plus phonon and trajectory visualization products.
 
-`Free Helmholtz energy vs volume` and `pressure vs volume`, with separate Birch-Murnaghan fits for `4500 K`, `5000 K`, and `5500 K`:
+`Free Helmholtz energy vs volume` and `pressure vs volume`, with separate Birch-Murnaghan fits for `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
 
 <p align="center">
-  <img src="assets/bcc_free_energy_vs_volume_4500K_5000K_5500K.png" alt="BCC free energy comparison for 4500 K, 5000 K, and 5500 K" width="48%" />
-  <img src="assets/bcc_volume_vs_pressure_4500K_5000K_5500K.png" alt="BCC pressure-volume comparison for 4500 K, 5000 K, and 5500 K" width="48%" />
+  <img src="assets/bcc_free_energy_vs_volume_4500K_5000K_5500K_6000K.png" alt="BCC free energy comparison for 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
+  <img src="assets/bcc_volume_vs_pressure_4500K_5000K_5500K_6000K.png" alt="BCC pressure-volume comparison for 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
 </p>
 
-`Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4500 K`, `5000 K`, and `5500 K`:
+`Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
 
 <p align="center">
-  <img src="assets/bcc_phonon_dispersion_overlay_4500K.png" alt="BCC phonon dispersion overlay 4500 K" width="32%" />
-  <img src="assets/bcc_phonon_dispersion_overlay_5000K.png" alt="BCC phonon dispersion overlay 5000 K" width="32%" />
-  <img src="assets/bcc_phonon_dispersion_overlay_5500K.png" alt="BCC phonon dispersion overlay 5500 K" width="32%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_4500K.png" alt="BCC phonon dispersion overlay 4500 K" width="24%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_5000K.png" alt="BCC phonon dispersion overlay 5000 K" width="24%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_5500K.png" alt="BCC phonon dispersion overlay 5500 K" width="24%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_6000K.png" alt="BCC phonon dispersion overlay 6000 K" width="24%" />
 </p>
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
@@ -411,6 +414,57 @@ When the fit runs, it also writes:
 - `<run_name>_parity_plot.png`
 - `<run_name>_feature_importance.csv`
 - `<run_name>_feature_importance.png`
+
+### `codes/npz_to_extxyz.py`
+
+Export helper for building a real MLIP-ready dataset from the QE NPZ archives.
+
+This script converts the repository NPZ files into `extxyz` frames with:
+
+- Cartesian positions in `angstrom`,
+- periodic cells in `angstrom`,
+- total energies in `eV`,
+- and forces in `eV/angstrom`.
+
+For each accepted frame, it attaches the energy and force labels through ASE's `SinglePointCalculator`, so the resulting `extxyz` files can be used directly by many atomistic ML workflows such as MACE, ACE, GAP, or custom ASE-based training pipelines.
+
+The frame filter for this export is stricter than the energy-only preview scripts: a frame is exported only if its positions, energy, and forces are all finite.
+
+Useful command-line controls include:
+
+- `--phase` or `--inputs` for dataset selection,
+- `--train-fraction` and `--val-fraction` for the split,
+- `--seed` for reproducibility,
+- `--max-frames-per-file` for quick smoke tests.
+
+Example: export the full FCC dataset into `extxyz` with train/val/test splits:
+
+```bash
+python3 codes/npz_to_extxyz.py \
+  --phase fcc \
+  --run-name fcc_mlip_dataset
+```
+
+Example: export one explicit HCP archive for a smoke test:
+
+```bash
+python3 codes/npz_to_extxyz.py \
+  --inputs "dataset/hcp/a_2.16_c_3.42_5000K.npz" \
+  --run-name hcp_extxyz_smoke \
+  --max-frames-per-file 20
+```
+
+The script writes:
+
+- `<run_name>_all.extxyz`
+- `<run_name>_train.extxyz`
+- `<run_name>_val.extxyz`
+- `<run_name>_test.extxyz`
+- `<run_name>_frames.csv`
+- `<run_name>_summary.json`
+- `<run_name>_dataset_preview.png`
+
+This is the recommended starting point when you want a true MLIP workflow based on energies and forces, rather than the CPU-side random-forest energy surrogate in `ml_cpu_regression.py`.
 
 ### `codes/plot_ml_dataset_split.py`
 
