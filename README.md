@@ -75,8 +75,9 @@ IronCoreMD/
 ├── assets/
 │   ├── phase-diag-range-geot.png
 │   ├── bcc_2.40_5000K_qe_md_slow.gif
-│   ├── bcc_free_energy_vs_volume_4500K_5000K_5500K_6000K.png
-│   ├── bcc_volume_vs_pressure_4500K_5000K_5500K_6000K.png
+│   ├── bcc_free_energy_vs_volume_4000K_4500K_5000K_5500K_6000K.png
+│   ├── bcc_volume_vs_pressure_4000K_4500K_5000K_5500K_6000K.png
+│   ├── bcc_phonon_dispersion_overlay_4000K.png
 │   ├── bcc_phonon_dispersion_overlay_4500K.png
 │   ├── bcc_phonon_dispersion_overlay_5000K.png
 │   ├── bcc_phonon_dispersion_overlay_5500K.png
@@ -136,22 +137,23 @@ The figures below summarize the current `bcc`, `hcp`, and `fcc` Fe datasets gene
 
 ### BCC Fe
 
-The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4500 K`, `5000 K`, `5500 K`, and `6000 K`, plus phonon and trajectory visualization products.
+The `bcc` dataset currently includes finite-temperature thermodynamic comparisons between `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`, plus phonon and trajectory visualization products.
 
-`Free Helmholtz energy vs volume` and `pressure vs volume`, with separate Birch-Murnaghan fits for `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
+`Free Helmholtz energy vs volume` and `pressure vs volume`, with separate Birch-Murnaghan fits for `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
 
 <p align="center">
-  <img src="assets/bcc_free_energy_vs_volume_4500K_5000K_5500K_6000K.png" alt="BCC free energy comparison for 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
-  <img src="assets/bcc_volume_vs_pressure_4500K_5000K_5500K_6000K.png" alt="BCC pressure-volume comparison for 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
+  <img src="assets/bcc_free_energy_vs_volume_4000K_4500K_5000K_5500K_6000K.png" alt="BCC free energy comparison for 4000 K, 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
+  <img src="assets/bcc_volume_vs_pressure_4000K_4500K_5000K_5500K_6000K.png" alt="BCC pressure-volume comparison for 4000 K, 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
 </p>
 
-`Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
+`Phonon dispersion and total DOS overlays` for the current `bcc` volume sets at `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
 
 <p align="center">
-  <img src="assets/bcc_phonon_dispersion_overlay_4500K.png" alt="BCC phonon dispersion overlay 4500 K" width="24%" />
-  <img src="assets/bcc_phonon_dispersion_overlay_5000K.png" alt="BCC phonon dispersion overlay 5000 K" width="24%" />
-  <img src="assets/bcc_phonon_dispersion_overlay_5500K.png" alt="BCC phonon dispersion overlay 5500 K" width="24%" />
-  <img src="assets/bcc_phonon_dispersion_overlay_6000K.png" alt="BCC phonon dispersion overlay 6000 K" width="24%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_4000K.png" alt="BCC phonon dispersion overlay 4000 K" width="19%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_4500K.png" alt="BCC phonon dispersion overlay 4500 K" width="19%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_5000K.png" alt="BCC phonon dispersion overlay 5000 K" width="19%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_5500K.png" alt="BCC phonon dispersion overlay 5500 K" width="19%" />
+  <img src="assets/bcc_phonon_dispersion_overlay_6000K.png" alt="BCC phonon dispersion overlay 6000 K" width="19%" />
 </p>
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
