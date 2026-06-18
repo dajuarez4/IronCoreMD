@@ -1,0 +1,215 @@
+NequIP workflow for the FCC Fe extxyz dataset
+=============================================
+
+Dataset used
+------------
+- all frames:
+  /Users/dajuarez4/Documents/Fe/IronCoreMD/mlip-data/fcc_mlip_dataset/fcc_mlip_dataset_all.extxyz
+- summary:
+  /Users/dajuarez4/Documents/Fe/IronCoreMD/mlip-data/fcc_mlip_dataset/fcc_mlip_dataset_summary.json
+
+The extxyz dataset already contains:
+- periodic cell
+- positions in angstrom
+- energy in eV
+- forces in eV/angstrom
+
+Important note
+--------------
+Do not use the old py36 environment for NequIP.
+Use a new environment with:
+- Python >= 3.10
+- PyTorch >= 2.2
+
+
+1. Create a clean environment
+-----------------------------
+conda create -n nequip python=3.11
+conda activate nequip
+
+Install PyTorch following the official selector for your CUDA version, then:
+
+pip install nequip ase
+
+
+2. Prepare a training config
+----------------------------
+Create a YAML config, for example:
+
+/Users/dajuarez4/Documents/Fe/IronCoreMD/configs/nequip/fcc_fe.yaml
+
+Suggested starting config:
+
+run: [train, test]
+
+cutoff_radius: 5.0
+num_layers: 4
+l_max: 1
+num_features: 32
+model_type_names: [Fe]
+chemical_species: ${model_type_names}
+monitored_metric: val0_epoch/weighted_sum
+
+data:
+  _target_: nequip.data.datamodule.ASEDataModule
+  seed: 0
+  split_dataset:
+    file_path: /Users/dajuarez4/Documents/Fe/IronCoreMD/mlip-data/fcc_mlip_dataset/fcc_mlip_dataset_all.extxyz
+    train: 0.8
+    val: 0.1
+    test: 0.1
+  transforms:
+    - _target_: nequip.data.transforms.ChemicalSpeciesToAtomTypeMapper
+      model_type_names: ${model_type_names}
+    - _target_: nequip.data.transforms.NeighborListTransform
+      r_max: ${cutoff_radius}
+  train_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    num_workers: 4
+    shuffle: true
+  val_dataloader:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+  test_dataloader: ${data.val_dataloader}
+  stats_manager:
+    _target_: nequip.data.CommonDataStatisticsManager
+    dataloader_kwargs:
+      batch_size: 2
+    type_names: ${model_type_names}
+
+trainer:
+  _target_: lightning.Trainer
+  accelerator: gpu
+  devices: 1
+  max_epochs: 200
+  log_every_n_steps: 10
+  callbacks:
+    - _target_: lightning.pytorch.callbacks.EarlyStopping
+      monitor: ${monitored_metric}
+      patience: 20
+      min_delta: 1e-4
+    - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+      monitor: ${monitored_metric}
+      dirpath: ${hydra:runtime.output_dir}
+      filename: best
+      save_last: true
+
+training_module:
+  _target_: nequip.train.EMALightningModule
+  ema_decay: 0.999
+  loss:
+    _target_: nequip.train.EnergyForceLoss
+    per_atom_energy: true
+    coeffs:
+      total_energy: 1.0
+      forces: 1.0
+  val_metrics:
+    _target_: nequip.train.EnergyForceMetrics
+    coeffs:
+      total_energy_mae: 1.0
+      forces_mae: 1.0
+  train_metrics: ${training_module.val_metrics}
+  test_metrics: ${training_module.val_metrics}
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 0.01
+  lr_scheduler:
+    scheduler:
+      _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+      factor: 0.6
+      patience: 5
+      threshold: 0.2
+      min_lr: 1e-6
+    monitor: ${monitored_metric}
+    interval: epoch
+    frequency: 1
+  model:
+    _target_: nequip.model.NequIPGNNModel
+    compile_mode: compile
+    seed: 0
+    model_dtype: float32
+    type_names: ${model_type_names}
+    r_max: ${cutoff_radius}
+    num_bessels: 8
+    polynomial_cutoff_p: 6
+    num_layers: ${num_layers}
+    l_max: ${l_max}
+    parity: true
+    num_features: ${num_features}
+    radial_mlp_depth: 2
+    radial_mlp_width: 64
+    avg_num_neighbors: ${training_data_stats:num_neighbors_mean}
+    per_type_energy_scales: ${training_data_stats:per_type_forces_rms}
+    per_type_energy_shifts: ${training_data_stats:per_atom_energy_mean}
+    per_type_energy_scales_trainable: false
+    per_type_energy_shifts_trainable: false
+
+
+3. Train the model
+------------------
+nequip-train -cp /Users/dajuarez4/Documents/Fe/IronCoreMD/configs/nequip -cn fcc_fe.yaml
+
+This produces checkpoints such as:
+- best.ckpt
+- last.ckpt
+
+
+4. Package the trained model
+----------------------------
+nequip-package build /path/to/best.ckpt /path/to/fcc_fe.nequip.zip
+
+
+5. Compile for ASE
+------------------
+nequip-compile \
+  /path/to/fcc_fe.nequip.zip \
+  /path/to/fcc_fe_ase.nequip.pt2 \
+  --device cuda \
+  --mode aotinductor \
+  --target ase
+
+
+6. Test the compiled model in ASE
+---------------------------------
+from ase.io import read
+from nequip.integrations.ase import NequIPCalculator
+
+atoms = read(
+    "/Users/dajuarez4/Documents/Fe/IronCoreMD/mlip-data/fcc_mlip_dataset/fcc_mlip_dataset_test.extxyz",
+    index=0,
+)
+
+calc = NequIPCalculator.from_compiled_model(
+    compile_path="/path/to/fcc_fe_ase.nequip.pt2",
+    device="cuda",
+    chemical_species_to_atom_type_map=True,
+)
+
+atoms.calc = calc
+print(atoms.get_potential_energy())
+print(atoms.get_forces())
+
+
+7. Practical notes
+------------------
+- This current dataset is FCC only.
+- It is centered on the FCC data you exported, not on BCC or HCP.
+- It should not be assumed transferable to other phases or temperatures without retraining.
+- Start with small settings first and then scale up.
+- batch_size: 1 is a safe starting point because the structures are large.
+
+
+8. Official NequIP references
+-----------------------------
+- Installation:
+  https://nequip.readthedocs.io/en/latest/guide/getting-started/install.html
+- Workflow:
+  https://nequip.readthedocs.io/en/latest/guide/getting-started/workflow.html
+- Data configuration:
+  https://nequip.readthedocs.io/en/latest/guide/configuration/data.html
+- ASE integration:
+  https://nequip.readthedocs.io/en/latest/integrations/ase.html
+- LAMMPS integration:
+  https://nequip.readthedocs.io/en/latest/integrations/lammps/index.html

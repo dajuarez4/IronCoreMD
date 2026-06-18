@@ -29,6 +29,7 @@ from tdep_common import (
 from tdep_phases import PHASE_SPECS, get_phase_spec
 
 SERIES_STYLES = {
+    "4000": {"point_color": "#8f1d3f", "line_color": "#5d0f28", "box_color": "#e9bcc9", "marker": "P"},
     "4500": {"point_color": "#c65f1a", "line_color": "#8f3d05", "box_color": "#f0c9b2", "marker": "s"},
     "5000": {"point_color": "#1f5aa6", "line_color": "#123b73", "box_color": "#bfd1ec", "marker": "o"},
     "5500": {"point_color": "#2f7d4a", "line_color": "#1c5732", "box_color": "#bfdcbc", "marker": "^"},

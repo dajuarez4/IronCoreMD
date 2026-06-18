@@ -15,7 +15,7 @@ CUBIC_FOLDER_RE = re.compile(r"tdep_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
 HCP_FOLDER_RE = re.compile(r"tdep_a_([0-9.]+)_c_([0-9.]+)_([0-9]+)(?:K)?(?:[-_].+)?$")
 CUBIC_NPZ_RE = re.compile(r"([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
 HCP_NPZ_RE = re.compile(r"a_([0-9.]+)_c_([0-9.]+)_([0-9]+K(?:[-_].+)?)$")
-DEFAULT_COMPARISON_TEMPERATURES = ("4500", "5000", "5500", "6000")
+DEFAULT_COMPARISON_TEMPERATURES = ("4000", "4500", "5000", "5500", "6000")
 
 
 def repo_root() -> Path:
