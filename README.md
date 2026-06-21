@@ -86,8 +86,9 @@ IronCoreMD/
 │   ├── hcp_volume_vs_pressure_5000K_eos_std.png
 │   ├── hcp_phonon_dispersion_overlay.png
 │   ├── hcp_phonon_dos_overlay.png
-│   ├── fcc_free_energy_vs_volume.png
-│   ├── fcc_volume_vs_pressure_5000K_eos_std.png
+│   ├── fcc_free_energy_vs_volume_4000K_5000K.png
+│   ├── fcc_volume_vs_pressure_4000K_5000K.png
+│   ├── fcc_phonon_dispersion_overlay_4000K.png
 │   ├── fcc_phonon_dispersion_overlay.png
 │   ├── qe_live_dashboard.png
 │   └── ...
@@ -123,7 +124,7 @@ IronCoreMD/
 
 ## Current Repository State
 
-Right now, the repository contains early utilities for output inspection and archive generation together with a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp` datasets. The broader relaxation, MD setup, magnetic-state generation, and ML-potential training stages described above are still evolving and are not yet fully implemented as a single end-to-end packaged workflow.
+Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
 
 ## Current Results
 
@@ -189,22 +190,23 @@ The current `hcp` thermodynamic summary uses `13` accepted points. Four configur
 
 ### FCC Fe
 
-The `fcc` dataset now includes an `8`-point `5000 K` thermodynamic summary spanning `a = 2.85-3.20 Å`, together with updated pressure-volume and phonon results for the same set.
+The `fcc` dataset now includes `8`-point thermodynamic summaries at `4000 K` and `5000 K`, spanning `a = 2.85-3.20 Å`, together with updated pressure-volume and phonon results for the same set.
 
-`Free Helmholtz energy vs volume` and `pressure vs volume` at `5000 K`:
-
-<p align="center">
-  <img src="assets/fcc_free_energy_vs_volume.png" alt="FCC free energy" width="48%" />
-  <img src="assets/fcc_volume_vs_pressure_5000K_eos_std.png" alt="FCC pressure-volume EOS" width="48%" />
-</p>
-
-`Phonon dispersion and total DOS overlay` for the current `fcc` volume set:
+`Free Helmholtz energy vs volume` and `pressure vs volume` comparing `4000 K` and `5000 K`:
 
 <p align="center">
-  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay" width="78%" />
+  <img src="assets/fcc_free_energy_vs_volume_4000K_5000K.png" alt="FCC free energy comparison for 4000 K and 5000 K" width="48%" />
+  <img src="assets/fcc_volume_vs_pressure_4000K_5000K.png" alt="FCC pressure-volume comparison for 4000 K and 5000 K" width="48%" />
 </p>
 
-All eight current `fcc` runs are included in the present thermodynamic and phonon summaries.
+`Phonon dispersion and total DOS overlays` for the current `fcc` volume set at `4000 K` and `5000 K`:
+
+<p align="center">
+  <img src="assets/fcc_phonon_dispersion_overlay_4000K.png" alt="FCC phonon dispersion overlay 4000 K" width="48%" />
+  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay 5000 K" width="48%" />
+</p>
+
+All eight current `fcc` runs are included in the present `4000 K` and `5000 K` thermodynamic and phonon summaries. Two additional `4000 K` files currently placed under the `fcc` dataset, `2.29_4000K` and `2.30_4000K`, were not included because their cell geometry is consistent with `bcc`, not `fcc`.
 
 ## What The Current Scripts Do
 

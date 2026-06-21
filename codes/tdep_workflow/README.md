@@ -4,7 +4,7 @@ This directory packages the reusable TDEP postprocessing workflow for the non-ma
 
 The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz` or `dataset/fcc/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
 
-For `bcc`, the default multi-temperature comparison set is now `4500 K`, `5000 K`, `5500 K`, and `6000 K`.
+For `bcc`, the default multi-temperature comparison set is now `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`.
 
 ## Included Scripts
 
@@ -140,6 +140,13 @@ cd /Users/dajuarez4/Documents/Fe/IronCoreMD
 python codes/tdep_workflow/run_bcc_harmonic_tdep.py --temperature-label 5000
 ```
 
+Run the new `4000 K` BCC workflow and refresh the default comparison plots:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_bcc_harmonic_tdep.py --temperature-label 4000
+```
+
 Run the new `6000 K` BCC workflow and refresh the default comparison plots:
 
 ```bash
@@ -258,8 +265,8 @@ For other temperatures, the temperature is included in the file name, for exampl
 
 The multi-temperature comparison script writes:
 
-- `free_energy_vs_volume_4500K_5000K_5500K_6000K.png`
-- `volume_vs_pressure_4500K_5000K_5500K_6000K_bcc.png`
+- `free_energy_vs_volume_4000K_4500K_5000K_5500K_6000K.png`
+- `volume_vs_pressure_4000K_4500K_5000K_5500K_6000K_bcc.png`
 
 ## Duplicate and Unstable Point Handling
 
