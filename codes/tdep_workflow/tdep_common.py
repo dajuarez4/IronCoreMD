@@ -23,7 +23,13 @@ def repo_root() -> Path:
 
 
 def default_dataset_dir(phase: str = "bcc") -> Path:
-    return get_phase_spec(phase).dataset_dir(repo_root())
+    spec = get_phase_spec(phase)
+    root = repo_root()
+    if spec.key == "fcc":
+        external_nonmag = root.parent / "dataset" / "fcc" / "non-mag"
+        if external_nonmag.exists():
+            return external_nonmag
+    return spec.dataset_dir(root)
 
 
 def normalize_temperature_label(label: str | int | float) -> str:

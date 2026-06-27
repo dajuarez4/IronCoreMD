@@ -1,8 +1,8 @@
 # Phase-Aware TDEP Workflow
 
-This directory packages the reusable TDEP postprocessing workflow for the non-magnetic iron datasets in the repository.
+This directory packages the reusable TDEP postprocessing workflow for the non-magnetic iron datasets used with the repository.
 
-The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz` or `dataset/fcc/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
+The workflow starts from compressed QE AIMD archives such as `dataset/bcc/*.npz`, `../dataset/fcc/non-mag/*.npz`, or `dataset/hcp/*.npz`, builds `tdep_*` folders, runs the harmonic TDEP fit, and regenerates the thermodynamic and phonon plots used in the repository.
 
 For `bcc`, the default multi-temperature comparison set is now `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`.
 
@@ -76,32 +76,35 @@ For `bcc`, the default multi-temperature comparison set is now `4000 K`, `4500 K
 
 ## Data Layout
 
-The scripts assume the repository layout:
+The scripts use the repository layout for `bcc` and `hcp`, while the active `fcc` workspace can live in the sibling external directory `../dataset/fcc/non-mag`:
 
 ```text
-IronCoreMD/
-├── codes/
-│   └── tdep_workflow/
+Fe/
+├── IronCoreMD/
+│   ├── codes/
+│   │   └── tdep_workflow/
+│   └── dataset/
+│       ├── bcc/
+│       │   ├── 2.29_5000K.npz
+│       │   ├── 2.52_5000-new.npz
+│       │   ├── 2.51_5500K.npz
+│       │   ├── ...
+│       │   └── tdep_2.29_5000K/
+│       └── hcp/
+│           ├── a_2.12_c_3.42_5000K.npz
+│           ├── a_2.18_c_3.42_5000K.npz
+│           ├── ...
+│           └── tdep_a_2.12_c_3.42_5000K/
 └── dataset/
-    ├── bcc/
-    │   ├── 2.29_5000K.npz
-    │   ├── 2.52_5000-new.npz
-    │   ├── 2.51_5500K.npz
-    │   ├── ...
-    │   └── tdep_2.29_5000K/
     └── fcc/
-        ├── 3.00_5000K.npz
-        ├── 3.05_5000K.npz
-        ├── ...
-        └── tdep_3.00_5000K/
-    └── hcp/
-        ├── a_2.12_c_3.42_5000K.npz
-        ├── a_2.18_c_3.42_5000K.npz
-        ├── ...
-        └── tdep_a_2.12_c_3.42_5000K/
+        └── non-mag/
+            ├── 3.00_5000K.npz
+            ├── 3.05_5000K.npz
+            ├── ...
+            └── tdep_3.00_5000K/
 ```
 
-The current defaults target `dataset/<phase>` relative to the repository root, and every script accepts both `--phase` and `--dataset-dir`.
+The current defaults target `dataset/<phase>` relative to the repository root for `bcc` and `hcp`. For `fcc`, the helpers first use `../dataset/fcc/non-mag` when that directory exists and fall back to `IronCoreMD/dataset/fcc` only when the external workspace is absent. Every script still accepts `--phase` and `--dataset-dir`.
 
 ## Requirements
 
@@ -168,6 +171,15 @@ cd /Users/dajuarez4/Documents/Fe/IronCoreMD
 python codes/tdep_workflow/run_fcc_harmonic_tdep.py --temperature-label 5000
 ```
 
+If `../dataset/fcc/non-mag` exists, both FCC commands above use that directory automatically. To be explicit, you can also pass:
+
+```bash
+cd /Users/dajuarez4/Documents/Fe/IronCoreMD
+python codes/tdep_workflow/run_fcc_harmonic_tdep.py \
+  --dataset-dir /Users/dajuarez4/Documents/Fe/dataset/fcc/non-mag \
+  --temperature-label 5500
+```
+
 Run the HCP workflow with the HCP convenience wrapper:
 
 ```bash
@@ -187,6 +199,8 @@ python codes/tdep_workflow/run_harmonic_tdep.py --phase hcp --temperature-label 
 - `bcc` and `fcc` use the cubic NPZ/TDEP naming scheme:
   - NPZ: `<a>_<temperature>K.npz`
   - TDEP folder: `tdep_<a>_<temperature>K`
+
+- `fcc` now defaults to the external working directory `../dataset/fcc/non-mag` when it exists, so the generated `tdep_*` folders and thermodynamic plots do not accumulate inside `IronCoreMD/dataset/fcc`.
 
 - `hcp` uses the two-parameter naming scheme:
   - NPZ: `a_<a>_c_<c>_<temperature>K.npz`
