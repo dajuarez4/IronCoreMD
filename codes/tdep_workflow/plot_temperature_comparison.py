@@ -39,6 +39,7 @@ FALLBACK_STYLES = [
     {"point_color": "#b04b30", "line_color": "#7d2f1c", "box_color": "#e9c0b6", "marker": "v"},
     {"point_color": "#4e8a2d", "line_color": "#2f5c18", "box_color": "#cee4be", "marker": "P"},
 ]
+COMPARISON_FIGSIZE = (7.3, 6.1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -157,7 +158,7 @@ def fit_birch_murnaghan_pressure(volumes: np.ndarray, pressures_gpa: np.ndarray)
 def plot_free_energy(path: Path, series: list[dict[str, object]], phase: str) -> None:
     spec = get_phase_spec(phase)
     plt.rcParams.update({"font.family": "serif", "font.size": 12.5})
-    fig, ax = plt.subplots(figsize=(7.3, 6.1), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=COMPARISON_FIGSIZE, constrained_layout=True)
 
     all_volumes = []
     all_energies = []
@@ -218,7 +219,6 @@ def add_pressure_series(
     line_color: str,
     marker: str,
     marker_size: float,
-    box_height: float,
 ) -> None:
     md_pressure = np.array([float(row["mean_md_pressure_GPa"]) for row in rows], dtype=float)
     md_std = np.array([float(row["std_md_pressure_GPa"]) for row in rows], dtype=float)
@@ -235,25 +235,20 @@ def add_pressure_series(
     fit_order = np.argsort(fit_pressures)
 
     ax.plot(fit_pressures[fit_order], fit_volumes[fit_order], ":", color=line_color, linewidth=1.8, label="_nolegend_", zorder=1)
-    ax.barh(
-        sorted_volume,
-        2.0 * sorted_std,
-        left=sorted_pressure - sorted_std,
-        height=box_height,
-        color=box_color,
-        alpha=0.58,
-        edgecolor="none",
-        label="_nolegend_",
-        zorder=2,
-    )
-    ax.plot(
+    ax.errorbar(
         sorted_pressure,
         sorted_volume,
-        marker,
+        xerr=sorted_std,
+        fmt=marker,
         ms=marker_size,
         mfc=point_face,
         mec=point_edge,
         mew=0.9,
+        ecolor=box_color,
+        elinewidth=1.35,
+        capsize=3.8,
+        capthick=1.1,
+        linestyle="none",
         label=label,
         zorder=3,
     )
@@ -261,7 +256,8 @@ def add_pressure_series(
 
 def plot_pressure(path: Path, series: list[dict[str, object]], phase: str) -> None:
     spec = get_phase_spec(phase)
-    fig, ax = plt.subplots(figsize=(7.0, 6.2), constrained_layout=True)
+    plt.rcParams.update({"font.family": "serif", "font.size": 12.5})
+    fig, ax = plt.subplots(figsize=COMPARISON_FIGSIZE, constrained_layout=True)
     marker_size = 7.0
 
     pressure_arrays = []
@@ -277,18 +273,13 @@ def plot_pressure(path: Path, series: list[dict[str, object]], phase: str) -> No
     xpad = 0.05 * xspan if xspan > 0.0 else 5.0
     ypad = 0.05 * yspan if yspan > 0.0 else 0.2
 
-    ax.set_xlabel("Pressure (GPa)", fontsize=20)
-    ax.set_ylabel(r"Volume ($\AA^3$)", fontsize=20)
+    ax.set_title(f"{spec.title} Fe Pressure vs Volume")
+    ax.set_xlabel("Pressure (GPa)", fontsize=18)
+    ax.set_ylabel(r"Volume ($\AA^3$)", fontsize=18)
     ax.set_xlim(pressures_all.min() - xpad, pressures_all.max() + xpad)
     ax.set_ylim(volumes_all.min() - ypad, volumes_all.max() + ypad)
-    ax.tick_params(axis="both", labelsize=16)
+    ax.tick_params(axis="both", labelsize=14)
     ax.grid(True, color="#d9c7f0", alpha=0.45)
-    fig.canvas.draw()
-
-    axes_bbox = ax.get_window_extent()
-    y_range = float(ax.get_ylim()[1] - ax.get_ylim()[0])
-    marker_height_pixels = marker_size * 0.98 * fig.dpi / 72.0
-    box_height = marker_height_pixels * (y_range / axes_bbox.height)
 
     for item in series:
         add_pressure_series(
@@ -301,9 +292,8 @@ def plot_pressure(path: Path, series: list[dict[str, object]], phase: str) -> No
             line_color=item["line_color"],
             marker=item["marker"],
             marker_size=marker_size,
-            box_height=box_height,
         )
-    ax.legend(frameon=False, loc="best", fontsize=13)
+    ax.legend(frameon=False, loc="upper right", fontsize=13)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=220)

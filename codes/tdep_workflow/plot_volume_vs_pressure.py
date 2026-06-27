@@ -289,13 +289,8 @@ def plot_eos_only(path: Path, rows: list[dict[str, float | str]], dense_md_curve
     ax.set_ylim(volume.min() - ypad, volume.max() + ypad)
     ax.tick_params(axis="both", labelsize=16)
     ax.grid(True, color="#d9c7f0", alpha=0.45)
-    fig.canvas.draw()
 
     sorted_volume = volume[order_md]
-    axes_bbox = ax.get_window_extent()
-    y_range = float(ax.get_ylim()[1] - ax.get_ylim()[0])
-    marker_height_pixels = marker_size * 0.98 * fig.dpi / 72.0
-    box_height = marker_height_pixels * (y_range / axes_bbox.height)
 
     ax.plot(
         dense_md_curve[order_curve, 0],
@@ -305,24 +300,20 @@ def plot_eos_only(path: Path, rows: list[dict[str, float | str]], dense_md_curve
         linewidth=1.5,
         label="_nolegend_",
     )
-    ax.barh(
-        sorted_volume,
-        2.0 * md_std[order_md],
-        left=md_pressure[order_md] - md_std[order_md],
-        height=box_height,
-        color="#d95c5c",
-        alpha=0.6,
-        edgecolor="none",
-        label="_nolegend_",
-    )
-    ax.plot(
+    ax.errorbar(
         md_pressure[order_md],
         sorted_volume,
-        "s",
+        xerr=md_std[order_md],
+        fmt="s",
         ms=marker_size,
         mfc="#1f5aa6",
         mec="#123b73",
         mew=0.9,
+        ecolor="#d95c5c",
+        elinewidth=1.2,
+        capsize=3.0,
+        capthick=1.0,
+        linestyle="none",
         label=eos_label,
     )
     ax.legend(frameon=False, loc="upper right", fontsize=14)
