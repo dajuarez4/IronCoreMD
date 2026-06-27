@@ -201,10 +201,15 @@ The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, 
   <img src="assets/fcc_volume_vs_pressure_4000K_4500K_5000K_5500K.png" alt="FCC pressure-volume comparison for 4000 K, 4500 K, 5000 K, and 5500 K" width="48%" />
 </p>
 
-`Phonon dispersion and total DOS overlays` for the new intermediate and high-temperature FCC cases:
+`Phonon dispersion and total DOS overlays` for all four FCC temperatures:
 
 <p align="center">
+  <img src="assets/fcc_phonon_dispersion_overlay_4000K.png" alt="FCC phonon dispersion overlay 4000 K" width="48%" />
   <img src="assets/fcc_phonon_dispersion_overlay_4500K.png" alt="FCC phonon dispersion overlay 4500 K" width="48%" />
+</p>
+
+<p align="center">
+  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay 5000 K" width="48%" />
   <img src="assets/fcc_phonon_dispersion_overlay_5500K.png" alt="FCC phonon dispersion overlay 5500 K" width="48%" />
 </p>
 
