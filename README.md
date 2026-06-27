@@ -192,25 +192,20 @@ The current `hcp` thermodynamic summary uses `13` accepted points. Four configur
 
 The active `fcc` TDEP workspace now lives outside the repository in `../dataset/fcc/non-mag` to avoid filling `IronCoreMD/dataset/fcc` with the generated `tdep_*` folders and plots.
 
-The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, `4500 K`, `5000 K`, and `5500 K`, for `32` `tdep_*` folders total. The latest external comparison figures are:
+The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, `4500 K`, `5000 K`, and `5500 K`, for `32` `tdep_*` folders total. The repo assets below are synced from that external FCC workspace.
 
-- `../dataset/fcc/non-mag/free_energy_vs_volume_4000K_4500K_5000K_5500K.png`
-- `../dataset/fcc/non-mag/volume_vs_pressure_4000K_4500K_5000K_5500K_fcc.png`
-
-The archived repo assets below still show the earlier `4000 K` and `5000 K` subset:
-
-`Free Helmholtz energy vs volume` and `pressure vs volume` for the archived `4000 K` / `5000 K` subset:
+`Free Helmholtz energy vs volume` and `pressure vs volume` across `4000 K`, `4500 K`, `5000 K`, and `5500 K`:
 
 <p align="center">
-  <img src="assets/fcc_free_energy_vs_volume_4000K_5000K.png" alt="FCC free energy comparison for 4000 K and 5000 K" width="48%" />
-  <img src="assets/fcc_volume_vs_pressure_4000K_5000K.png" alt="FCC pressure-volume comparison for 4000 K and 5000 K" width="48%" />
+  <img src="assets/fcc_free_energy_vs_volume_4000K_4500K_5000K_5500K.png" alt="FCC free energy comparison for 4000 K, 4500 K, 5000 K, and 5500 K" width="48%" />
+  <img src="assets/fcc_volume_vs_pressure_4000K_4500K_5000K_5500K.png" alt="FCC pressure-volume comparison for 4000 K, 4500 K, 5000 K, and 5500 K" width="48%" />
 </p>
 
-`Phonon dispersion and total DOS overlays` archived in the repository for the same `4000 K` / `5000 K` subset:
+`Phonon dispersion and total DOS overlays` for the new intermediate and high-temperature FCC cases:
 
 <p align="center">
-  <img src="assets/fcc_phonon_dispersion_overlay_4000K.png" alt="FCC phonon dispersion overlay 4000 K" width="48%" />
-  <img src="assets/fcc_phonon_dispersion_overlay.png" alt="FCC phonon dispersion overlay 5000 K" width="48%" />
+  <img src="assets/fcc_phonon_dispersion_overlay_4500K.png" alt="FCC phonon dispersion overlay 4500 K" width="48%" />
+  <img src="assets/fcc_phonon_dispersion_overlay_5500K.png" alt="FCC phonon dispersion overlay 5500 K" width="48%" />
 </p>
 
 All eight current `fcc` runs are included at each of the four temperatures in `../dataset/fcc/non-mag`. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
