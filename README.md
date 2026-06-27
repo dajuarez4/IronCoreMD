@@ -186,7 +186,7 @@ The `hcp` dataset currently includes a `5000 K` thermodynamic summary across the
   <img src="assets/hcp_phonon_dos_overlay.png" alt="HCP phonon DOS overlay" width="62%" />
 </p>
 
-The current `hcp` thermodynamic summary uses `13` accepted points. Four configurations are dynamically unstable on the sampled path, `tdep_a_2.12_c_3.38_5000K`, `tdep_a_2.14_c_3.46_5000K`, `tdep_a_2.18_c_3.46_5000K`, and `tdep_a_2.20_c_3.42_5000K`. One additional case, `tdep_a_2.14_c_3.44_5000K`, is excluded because the Brillouin-zone free-energy step returned an unphysical value. These rejected cases are still visible in the phonon overlays for reference.
+The current `hcp` thermodynamic summary uses `15` accepted points. The newly added `tdep_a_2.11_c_3.38_5000K` point is included in the fitted thermodynamic set. Five configurations are currently excluded as dynamically unstable on the sampled path: `tdep_a_2.11_c_3.40_5000K`, `tdep_a_2.12_c_3.38_5000K`, `tdep_a_2.14_c_3.44_5000K`, `tdep_a_2.14_c_3.46_5000K`, and `tdep_a_2.20_c_3.42_5000K`. These rejected cases are still visible in the phonon overlays for reference.
 
 ### FCC Fe
 

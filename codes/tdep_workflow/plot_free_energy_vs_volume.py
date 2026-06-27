@@ -34,6 +34,8 @@ from tdep_common import (
 )
 from tdep_phases import PHASE_SPECS, get_phase_spec
 
+SINGLE_PANEL_FIGSIZE = (7.3, 6.1)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Plot TDEP free energy vs volume and lattice parameter.")
@@ -161,7 +163,7 @@ def save_single_panel(
     point_color: str,
     fit_color: str,
 ) -> None:
-    fig, ax = plt.subplots(figsize=(6.6, 5.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=SINGLE_PANEL_FIGSIZE, constrained_layout=True)
     ax.scatter(x_points, y_points, color=point_color, s=75, zorder=3)
     ax.plot(x_fit, y_fit, "-", color=fit_color, linewidth=1.8, label="Birch-Murnaghan fit")
     ax.set_xlabel(xlabel)

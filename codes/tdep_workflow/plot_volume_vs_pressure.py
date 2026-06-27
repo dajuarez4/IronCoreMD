@@ -30,6 +30,7 @@ from tdep_common import (
 from tdep_phases import PHASE_SPECS, get_phase_spec
 
 EV_A3_TO_GPA = 160.21766208
+PRESSURE_FIGSIZE = (7.3, 6.1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -227,7 +228,7 @@ def plot(
     order_curve = np.argsort(dense_curve[:, 0])
     order_md_curve = np.argsort(dense_md_curve[:, 0])
 
-    fig, ax = plt.subplots(figsize=(7.0, 6.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=PRESSURE_FIGSIZE, constrained_layout=True)
     ax.plot(
         dense_curve[order_curve, 0],
         dense_curve[order_curve, 1],
@@ -277,7 +278,7 @@ def plot_eos_only(path: Path, rows: list[dict[str, float | str]], dense_md_curve
     order_md = np.argsort(md_pressure)
     order_curve = np.argsort(dense_md_curve[:, 0])
 
-    fig, ax = plt.subplots(figsize=(7.0, 6.2), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=PRESSURE_FIGSIZE, constrained_layout=True)
     all_pressures = np.concatenate([md_pressure, dense_md_curve[:, 0]])
     pressure_span = float(all_pressures.max() - all_pressures.min())
     volume_span = float(volume.max() - volume.min())
