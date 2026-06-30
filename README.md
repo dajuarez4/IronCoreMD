@@ -96,11 +96,14 @@ IronCoreMD/
     ├── data_compress.py
     ├── generate_stochastic_bcc_configs.py
     ├── build_bcc_qe_md_inputs.py
+    ├── generate_qe_maxwell_velocities.py
     ├── live_qe_check.sh
     ├── load_data.py
     ├── ml_cpu_regression.py
     ├── ml_gpr.py
     ├── ml_gpr_dataset_workflow.ipynb
+    ├── prepare_latest_bcc_qe_input.py
+    ├── prepare_latest_bcc_qe_input.ipynb
     ├── npz_to_extxyz.py
     ├── plot_ml_dataset_split.py
     ├── plot_bcc_hcp_volume_vs_pressure.py
@@ -286,6 +289,80 @@ It follows the same lightweight visual idea used in the `No-Vito` project, but i
 - and overlays a boxed legend with timestep, time, temperature, and pressure.
 
 This is useful for quickly inspecting MD trajectories without opening OVITO or writing a separate conversion pipeline.
+
+### `codes/prepare_latest_bcc_qe_input.py` and `codes/prepare_latest_bcc_qe_input.ipynb`
+
+Helper workflow for generating a Quantum ESPRESSO `pw.x` MD input from the latest `bcc` Fe archive while keeping both input velocities and random noncollinear spin directions.
+
+This workflow exists because QE is strict about species labels when `ATOMIC_VELOCITIES` is present: the labels in `ATOMIC_VELOCITIES` must match the labels in `ATOMIC_POSITIONS` atom by atom. For the noncollinear setup used here, the script therefore assigns one short fake QE species label per atom, using a safe three-character sequence such as `A01`, `A02`, ..., `A99`, `B01`, ..., while still mapping every species to the same Fe mass and Fe pseudopotential:
+
+```text
+55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+```
+
+The generated input uses:
+
+- `nat = number_of_atoms`
+- `ntyp = number_of_atoms`
+- `noncolin = .true.`
+- `nosym = .true.`
+- `ion_velocities='from_input'`
+- an `ATOMIC_VELOCITIES { a.u }` card
+- one `starting_magnetization(i)=0.35`, `angle1(i)`, and `angle2(i)` triplet per atom/type
+
+The script and notebook preserve the existing structure and velocity data from the source archive, then validate that:
+
+- `len(labels) == nat`
+- `len(set(labels)) == nat`
+- every `ATOMIC_POSITIONS` label appears in `ATOMIC_SPECIES`
+- every `ATOMIC_VELOCITIES` label appears in `ATOMIC_SPECIES`
+- the position-label list and velocity-label list are identical line by line
+
+After generation, the notebook prints a short diagnostic with the atom count, species count, first and last labels, and whether `ATOMIC_POSITIONS` and `ATOMIC_VELOCITIES` match exactly. The final notebook cell also re-reads the written `.in` file and performs a lightweight text check on both cards.
+
+The QE input structure produced by this workflow is intentionally:
+
+```pw
+&control
+   calculation='md'
+   ...
+/
+
+&system
+   ibrav = 0
+   nat = 128
+   ntyp = 128
+   ...
+   noncolin = .true.
+   nosym = .true.
+   starting_magnetization(1)=0.35
+   angle1(1)=...
+   angle2(1)=...
+   ...
+/
+
+&ions
+   ...
+   ion_velocities='from_input'
+/
+
+ATOMIC_SPECIES
+A01 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+A02 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+...
+
+ATOMIC_POSITIONS (crystal)
+A01 x1 y1 z1
+A02 x2 y2 z2
+...
+
+ATOMIC_VELOCITIES { a.u }
+A01 vx1 vy1 vz1
+A02 vx2 vy2 vz2
+...
+```
+
+The important rule is that if atom `1` is labeled `A01` in `ATOMIC_POSITIONS`, it must also be labeled `A01` in `ATOMIC_VELOCITIES`. The workflow does not fall back to a single `Fe` label when velocities are written.
 
 ### `codes/ml_gpr.py`
 
