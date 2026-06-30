@@ -15,6 +15,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.colors import to_rgb
 from scipy.optimize import curve_fit
 
 from tdep_common import (
@@ -209,6 +210,58 @@ def write_csv(path: Path, rows: list[dict[str, float | str]]) -> None:
         writer.writerows(rows)
 
 
+def lighten_color(color: str, amount: float = 0.58) -> tuple[float, float, float]:
+    rgb = np.array(to_rgb(color), dtype=float)
+    return tuple(rgb + (1.0 - rgb) * amount)
+
+
+def add_uncertainty_series(
+    ax: plt.Axes,
+    x_values: np.ndarray,
+    y_values: np.ndarray,
+    xerr: np.ndarray,
+    *,
+    marker: str,
+    marker_size: float,
+    face_color: str,
+    edge_color: str,
+    label: str | None = None,
+    zorder: float = 3.0,
+    capsize: float = 3.0,
+    elinewidth: float = 1.15,
+) -> None:
+    light_color = lighten_color(face_color)
+    ax.errorbar(
+        x_values,
+        y_values,
+        xerr=xerr,
+        fmt=marker,
+        ms=marker_size + 1.8,
+        mfc=light_color,
+        mec=light_color,
+        mew=0.8,
+        ecolor=light_color,
+        elinewidth=elinewidth,
+        capsize=capsize,
+        capthick=max(0.9, elinewidth - 0.05),
+        linestyle="none",
+        label="_nolegend_",
+        zorder=zorder - 0.2,
+    )
+    ax.plot(
+        x_values,
+        y_values,
+        linestyle="none",
+        marker=marker,
+        markersize=marker_size,
+        markerfacecolor=face_color,
+        markeredgecolor=edge_color,
+        markeredgewidth=0.9,
+        label=label if label is not None else "_nolegend_",
+        zorder=zorder,
+    )
+
+
 def plot(
     path: Path,
     rows: list[dict[str, float | str]],
@@ -246,18 +299,18 @@ def plot(
         label="BM fit to AIMD mean pressure",
     )
     ax.plot(fit_pressure[order_fit], volume[order_fit], "o", color="#c24b2a", markersize=6.5)
-    ax.errorbar(
+    add_uncertainty_series(
+        ax,
         md_pressure[order_md],
         volume[order_md],
-        xerr=md_std[order_md],
-        fmt="s",
-        ms=7.0,
-        mfc="#1f5f8a",
-        mec="#1f5f8a",
-        ecolor="#1f5f8a",
-        elinewidth=1.0,
-        capsize=2.5,
-        label="_nolegend_",
+        md_std[order_md],
+        marker="s",
+        marker_size=7.0,
+        face_color="#1f5f8a",
+        edge_color="#123b73",
+        zorder=3.0,
+        capsize=2.8,
+        elinewidth=1.05,
     )
     ax.set_xlabel("Pressure (GPa)")
     ax.set_ylabel(r"Volume ($\AA^3$)")
@@ -301,21 +354,19 @@ def plot_eos_only(path: Path, rows: list[dict[str, float | str]], dense_md_curve
         linewidth=1.5,
         label="_nolegend_",
     )
-    ax.errorbar(
+    add_uncertainty_series(
+        ax,
         md_pressure[order_md],
         sorted_volume,
-        xerr=md_std[order_md],
-        fmt="s",
-        ms=marker_size,
-        mfc="#1f5aa6",
-        mec="#123b73",
-        mew=0.9,
-        ecolor="#d95c5c",
-        elinewidth=1.2,
-        capsize=3.0,
-        capthick=1.0,
-        linestyle="none",
+        md_std[order_md],
+        marker="s",
+        marker_size=marker_size,
+        face_color="#1f5aa6",
+        edge_color="#123b73",
         label=eos_label,
+        zorder=3.0,
+        capsize=3.0,
+        elinewidth=1.2,
     )
     ax.legend(frameon=False, loc="upper right", fontsize=14)
     path.parent.mkdir(parents=True, exist_ok=True)
