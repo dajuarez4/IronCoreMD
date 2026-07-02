@@ -5,7 +5,8 @@ The workflow is intentionally narrow:
 1. Pick the newest BCC NPZ, or an explicit override.
 2. Extract the requested frame, using the fixed input cell when per-frame cells
    are absent or invalid.
-3. Generate random noncollinear paramagnetic spins with zero net moment.
+3. Generate zero-net noncollinear paramagnetic spins, using either paired-random
+   or quasi-random directions on the sphere.
 4. Generate Maxwell-Boltzmann velocities in QE atomic units.
 5. Write sidecar text files plus a final QE input with spins and velocities.
 """
@@ -34,6 +35,12 @@ BOHR_TO_ANG = 0.529177210903
 TEMPERATURE_RE = re.compile(r"_(\d+)(?:K)?(?:[-_].+)?$")
 FAKE_SPECIES_LETTERS = string.ascii_uppercase
 MAX_FAKE_SPECIES = len(FAKE_SPECIES_LETTERS) * 99
+SPIN_MODE_RANDOM_ZERO_NET = "random_zero_net"
+SPIN_MODE_QUASI_RANDOM_ZERO_NET = "quasi_random_zero_net"
+SUPPORTED_SPIN_MODES = (
+    SPIN_MODE_RANDOM_ZERO_NET,
+    SPIN_MODE_QUASI_RANDOM_ZERO_NET,
+)
 
 
 @dataclass
@@ -51,6 +58,7 @@ class PreparationResult:
     spin_vectors: Path
     spin_parameters: Path
     net_magnetization: tuple[float, float, float]
+    spin_mode: str
     ntypes: int
     first_labels: tuple[str, ...]
     last_labels: tuple[str, ...]
@@ -182,6 +190,47 @@ def generate_unique_qe_species_labels(natoms: int) -> list[str]:
     return labels
 
 
+def normalize_direction_vectors(
+    vectors: np.ndarray,
+    rng: np.random.Generator | None = None,
+) -> np.ndarray:
+    norms = np.linalg.norm(vectors, axis=1)
+    bad = norms < 1.0e-14
+    while np.any(bad):
+        if rng is None:
+            rng = np.random.default_rng()
+        vectors[bad] = rng.normal(size=(np.sum(bad), 3))
+        norms = np.linalg.norm(vectors, axis=1)
+        bad = norms < 1.0e-14
+    return vectors / norms[:, None]
+
+
+def random_rotation_matrix(rng: np.random.Generator) -> np.ndarray:
+    quaternion = rng.normal(size=4)
+    quaternion /= np.linalg.norm(quaternion)
+    w, x, y, z = quaternion
+    return np.array(
+        [
+            [1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y - z * w), 2.0 * (x * z + y * w)],
+            [2.0 * (x * y + z * w), 1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z - x * w)],
+            [2.0 * (x * z - y * w), 2.0 * (y * z + x * w), 1.0 - 2.0 * (x * x + y * y)],
+        ],
+        dtype=float,
+    )
+
+
+def spins_from_directions(
+    directions: np.ndarray,
+    m_abs: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    spins_cart = m_abs * directions
+    angle1 = np.degrees(np.arccos(np.clip(directions[:, 2], -1.0, 1.0)))
+    angle2 = np.degrees(np.arctan2(directions[:, 1], directions[:, 0]))
+    angle2 = np.where(angle2 < 0.0, angle2 + 360.0, angle2)
+    net_m = np.sum(spins_cart, axis=0)
+    return spins_cart, angle1, angle2, net_m
+
+
 def generate_paramagnetic_spins_zero_net(
     natoms: int,
     m_abs: float = 0.35,
@@ -195,22 +244,58 @@ def generate_paramagnetic_spins_zero_net(
     rng = np.random.default_rng(seed)
     half = natoms // 2
     vectors = rng.normal(size=(half, 3))
-    norms = np.linalg.norm(vectors, axis=1)
-    bad = norms < 1.0e-14
-    while np.any(bad):
-        vectors[bad] = rng.normal(size=(np.sum(bad), 3))
-        norms = np.linalg.norm(vectors, axis=1)
-        bad = norms < 1.0e-14
-    directions = vectors / norms[:, None]
+    directions = normalize_direction_vectors(vectors, rng=rng)
     directions = np.vstack([directions, -directions])
     rng.shuffle(directions, axis=0)
+    return spins_from_directions(directions, m_abs)
 
-    spins_cart = m_abs * directions
-    angle1 = np.degrees(np.arccos(np.clip(directions[:, 2], -1.0, 1.0)))
-    angle2 = np.degrees(np.arctan2(directions[:, 1], directions[:, 0]))
-    angle2 = np.where(angle2 < 0.0, angle2 + 360.0, angle2)
-    net_m = np.sum(spins_cart, axis=0)
-    return spins_cart, angle1, angle2, net_m
+
+def generate_paramagnetic_spins_quasi_random_zero_net(
+    natoms: int,
+    m_abs: float = 0.35,
+    seed: int | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    if natoms < 2:
+        raise ValueError("Need at least 2 atoms to build a zero-net paramagnetic spin pattern.")
+    if natoms % 2 != 0:
+        raise ValueError("The antipodal quasi-random generator expects an even number of atoms.")
+
+    rng = np.random.default_rng(seed)
+    half = natoms // 2
+    indices = np.arange(half, dtype=float)
+    golden_angle = np.pi * (3.0 - np.sqrt(5.0))
+
+    z = 1.0 - 2.0 * (indices + 0.5) / half
+    azimuth = golden_angle * indices
+    radial = np.sqrt(np.clip(1.0 - z * z, 0.0, None))
+
+    base_directions = np.column_stack(
+        (
+            radial * np.cos(azimuth),
+            radial * np.sin(azimuth),
+            z,
+        )
+    )
+    directions = np.vstack([base_directions, -base_directions])
+    directions = directions @ random_rotation_matrix(rng).T
+    rng.shuffle(directions, axis=0)
+    return spins_from_directions(directions, m_abs)
+
+
+def generate_paramagnetic_spins(
+    natoms: int,
+    *,
+    m_abs: float = 0.35,
+    seed: int | None = None,
+    mode: str = SPIN_MODE_RANDOM_ZERO_NET,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    if mode == SPIN_MODE_RANDOM_ZERO_NET:
+        return generate_paramagnetic_spins_zero_net(natoms, m_abs=m_abs, seed=seed)
+    if mode == SPIN_MODE_QUASI_RANDOM_ZERO_NET:
+        return generate_paramagnetic_spins_quasi_random_zero_net(natoms, m_abs=m_abs, seed=seed)
+    raise ValueError(
+        f"Unsupported spin mode {mode!r}. Supported modes: {', '.join(SUPPORTED_SPIN_MODES)}"
+    )
 
 
 def write_spin_vectors_txt(spins_cart: np.ndarray, path: Path) -> None:
@@ -429,6 +514,7 @@ def prepare_bcc_qe_input(
     temperature_k: float | None = None,
     velocity_seed: int | None = None,
     spin_seed: int | None = None,
+    spin_mode: str = SPIN_MODE_RANDOM_ZERO_NET,
     m_abs: float = 0.35,
     pseudo_dir: str = ".",
     pseudo_file: str = "Fe.pbe-spn-kjpaw_psl.1.0.0.UPF",
@@ -470,10 +556,11 @@ def prepare_bcc_qe_input(
     spin_parameters_path = output_dir / f"{prefix}_qe_spin_parameters.txt"
     species_labels = generate_unique_qe_species_labels(natoms)
 
-    spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins_zero_net(
+    spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins(
         natoms,
         m_abs=m_abs,
         seed=spin_seed,
+        mode=spin_mode,
     )
     write_spin_vectors_txt(spins_cart, spin_vectors_path)
     write_qe_spin_parameters_txt(angle1, angle2, spin_parameters_path, m_abs=m_abs)
@@ -548,6 +635,7 @@ def prepare_bcc_qe_input(
         spin_vectors=spin_vectors_path,
         spin_parameters=spin_parameters_path,
         net_magnetization=(float(net_m[0]), float(net_m[1]), float(net_m[2])),
+        spin_mode=spin_mode,
         first_labels=tuple(final_species_labels[:10]),
         last_labels=tuple(final_species_labels[-10:]),
         position_velocity_labels_match=(final_position_labels == final_velocity_labels),
