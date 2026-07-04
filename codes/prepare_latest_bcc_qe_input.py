@@ -37,6 +37,16 @@ FAKE_SPECIES_LETTERS = string.ascii_uppercase
 MAX_FAKE_SPECIES = len(FAKE_SPECIES_LETTERS) * 99
 SPIN_MODE_RANDOM_ZERO_NET = "random_zero_net"
 SPIN_MODE_QUASI_RANDOM_ZERO_NET = "quasi_random_zero_net"
+QE_FLOAT_RE = r"[+\-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[EeDd][+\-]?\d+)?"
+QE_ATOM_SPIN_BLOCK_RE = re.compile(
+    rf"atom number\s+(\d+)\s+relative position\s*:\s*"
+    rf"({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+"
+    rf"charge\s*:\s*({QE_FLOAT_RE})\s+\(integrated on a sphere of radius\s+({QE_FLOAT_RE})\)\s+"
+    rf"magnetization\s*:\s*({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+"
+    rf"magnetization/charge:\s*({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+"
+    rf"polar coord\.: r, theta, phi \[deg\] :\s*({QE_FLOAT_RE})\s+({QE_FLOAT_RE})\s+({QE_FLOAT_RE})",
+    re.MULTILINE,
+)
 SUPPORTED_SPIN_MODES = (
     SPIN_MODE_RANDOM_ZERO_NET,
     SPIN_MODE_QUASI_RANDOM_ZERO_NET,
@@ -59,6 +69,11 @@ class PreparationResult:
     spin_parameters: Path
     net_magnetization: tuple[float, float, float]
     spin_mode: str
+    spin_source: str
+    qe_spin_output_path: Path | None
+    mean_starting_magnetization: float
+    min_starting_magnetization: float
+    max_starting_magnetization: float
     ntypes: int
     first_labels: tuple[str, ...]
     last_labels: tuple[str, ...]
@@ -73,15 +88,45 @@ class PreparationResult:
         payload["velocity_block"] = str(self.velocity_block)
         payload["spin_vectors"] = str(self.spin_vectors)
         payload["spin_parameters"] = str(self.spin_parameters)
+        payload["qe_spin_output_path"] = None if self.qe_spin_output_path is None else str(self.qe_spin_output_path)
         payload["net_magnetization"] = [float(value) for value in self.net_magnetization]
         payload["first_labels"] = list(self.first_labels)
         payload["last_labels"] = list(self.last_labels)
         return payload
 
 
+@dataclass
+class QESpinGuess:
+    qe_output_path: Path
+    atom_numbers: np.ndarray
+    charge_in_sphere: np.ndarray
+    moment_cart_bohr: np.ndarray
+    moment_over_charge_cart: np.ndarray
+    local_moment_bohr: np.ndarray
+    angle1: np.ndarray
+    angle2: np.ndarray
+    starting_magnetization: np.ndarray
+
+    def summary_dict(self) -> dict[str, object]:
+        return {
+            "qe_output_path": str(self.qe_output_path),
+            "natoms": int(len(self.atom_numbers)),
+            "mean_starting_magnetization": float(np.mean(self.starting_magnetization)),
+            "min_starting_magnetization": float(np.min(self.starting_magnetization)),
+            "max_starting_magnetization": float(np.max(self.starting_magnetization)),
+            "mean_local_moment_bohr": float(np.mean(self.local_moment_bohr)),
+            "min_local_moment_bohr": float(np.min(self.local_moment_bohr)),
+            "max_local_moment_bohr": float(np.max(self.local_moment_bohr)),
+        }
+
+
 def scalar_string(value) -> str:
     array = np.asarray(value)
     return str(array.item() if array.shape == () else value)
+
+
+def qe_float(value: str) -> float:
+    return float(value.replace("D", "E").replace("d", "e"))
 
 
 def load_metadata(data) -> dict[str, object]:
@@ -298,16 +343,89 @@ def generate_paramagnetic_spins(
     )
 
 
+def parse_qe_atom_resolved_spin_guess(
+    qe_output_path: Path,
+    *,
+    natoms: int | None = None,
+) -> QESpinGuess:
+    qe_output_path = qe_output_path.resolve()
+    text = qe_output_path.read_text()
+    matches = list(QE_ATOM_SPIN_BLOCK_RE.finditer(text))
+    if not matches:
+        raise ValueError(
+            "Could not find any atom-resolved magnetization blocks in the QE output. "
+            "Expected blocks containing 'atom number', 'magnetization/charge', and 'polar coord.'."
+        )
+
+    atom_numbers = np.array([int(match.group(1)) for match in matches], dtype=int)
+    if not np.array_equal(atom_numbers, np.arange(1, len(atom_numbers) + 1, dtype=int)):
+        raise ValueError(
+            "The atom-resolved QE spin blocks are incomplete or out of order. "
+            f"Parsed atom numbers start as: {atom_numbers[:10].tolist()}"
+        )
+    if natoms is not None and len(atom_numbers) != natoms:
+        raise ValueError(
+            f"QE output contains {len(atom_numbers)} atom-resolved spin blocks, but the structure has {natoms} atoms."
+        )
+
+    charge_in_sphere = np.array([qe_float(match.group(5)) for match in matches], dtype=float)
+    moment_cart_bohr = np.array(
+        [[qe_float(match.group(group)) for group in (7, 8, 9)] for match in matches],
+        dtype=float,
+    )
+    moment_over_charge_cart = np.array(
+        [[qe_float(match.group(group)) for group in (10, 11, 12)] for match in matches],
+        dtype=float,
+    )
+    local_moment_bohr = np.array([qe_float(match.group(13)) for match in matches], dtype=float)
+    angle1 = np.array([qe_float(match.group(14)) for match in matches], dtype=float)
+    angle2 = np.mod(np.array([qe_float(match.group(15)) for match in matches], dtype=float), 360.0)
+    starting_magnetization = np.linalg.norm(moment_over_charge_cart, axis=1)
+
+    return QESpinGuess(
+        qe_output_path=qe_output_path,
+        atom_numbers=atom_numbers,
+        charge_in_sphere=charge_in_sphere,
+        moment_cart_bohr=moment_cart_bohr,
+        moment_over_charge_cart=moment_over_charge_cart,
+        local_moment_bohr=local_moment_bohr,
+        angle1=angle1,
+        angle2=angle2,
+        starting_magnetization=starting_magnetization,
+    )
+
+
 def write_spin_vectors_txt(spins_cart: np.ndarray, path: Path) -> None:
     lines = ["# mx my mz"]
     lines.extend(f"{mx:.10f} {my:.10f} {mz:.10f}" for mx, my, mz in spins_cart)
     path.write_text("\n".join(lines) + "\n")
 
 
-def write_qe_spin_parameters_txt(angle1: np.ndarray, angle2: np.ndarray, path: Path, m_abs: float) -> None:
+def resolve_starting_magnetization_array(
+    starting_magnetization: float | np.ndarray,
+    natoms: int,
+) -> np.ndarray:
+    values = np.asarray(starting_magnetization, dtype=float)
+    if values.ndim == 0:
+        return np.full(natoms, float(values), dtype=float)
+    values = values.reshape(-1)
+    if values.shape != (natoms,):
+        raise ValueError(
+            f"Expected {natoms} starting_magnetization values, got shape {values.shape}."
+        )
+    return values
+
+
+def write_qe_spin_parameters_txt(
+    angle1: np.ndarray,
+    angle2: np.ndarray,
+    path: Path,
+    starting_magnetization: float | np.ndarray,
+) -> None:
+    start_mags = resolve_starting_magnetization_array(starting_magnetization, len(angle1))
     lines = ["# QE noncollinear initial magnetic parameters"]
-    for index, (theta, phi) in enumerate(zip(angle1, angle2), start=1):
-        lines.append(f"starting_magnetization({index}) = {m_abs:.10f}")
+    for index, (theta, phi, start_mag) in enumerate(zip(angle1, angle2, start_mags), start=1):
+        lines.append(f"starting_magnetization({index}) = {start_mag:.10f}")
         lines.append(f"angle1({index}) = {theta:.10f}")
         lines.append(f"angle2({index}) = {phi:.10f}")
     path.write_text("\n".join(lines) + "\n")
@@ -434,7 +552,7 @@ def build_noncollinear_md_input(
     k_grid: tuple[int, int, int],
     angle1: np.ndarray,
     angle2: np.ndarray,
-    m_abs: float,
+    starting_magnetization: float | np.ndarray,
     constrained_magnetization: bool,
     lambda_value: float,
     mixing_beta: float,
@@ -443,6 +561,7 @@ def build_noncollinear_md_input(
     natoms = len(frac_positions)
     if len(species_labels) != natoms:
         raise ValueError(f"Expected {natoms} species labels, got {len(species_labels)}.")
+    start_mags = resolve_starting_magnetization_array(starting_magnetization, natoms)
     kx, ky, kz = k_grid
 
     lines = [
@@ -470,8 +589,8 @@ def build_noncollinear_md_input(
     if constrained_magnetization:
         lines.append("    constrained_magnetization='atomic direction'")
         lines.append(f"    lambda={lambda_value:g}")
-    for index, (theta, phi) in enumerate(zip(angle1, angle2), start=1):
-        lines.append(f"    starting_magnetization({index})={m_abs:.10f}")
+    for index, (theta, phi, start_mag) in enumerate(zip(angle1, angle2, start_mags), start=1):
+        lines.append(f"    starting_magnetization({index})={start_mag:.10f}")
         lines.append(f"    angle1({index})={theta:.10f}")
         lines.append(f"    angle2({index})={phi:.10f}")
 
@@ -515,6 +634,7 @@ def prepare_bcc_qe_input(
     velocity_seed: int | None = None,
     spin_seed: int | None = None,
     spin_mode: str = SPIN_MODE_RANDOM_ZERO_NET,
+    qe_spin_output_path: Path | None = None,
     m_abs: float = 0.35,
     pseudo_dir: str = ".",
     pseudo_file: str = "Fe.pbe-spn-kjpaw_psl.1.0.0.UPF",
@@ -556,14 +676,32 @@ def prepare_bcc_qe_input(
     spin_parameters_path = output_dir / f"{prefix}_qe_spin_parameters.txt"
     species_labels = generate_unique_qe_species_labels(natoms)
 
-    spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins(
-        natoms,
-        m_abs=m_abs,
-        seed=spin_seed,
-        mode=spin_mode,
-    )
+    qe_spin_output = None if qe_spin_output_path is None else qe_spin_output_path.resolve()
+    if qe_spin_output is None:
+        spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins(
+            natoms,
+            m_abs=m_abs,
+            seed=spin_seed,
+            mode=spin_mode,
+        )
+        starting_magnetization = np.full(natoms, float(m_abs), dtype=float)
+        spin_source = f"generated:{spin_mode}"
+    else:
+        spin_guess = parse_qe_atom_resolved_spin_guess(qe_spin_output, natoms=natoms)
+        spins_cart = spin_guess.moment_cart_bohr
+        angle1 = spin_guess.angle1
+        angle2 = spin_guess.angle2
+        starting_magnetization = spin_guess.starting_magnetization
+        net_m = np.sum(spins_cart, axis=0)
+        spin_source = f"qe_output:{qe_spin_output.name}"
+
     write_spin_vectors_txt(spins_cart, spin_vectors_path)
-    write_qe_spin_parameters_txt(angle1, angle2, spin_parameters_path, m_abs=m_abs)
+    write_qe_spin_parameters_txt(
+        angle1,
+        angle2,
+        spin_parameters_path,
+        starting_magnetization=starting_magnetization,
+    )
 
     base_text = build_noncollinear_md_input(
         frac_positions,
@@ -581,7 +719,7 @@ def prepare_bcc_qe_input(
         k_grid=k_grid,
         angle1=angle1,
         angle2=angle2,
-        m_abs=m_abs,
+        starting_magnetization=starting_magnetization,
         constrained_magnetization=constrained_magnetization,
         lambda_value=lambda_value,
         mixing_beta=mixing_beta,
@@ -636,6 +774,11 @@ def prepare_bcc_qe_input(
         spin_parameters=spin_parameters_path,
         net_magnetization=(float(net_m[0]), float(net_m[1]), float(net_m[2])),
         spin_mode=spin_mode,
+        spin_source=spin_source,
+        qe_spin_output_path=qe_spin_output,
+        mean_starting_magnetization=float(np.mean(starting_magnetization)),
+        min_starting_magnetization=float(np.min(starting_magnetization)),
+        max_starting_magnetization=float(np.max(starting_magnetization)),
         first_labels=tuple(final_species_labels[:10]),
         last_labels=tuple(final_species_labels[-10:]),
         position_velocity_labels_match=(final_position_labels == final_velocity_labels),
