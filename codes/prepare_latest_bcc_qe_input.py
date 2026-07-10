@@ -17,6 +17,7 @@ from dataclasses import asdict, dataclass
 import json
 import re
 from pathlib import Path
+import shutil
 import string
 
 import numpy as np
@@ -37,6 +38,8 @@ FAKE_SPECIES_LETTERS = string.ascii_uppercase
 MAX_FAKE_SPECIES = len(FAKE_SPECIES_LETTERS) * 99
 SPIN_MODE_RANDOM_ZERO_NET = "random_zero_net"
 SPIN_MODE_QUASI_RANDOM_ZERO_NET = "quasi_random_zero_net"
+MAGNETIC_MODE_NONCOLLINEAR_RANDOM = "noncollinear_random"
+MAGNETIC_MODE_COLLINEAR_RANDOM = "collinear_random"
 QE_FLOAT_RE = r"[+\-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[EeDd][+\-]?\d+)?"
 QE_ATOM_SPIN_BLOCK_RE = re.compile(
     rf"atom number\s+(\d+)\s+relative position\s*:\s*"
@@ -50,6 +53,10 @@ QE_ATOM_SPIN_BLOCK_RE = re.compile(
 SUPPORTED_SPIN_MODES = (
     SPIN_MODE_RANDOM_ZERO_NET,
     SPIN_MODE_QUASI_RANDOM_ZERO_NET,
+)
+SUPPORTED_MAGNETIC_MODES = (
+    MAGNETIC_MODE_NONCOLLINEAR_RANDOM,
+    MAGNETIC_MODE_COLLINEAR_RANDOM,
 )
 
 
@@ -68,12 +75,23 @@ class PreparationResult:
     spin_vectors: Path
     spin_parameters: Path
     net_magnetization: tuple[float, float, float]
+    magnetic_mode: str
     spin_mode: str
     spin_source: str
     qe_spin_output_path: Path | None
+    qe_restart_save_dir: Path | None
+    qe_wfc_dir: Path | None
+    staged_restart_save_dir: Path | None
+    restart_density_seeded: bool
+    restart_wfc_seeded: bool
+    staged_wfc_count: int
     mean_starting_magnetization: float
+    mean_absolute_starting_magnetization: float
     min_starting_magnetization: float
     max_starting_magnetization: float
+    positive_moment_count: int
+    negative_moment_count: int
+    sum_starting_magnetization: float
     ntypes: int
     first_labels: tuple[str, ...]
     last_labels: tuple[str, ...]
@@ -89,6 +107,9 @@ class PreparationResult:
         payload["spin_vectors"] = str(self.spin_vectors)
         payload["spin_parameters"] = str(self.spin_parameters)
         payload["qe_spin_output_path"] = None if self.qe_spin_output_path is None else str(self.qe_spin_output_path)
+        payload["qe_restart_save_dir"] = None if self.qe_restart_save_dir is None else str(self.qe_restart_save_dir)
+        payload["qe_wfc_dir"] = None if self.qe_wfc_dir is None else str(self.qe_wfc_dir)
+        payload["staged_restart_save_dir"] = None if self.staged_restart_save_dir is None else str(self.staged_restart_save_dir)
         payload["net_magnetization"] = [float(value) for value in self.net_magnetization]
         payload["first_labels"] = list(self.first_labels)
         payload["last_labels"] = list(self.last_labels)
@@ -120,6 +141,30 @@ class QESpinGuess:
         }
 
 
+@dataclass
+class QERestartSeed:
+    source_save_dir: Path
+    source_prefix: str
+    target_save_dir: Path
+    target_prefix: str
+    density_seeded: bool
+    wfc_seeded: bool
+    wfc_source_dir: Path | None
+    copied_wfc_files: tuple[str, ...]
+
+    def summary_dict(self) -> dict[str, object]:
+        return {
+            "source_save_dir": str(self.source_save_dir),
+            "target_save_dir": str(self.target_save_dir),
+            "source_prefix": self.source_prefix,
+            "target_prefix": self.target_prefix,
+            "density_seeded": self.density_seeded,
+            "wfc_seeded": self.wfc_seeded,
+            "wfc_source_dir": None if self.wfc_source_dir is None else str(self.wfc_source_dir),
+            "copied_wfc_files": list(self.copied_wfc_files),
+        }
+
+
 def scalar_string(value) -> str:
     array = np.asarray(value)
     return str(array.item() if array.shape == () else value)
@@ -127,6 +172,13 @@ def scalar_string(value) -> str:
 
 def qe_float(value: str) -> float:
     return float(value.replace("D", "E").replace("d", "e"))
+
+
+def save_dir_prefix(save_dir: Path) -> str:
+    name = save_dir.name
+    if not name.endswith(".save"):
+        raise ValueError(f"Expected a QE save directory ending in '.save', got {save_dir}")
+    return name[: -len(".save")]
 
 
 def load_metadata(data) -> dict[str, object]:
@@ -233,6 +285,110 @@ def generate_unique_qe_species_labels(natoms: int) -> list[str]:
         number = atom_index % 99 + 1
         labels.append(f"{letter}{number:02d}")
     return labels
+
+
+def generate_collinear_fe_species_labels(natoms: int) -> list[str]:
+    if natoms < 1:
+        raise ValueError("Need at least 1 atom to generate collinear QE species labels.")
+    labels = [f"Fe{atom_index}" for atom_index in range(1, natoms + 1)]
+    if len(set(labels)) != natoms:
+        raise ValueError("Generated collinear QE species labels are not unique.")
+    return labels
+
+
+def validate_collinear_moments(
+    moments: np.ndarray,
+    *,
+    natoms: int,
+    min_moment: float,
+    max_moment: float,
+) -> np.ndarray:
+    if min_moment < 0.0:
+        raise ValueError(f"min_moment must be non-negative, got {min_moment}.")
+    if max_moment <= min_moment:
+        raise ValueError(
+            f"max_moment must be strictly larger than min_moment; got min_moment={min_moment}, max_moment={max_moment}."
+        )
+
+    values = np.asarray(moments, dtype=float).reshape(-1)
+    if values.shape != (natoms,):
+        raise ValueError(f"Expected {natoms} collinear magnetic moments, got shape {values.shape}.")
+
+    inside_excluded = np.abs(values) < min_moment
+    if np.any(inside_excluded):
+        bad_values = values[inside_excluded][:10]
+        raise ValueError(
+            "Some collinear magnetic moments fall inside the excluded interval "
+            f"(-{min_moment}, +{min_moment}). Examples: {bad_values.tolist()}"
+        )
+
+    outside_allowed = np.abs(values) > max_moment
+    if np.any(outside_allowed):
+        bad_values = values[outside_allowed][:10]
+        raise ValueError(
+            "Some collinear magnetic moments exceed the allowed magnitude "
+            f"{max_moment}. Examples: {bad_values.tolist()}"
+        )
+
+    return values
+
+
+def summarize_collinear_moments(moments: np.ndarray) -> dict[str, float | int]:
+    values = np.asarray(moments, dtype=float).reshape(-1)
+    return {
+        "positive_count": int(np.sum(values > 0.0)),
+        "negative_count": int(np.sum(values < 0.0)),
+        "average_absolute_moment": float(np.mean(np.abs(values))),
+        "sum_moments": float(np.sum(values)),
+        "maximum_moment": float(np.max(values)),
+        "minimum_moment": float(np.min(values)),
+    }
+
+
+def print_collinear_moment_summary(moments: np.ndarray) -> None:
+    summary = summarize_collinear_moments(moments)
+    print("Collinear random magnetic summary")
+    print(f"Number of positive moments: {summary['positive_count']}")
+    print(f"Number of negative moments: {summary['negative_count']}")
+    print(f"Average absolute magnetic moment: {summary['average_absolute_moment']:.6f}")
+    print(f"Sum of initial magnetic moments: {summary['sum_moments']:.6f}")
+    print(f"Maximum magnetic moment: {summary['maximum_moment']:.6f}")
+    print(f"Minimum magnetic moment: {summary['minimum_moment']:.6f}")
+
+
+def generate_random_collinear_moments(
+    natoms: int,
+    *,
+    min_moment: float = 0.3,
+    max_moment: float = 0.8,
+    seed: int | None = None,
+) -> tuple[np.ndarray, dict[str, float | int]]:
+    if natoms < 1:
+        raise ValueError("Need at least 1 atom to generate a collinear random magnetic configuration.")
+    if min_moment < 0.0:
+        raise ValueError(f"min_moment must be non-negative, got {min_moment}.")
+    if max_moment <= min_moment:
+        raise ValueError(
+            f"max_moment must be strictly larger than min_moment; got min_moment={min_moment}, max_moment={max_moment}."
+        )
+
+    rng = np.random.default_rng(seed)
+    pair_count = natoms // 2
+    pair_magnitudes = rng.uniform(min_moment, max_moment, size=pair_count)
+    moments = np.concatenate([pair_magnitudes, -pair_magnitudes])
+    if natoms % 2 == 1:
+        extra_moment = rng.uniform(min_moment, max_moment)
+        extra_sign = rng.choice(np.array([-1.0, 1.0]))
+        moments = np.concatenate([moments, [extra_sign * extra_moment]])
+    rng.shuffle(moments)
+
+    validated_moments = validate_collinear_moments(
+        moments,
+        natoms=natoms,
+        min_moment=min_moment,
+        max_moment=max_moment,
+    )
+    return validated_moments, summarize_collinear_moments(validated_moments)
 
 
 def normalize_direction_vectors(
@@ -343,6 +499,16 @@ def generate_paramagnetic_spins(
     )
 
 
+def collinear_spins_from_moments(
+    moments: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    values = np.asarray(moments, dtype=float).reshape(-1)
+    spins_cart = np.zeros((len(values), 3), dtype=float)
+    spins_cart[:, 2] = values
+    net_m = np.sum(spins_cart, axis=0)
+    return spins_cart, net_m
+
+
 def parse_qe_atom_resolved_spin_guess(
     qe_output_path: Path,
     *,
@@ -395,6 +561,79 @@ def parse_qe_atom_resolved_spin_guess(
     )
 
 
+def stage_qe_restart_seed(
+    source_save_dir: Path,
+    *,
+    target_outdir: Path,
+    target_prefix: str,
+    wfc_dir: Path | None = None,
+) -> QERestartSeed:
+    source_save_dir = source_save_dir.resolve()
+    if not source_save_dir.is_dir():
+        raise FileNotFoundError(f"QE restart save directory not found: {source_save_dir}")
+    resolved_wfc_dir = None
+    if wfc_dir is not None:
+        resolved_wfc_dir = wfc_dir.resolve()
+        if not resolved_wfc_dir.is_dir():
+            raise FileNotFoundError(f"QE wavefunction directory not found: {resolved_wfc_dir}")
+
+    source_prefix = save_dir_prefix(source_save_dir)
+    target_outdir = target_outdir.resolve()
+    target_outdir.mkdir(parents=True, exist_ok=True)
+    target_save_dir = target_outdir / f"{target_prefix}.save"
+
+    xml_path = source_save_dir / "data-file-schema.xml"
+    density_path = source_save_dir / "charge-density.dat"
+    if not xml_path.exists():
+        raise FileNotFoundError(f"Missing QE schema file: {xml_path}")
+    if not density_path.exists():
+        raise FileNotFoundError(f"Missing QE charge density file: {density_path}")
+
+    if target_save_dir.exists():
+        shutil.rmtree(target_save_dir)
+    shutil.copytree(source_save_dir, target_save_dir)
+
+    wfc_search_dirs: list[Path] = []
+    seen_dirs: set[Path] = set()
+    for candidate_dir in (
+        resolved_wfc_dir,
+        source_save_dir.parent / "wavefunc",
+        source_save_dir.parent,
+    ):
+        if candidate_dir is None:
+            continue
+        candidate_dir = candidate_dir.resolve()
+        if not candidate_dir.is_dir() or candidate_dir in seen_dirs:
+            continue
+        wfc_search_dirs.append(candidate_dir)
+        seen_dirs.add(candidate_dir)
+
+    copied_wfc_files: list[str] = []
+    wfc_source_dir = None
+    for search_dir in wfc_search_dirs:
+        matched_wfc_paths = sorted(search_dir.glob(f"{source_prefix}.wfc*"))
+        if not matched_wfc_paths:
+            continue
+        wfc_source_dir = search_dir
+        for wfc_path in matched_wfc_paths:
+            suffix = wfc_path.name[len(source_prefix) :]
+            target_wfc_path = target_outdir / f"{target_prefix}{suffix}"
+            shutil.copy2(wfc_path, target_wfc_path)
+            copied_wfc_files.append(target_wfc_path.name)
+        break
+
+    return QERestartSeed(
+        source_save_dir=source_save_dir,
+        source_prefix=source_prefix,
+        target_save_dir=target_save_dir,
+        target_prefix=target_prefix,
+        density_seeded=True,
+        wfc_seeded=bool(copied_wfc_files),
+        wfc_source_dir=wfc_source_dir,
+        copied_wfc_files=tuple(copied_wfc_files),
+    )
+
+
 def write_spin_vectors_txt(spins_cart: np.ndarray, path: Path) -> None:
     lines = ["# mx my mz"]
     lines.extend(f"{mx:.10f} {my:.10f} {mz:.10f}" for mx, my, mz in spins_cart)
@@ -417,12 +656,22 @@ def resolve_starting_magnetization_array(
 
 
 def write_qe_spin_parameters_txt(
-    angle1: np.ndarray,
-    angle2: np.ndarray,
+    angle1: np.ndarray | None,
+    angle2: np.ndarray | None,
     path: Path,
     starting_magnetization: float | np.ndarray,
 ) -> None:
-    start_mags = resolve_starting_magnetization_array(starting_magnetization, len(angle1))
+    if (angle1 is None) != (angle2 is None):
+        raise ValueError("angle1 and angle2 must either both be provided or both be omitted.")
+    natoms = len(angle1) if angle1 is not None else len(np.asarray(starting_magnetization).reshape(-1))
+    start_mags = resolve_starting_magnetization_array(starting_magnetization, natoms)
+    if angle1 is None:
+        lines = ["# QE collinear initial magnetic parameters"]
+        for index, start_mag in enumerate(start_mags, start=1):
+            lines.append(f"starting_magnetization({index}) = {start_mag:.10f}")
+        path.write_text("\n".join(lines) + "\n")
+        return
+
     lines = ["# QE noncollinear initial magnetic parameters"]
     for index, (theta, phi, start_mag) in enumerate(zip(angle1, angle2, start_mags), start=1):
         lines.append(f"starting_magnetization({index}) = {start_mag:.10f}")
@@ -543,6 +792,10 @@ def build_noncollinear_md_input(
     prefix: str,
     pseudo_dir: str,
     pseudo_file: str,
+    outdir: str,
+    restart_mode: str,
+    startingpot: str | None,
+    startingwfc: str | None,
     temperature_k: float,
     dt_au: float,
     nstep: int,
@@ -567,10 +820,10 @@ def build_noncollinear_md_input(
     lines = [
         "&control",
         "   calculation='md'",
-        "   restart_mode='from_scratch'",
+        f"   restart_mode='{restart_mode}'",
         f"   prefix='{prefix}'",
         f"   pseudo_dir='{pseudo_dir}'",
-        "   outdir='./md'",
+        f"   outdir='{outdir}'",
         f"   dt={dt_au:.4f}d0",
         "   tstress=.true.",
         "   tprnfor=.true.",
@@ -598,6 +851,14 @@ def build_noncollinear_md_input(
         [
             "/",
             " &electrons",
+        ]
+    )
+    if startingpot is not None:
+        lines.append(f"    startingpot='{startingpot}'")
+    if startingwfc is not None:
+        lines.append(f"    startingwfc='{startingwfc}'")
+    lines.extend(
+        [
             "    conv_thr=1.0d-4",
             f"    mixing_beta={mixing_beta:.4f}d0",
             "/",
@@ -624,6 +885,182 @@ def build_noncollinear_md_input(
     return "\n".join(lines)
 
 
+def build_collinear_md_input(
+    frac_positions: np.ndarray,
+    cell_ang: np.ndarray,
+    *,
+    species_labels: list[str],
+    prefix: str,
+    pseudo_dir: str,
+    pseudo_file: str,
+    outdir: str,
+    restart_mode: str,
+    startingpot: str | None,
+    startingwfc: str | None,
+    temperature_k: float,
+    dt_au: float,
+    nstep: int,
+    ecutwfc: float,
+    ecutrho: float,
+    degauss: float,
+    k_grid: tuple[int, int, int],
+    starting_magnetization: np.ndarray,
+    mixing_beta: float,
+    nosym: bool,
+) -> str:
+    natoms = len(frac_positions)
+    if len(species_labels) != natoms:
+        raise ValueError(f"Expected {natoms} species labels, got {len(species_labels)}.")
+    start_mags = resolve_starting_magnetization_array(starting_magnetization, natoms)
+    kx, ky, kz = k_grid
+
+    lines = [
+        "&control",
+        "   calculation='md'",
+        f"   restart_mode='{restart_mode}'",
+        f"   prefix='{prefix}'",
+        f"   pseudo_dir='{pseudo_dir}'",
+        f"   outdir='{outdir}'",
+        f"   dt={dt_au:.4f}d0",
+        "   tstress=.true.",
+        "   tprnfor=.true.",
+        f"   nstep={nstep}",
+        "/",
+        " &system",
+        "    ibrav = 0",
+        f"    nat = {natoms}, ntyp = {natoms},",
+        f"    ecutwfc={ecutwfc:g}",
+        f"    ecutrho={ecutrho:g}",
+        f"    occupations='smearing',smearing='m-v',degauss={degauss:.2f}",
+        f"    nosym={'.true.' if nosym else '.false.'}",
+        "    nspin=2",
+    ]
+    for index, start_mag in enumerate(start_mags, start=1):
+        lines.append(f"    starting_magnetization({index})={start_mag:.10f}")
+
+    lines.extend(
+        [
+            "/",
+            " &electrons",
+        ]
+    )
+    if startingpot is not None:
+        lines.append(f"    startingpot='{startingpot}'")
+    if startingwfc is not None:
+        lines.append(f"    startingwfc='{startingwfc}'")
+    lines.extend(
+        [
+            "    conv_thr=1.0d-4",
+            f"    mixing_beta={mixing_beta:.4f}d0",
+            "/",
+            " &ions",
+            "    pot_extrapolation='second_order'",
+            "    wfc_extrapolation='second_order'",
+            "    ion_temperature='svr'",
+            "    ion_velocities='from_input'",
+            f"    tempw={temperature_k:.1f}",
+            "    nraise=20",
+            "/",
+            "ATOMIC_SPECIES",
+        ]
+    )
+    lines.extend(f"{label} 55.845 {pseudo_file}" for label in species_labels)
+    lines.extend(["", "ATOMIC_POSITIONS (crystal)"])
+    lines.extend(
+        f"{label} {pos[0]:.10f} {pos[1]:.10f} {pos[2]:.10f}"
+        for label, pos in zip(species_labels, frac_positions)
+    )
+    lines.extend(["", "CELL_PARAMETERS angstrom"])
+    lines.extend(f"{row[0]:.12f} {row[1]:.12f} {row[2]:.12f}" for row in cell_ang)
+    lines.extend(["", "K_POINTS automatic", f"{kx} {ky} {kz} 0 0 0", ""])
+    return "\n".join(lines)
+
+
+def build_collinear_random_test_input_from_frame(
+    *,
+    npz_path: Path,
+    frame_index: int = -1,
+    natoms_preview: int = 8,
+    temperature_k: float | None = None,
+    random_seed: int = 12345,
+    velocity_seed: int = 54321,
+    min_moment: float = 0.3,
+    max_moment: float = 0.8,
+    pseudo_dir: str = ".",
+    pseudo_file: str = "Fe.pbe-spn-kjpaw_psl.1.0.0.UPF",
+    dt_au: float = 20.670,
+    nstep: int = 20,
+    ecutwfc: float = 71.0,
+    ecutrho: float = 496.0,
+    degauss: float = 0.02,
+    k_grid: tuple[int, int, int] = (1, 1, 1),
+    mixing_beta: float = 0.01,
+    nosym: bool = True,
+) -> tuple[str, dict[str, float | int]]:
+    npz_path = npz_path.resolve()
+    data = np.load(npz_path, allow_pickle=False)
+    positions = np.asarray(data["positions"], dtype=float)
+    natoms_total = int(positions.shape[1])
+    if natoms_preview < 1:
+        raise ValueError("natoms_preview must be at least 1.")
+    if natoms_preview > natoms_total:
+        raise ValueError(
+            f"Requested an {natoms_preview}-atom preview, but the frame only contains {natoms_total} atoms."
+        )
+
+    resolved_index = frame_index if frame_index >= 0 else positions.shape[0] + frame_index
+    if resolved_index < 0 or resolved_index >= positions.shape[0]:
+        raise IndexError(f"Frame index {frame_index} is out of range for {npz_path.name}")
+
+    fallback_cell = fixed_cell_angstrom(data)
+    cell_ang = frame_cell_angstrom(data, resolved_index, fallback_cell)
+    frac_positions = wrap_fractional(frame_positions_fractional(data, resolved_index, cell_ang))[:natoms_preview]
+    target_temperature = float(temperature_k) if temperature_k is not None else parse_temperature_from_name(npz_path)
+
+    species_labels = generate_collinear_fe_species_labels(natoms_preview)
+    moments, summary = generate_random_collinear_moments(
+        natoms_preview,
+        min_moment=min_moment,
+        max_moment=max_moment,
+        seed=random_seed,
+    )
+    base_text = build_collinear_md_input(
+        frac_positions,
+        cell_ang,
+        species_labels=species_labels,
+        prefix=f"Fe_bcc_{natoms_preview}atom_collinear_random_example",
+        pseudo_dir=pseudo_dir,
+        pseudo_file=pseudo_file,
+        outdir="./md",
+        restart_mode="from_scratch",
+        startingpot=None,
+        startingwfc=None,
+        temperature_k=target_temperature,
+        dt_au=dt_au,
+        nstep=nstep,
+        ecutwfc=ecutwfc,
+        ecutrho=ecutrho,
+        degauss=degauss,
+        k_grid=k_grid,
+        starting_magnetization=moments,
+        mixing_beta=mixing_beta,
+        nosym=nosym,
+    )
+
+    masses_amu = np.full(natoms_preview, 55.845, dtype=float)
+    velocities_au = sample_maxwell_velocities_au(masses_amu, target_temperature, velocity_seed)
+    velocities_au = remove_center_of_mass_drift_au(velocities_au, masses_amu)
+    velocities_au = rescale_to_temperature_au(
+        velocities_au,
+        masses_amu,
+        target_temperature,
+        remove_com=True,
+    )
+    velocity_block = format_atomic_velocities_card(species_labels, velocities_au)
+    final_text = replace_or_append_atomic_velocities(base_text, velocity_block)
+    return final_text, summary
+
+
 def prepare_bcc_qe_input(
     *,
     dataset_dir: Path,
@@ -633,9 +1070,14 @@ def prepare_bcc_qe_input(
     temperature_k: float | None = None,
     velocity_seed: int | None = None,
     spin_seed: int | None = None,
+    magnetic_mode: str = MAGNETIC_MODE_NONCOLLINEAR_RANDOM,
     spin_mode: str = SPIN_MODE_RANDOM_ZERO_NET,
     qe_spin_output_path: Path | None = None,
+    qe_restart_save_dir: Path | None = None,
+    qe_wfc_dir: Path | None = None,
     m_abs: float = 0.35,
+    min_moment: float = 0.3,
+    max_moment: float = 0.8,
     pseudo_dir: str = ".",
     pseudo_file: str = "Fe.pbe-spn-kjpaw_psl.1.0.0.UPF",
     dt_au: float = 20.670,
@@ -651,6 +1093,10 @@ def prepare_bcc_qe_input(
     rescale_exact: bool = True,
     nosym: bool = True,
 ) -> PreparationResult:
+    if magnetic_mode not in SUPPORTED_MAGNETIC_MODES:
+        raise ValueError(
+            f"Unsupported magnetic_mode {magnetic_mode!r}. Supported modes: {', '.join(SUPPORTED_MAGNETIC_MODES)}"
+        )
     chosen_npz = npz_path.resolve() if npz_path is not None else infer_latest_bcc_npz(dataset_dir.resolve())
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -668,32 +1114,69 @@ def prepare_bcc_qe_input(
     target_temperature = float(temperature_k) if temperature_k is not None else parse_temperature_from_name(chosen_npz)
 
     structure_tag = infer_structure_tag(natoms)
-    prefix = f"Fe_{structure_tag}_latest_noncollinear_paramagnetic"
+    if magnetic_mode == MAGNETIC_MODE_COLLINEAR_RANDOM:
+        prefix = f"Fe_{structure_tag}_latest_collinear_random_dlm"
+    else:
+        prefix = f"Fe_{structure_tag}_latest_noncollinear_paramagnetic"
     base_input = output_dir / f"{prefix}_{int(round(target_temperature))}K_base.in"
     final_input = output_dir / f"{prefix}_{int(round(target_temperature))}K_with_velocities.in"
     velocity_block_path = output_dir / f"{prefix}_atomic_velocities_{int(round(target_temperature))}K.txt"
     spin_vectors_path = output_dir / f"{prefix}_spin_vectors.txt"
     spin_parameters_path = output_dir / f"{prefix}_qe_spin_parameters.txt"
-    species_labels = generate_unique_qe_species_labels(natoms)
+    qe_outdir = output_dir / "md"
+    qe_outdir.mkdir(parents=True, exist_ok=True)
 
-    qe_spin_output = None if qe_spin_output_path is None else qe_spin_output_path.resolve()
-    if qe_spin_output is None:
-        spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins(
+    positive_moment_count = 0
+    negative_moment_count = 0
+    qe_spin_output = None
+    angle1 = None
+    angle2 = None
+    if magnetic_mode == MAGNETIC_MODE_COLLINEAR_RANDOM:
+        species_labels = generate_collinear_fe_species_labels(natoms)
+        starting_magnetization, collinear_summary = generate_random_collinear_moments(
             natoms,
-            m_abs=m_abs,
+            min_moment=min_moment,
+            max_moment=max_moment,
             seed=spin_seed,
-            mode=spin_mode,
         )
-        starting_magnetization = np.full(natoms, float(m_abs), dtype=float)
-        spin_source = f"generated:{spin_mode}"
+        spins_cart, net_m = collinear_spins_from_moments(starting_magnetization)
+        spin_source = f"generated:{magnetic_mode}"
+        positive_moment_count = int(collinear_summary["positive_count"])
+        negative_moment_count = int(collinear_summary["negative_count"])
+        print_collinear_moment_summary(starting_magnetization)
     else:
-        spin_guess = parse_qe_atom_resolved_spin_guess(qe_spin_output, natoms=natoms)
-        spins_cart = spin_guess.moment_cart_bohr
-        angle1 = spin_guess.angle1
-        angle2 = spin_guess.angle2
-        starting_magnetization = spin_guess.starting_magnetization
-        net_m = np.sum(spins_cart, axis=0)
-        spin_source = f"qe_output:{qe_spin_output.name}"
+        species_labels = generate_unique_qe_species_labels(natoms)
+        qe_spin_output = None if qe_spin_output_path is None else qe_spin_output_path.resolve()
+        if qe_spin_output is None:
+            spins_cart, angle1, angle2, net_m = generate_paramagnetic_spins(
+                natoms,
+                m_abs=m_abs,
+                seed=spin_seed,
+                mode=spin_mode,
+            )
+            starting_magnetization = np.full(natoms, float(m_abs), dtype=float)
+            spin_source = f"generated:{spin_mode}"
+        else:
+            spin_guess = parse_qe_atom_resolved_spin_guess(qe_spin_output, natoms=natoms)
+            spins_cart = spin_guess.moment_cart_bohr
+            angle1 = spin_guess.angle1
+            angle2 = spin_guess.angle2
+            starting_magnetization = spin_guess.starting_magnetization
+            net_m = np.sum(spins_cart, axis=0)
+            spin_source = f"qe_output:{qe_spin_output.name}"
+
+    restart_seed = None
+    if qe_restart_save_dir is not None:
+        restart_seed = stage_qe_restart_seed(
+            qe_restart_save_dir,
+            target_outdir=qe_outdir,
+            target_prefix=prefix,
+            wfc_dir=qe_wfc_dir,
+        )
+    restart_mode = "from_scratch"
+    outdir = "./md"
+    startingpot = "file" if restart_seed is not None and restart_seed.density_seeded else None
+    startingwfc = "file" if restart_seed is not None and restart_seed.wfc_seeded else None
 
     write_spin_vectors_txt(spins_cart, spin_vectors_path)
     write_qe_spin_parameters_txt(
@@ -703,28 +1186,56 @@ def prepare_bcc_qe_input(
         starting_magnetization=starting_magnetization,
     )
 
-    base_text = build_noncollinear_md_input(
-        frac_positions,
-        cell_ang,
-        species_labels=species_labels,
-        prefix=prefix,
-        pseudo_dir=pseudo_dir,
-        pseudo_file=pseudo_file,
-        temperature_k=target_temperature,
-        dt_au=dt_au,
-        nstep=nstep,
-        ecutwfc=ecutwfc,
-        ecutrho=ecutrho,
-        degauss=degauss,
-        k_grid=k_grid,
-        angle1=angle1,
-        angle2=angle2,
-        starting_magnetization=starting_magnetization,
-        constrained_magnetization=constrained_magnetization,
-        lambda_value=lambda_value,
-        mixing_beta=mixing_beta,
-        nosym=nosym,
-    )
+    if magnetic_mode == MAGNETIC_MODE_COLLINEAR_RANDOM:
+        base_text = build_collinear_md_input(
+            frac_positions,
+            cell_ang,
+            species_labels=species_labels,
+            prefix=prefix,
+            pseudo_dir=pseudo_dir,
+            pseudo_file=pseudo_file,
+            outdir=outdir,
+            restart_mode=restart_mode,
+            startingpot=startingpot,
+            startingwfc=startingwfc,
+            temperature_k=target_temperature,
+            dt_au=dt_au,
+            nstep=nstep,
+            ecutwfc=ecutwfc,
+            ecutrho=ecutrho,
+            degauss=degauss,
+            k_grid=k_grid,
+            starting_magnetization=starting_magnetization,
+            mixing_beta=mixing_beta,
+            nosym=nosym,
+        )
+    else:
+        base_text = build_noncollinear_md_input(
+            frac_positions,
+            cell_ang,
+            species_labels=species_labels,
+            prefix=prefix,
+            pseudo_dir=pseudo_dir,
+            pseudo_file=pseudo_file,
+            outdir=outdir,
+            restart_mode=restart_mode,
+            startingpot=startingpot,
+            startingwfc=startingwfc,
+            temperature_k=target_temperature,
+            dt_au=dt_au,
+            nstep=nstep,
+            ecutwfc=ecutwfc,
+            ecutrho=ecutrho,
+            degauss=degauss,
+            k_grid=k_grid,
+            angle1=angle1,
+            angle2=angle2,
+            starting_magnetization=starting_magnetization,
+            constrained_magnetization=constrained_magnetization,
+            lambda_value=lambda_value,
+            mixing_beta=mixing_beta,
+            nosym=nosym,
+        )
     base_species_labels = extract_card_labels(base_text, "ATOMIC_SPECIES", min_fields=3)
     base_position_labels = extract_card_labels(base_text, "ATOMIC_POSITIONS", min_fields=4)
     validate_label_consistency(base_species_labels, base_position_labels, base_position_labels)
@@ -773,12 +1284,23 @@ def prepare_bcc_qe_input(
         spin_vectors=spin_vectors_path,
         spin_parameters=spin_parameters_path,
         net_magnetization=(float(net_m[0]), float(net_m[1]), float(net_m[2])),
-        spin_mode=spin_mode,
+        magnetic_mode=magnetic_mode,
+        spin_mode=spin_mode if magnetic_mode == MAGNETIC_MODE_NONCOLLINEAR_RANDOM else magnetic_mode,
         spin_source=spin_source,
         qe_spin_output_path=qe_spin_output,
+        qe_restart_save_dir=None if qe_restart_save_dir is None else Path(qe_restart_save_dir).resolve(),
+        qe_wfc_dir=None if qe_wfc_dir is None else Path(qe_wfc_dir).resolve(),
+        staged_restart_save_dir=None if restart_seed is None else restart_seed.target_save_dir,
+        restart_density_seeded=False if restart_seed is None else restart_seed.density_seeded,
+        restart_wfc_seeded=False if restart_seed is None else restart_seed.wfc_seeded,
+        staged_wfc_count=0 if restart_seed is None else len(restart_seed.copied_wfc_files),
         mean_starting_magnetization=float(np.mean(starting_magnetization)),
+        mean_absolute_starting_magnetization=float(np.mean(np.abs(starting_magnetization))),
         min_starting_magnetization=float(np.min(starting_magnetization)),
         max_starting_magnetization=float(np.max(starting_magnetization)),
+        positive_moment_count=positive_moment_count,
+        negative_moment_count=negative_moment_count,
+        sum_starting_magnetization=float(np.sum(starting_magnetization)),
         first_labels=tuple(final_species_labels[:10]),
         last_labels=tuple(final_species_labels[-10:]),
         position_velocity_labels_match=(final_position_labels == final_velocity_labels),
