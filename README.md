@@ -226,7 +226,7 @@ The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, 
   <img src="assets/fcc_phonon_dispersion_overlay_6000K.png" alt="FCC phonon dispersion overlay 6000 K" width="48%" />
 </p>
 
-All eight current `fcc` runs are represented in `../dataset/fcc/non-mag` at each of the five temperatures. The `6000 K` thermodynamic fit currently accepts `7` points; `tdep_3.20_6000K` is excluded from the free-energy and pressure curves because it shows imaginary modes, but it is still retained in the raw TDEP workspace. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
+All eight current `fcc` runs are represented in `../dataset/fcc/non-mag` at each of the five temperatures. The `6000 K` thermodynamic fit currently accepts `7` points; `tdep_3.20_6000K` is excluded from the free-energy and pressure curves because it shows imaginary modes, but it is retained in the `6000 K` phonon overlay for reference. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
 
 ## What The Current Scripts Do
 

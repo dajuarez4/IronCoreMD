@@ -196,28 +196,15 @@ def main() -> None:
     if not folders:
         raise FileNotFoundError(f"No TDEP folders found for {args.temperature_label} K in {dataset_dir}")
 
-    if get_phase_spec(args.phase).key == "hcp":
-        valid_folders = folders
-        skipped: list[str] = []
-    else:
-        valid_folders = []
-        skipped = []
-        for folder in folders:
-            if folder_has_valid_free_energy(folder):
-                valid_folders.append(folder)
-            else:
-                skipped.append(folder.name)
-        if not valid_folders:
-            raise ValueError(f"No valid TDEP folders remained after filtering for {args.temperature_label} K")
-
     output = resolve_path(
         dataset_dir,
         args.output if args.output is not None else dispersion_plot_name(args.temperature_label, phase=args.phase),
     )
-    plot(output, valid_folders, args.temperature_label, args.phase)
+    plot(output, folders, args.temperature_label, args.phase)
 
-    for folder_name in skipped:
-        print(f"Skipped {folder_name}: invalid free energy / imaginary modes")
+    unstable_folders = [folder.name for folder in folders if not folder_has_valid_free_energy(folder)]
+    for folder_name in unstable_folders:
+        print(f"Included {folder_name}: invalid free energy / imaginary modes retained in phonon overlay")
     print(f"Wrote {output}")
 
 
