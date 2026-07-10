@@ -290,10 +290,34 @@ def generate_unique_qe_species_labels(natoms: int) -> list[str]:
 def generate_collinear_fe_species_labels(natoms: int) -> list[str]:
     if natoms < 1:
         raise ValueError("Need at least 1 atom to generate collinear QE species labels.")
-    labels = [f"Fe{atom_index}" for atom_index in range(1, natoms + 1)]
-    if len(set(labels)) != natoms:
-        raise ValueError("Generated collinear QE species labels are not unique.")
-    return labels
+    # QE species labels need to stay short and unambiguous across ATOMIC_SPECIES,
+    # ATOMIC_POSITIONS, and ATOMIC_VELOCITIES. Labels like Fe10 / Fe100 are unsafe
+    # because QE may truncate or collide on them during card parsing.
+    return generate_unique_qe_species_labels(natoms)
+
+
+def resolve_collinear_moment_range(
+    min_moment: float,
+    max_moment: float,
+) -> tuple[float, float]:
+    """Return positive moment magnitudes from user-entered collinear bounds.
+
+    Users often think in terms of a signed interval, for example [-0.35, 0.35].
+    Internally we only need the positive magnitude window that will later be
+    assigned random +/- signs atom-by-atom.
+    """
+    min_mag = abs(float(min_moment))
+    max_mag = abs(float(max_moment))
+    if min_mag > max_mag:
+        min_mag, max_mag = max_mag, min_mag
+    if max_mag <= 0.0:
+        raise ValueError(
+            "At least one collinear moment bound must have non-zero magnitude; "
+            f"got min_moment={min_moment}, max_moment={max_moment}."
+        )
+    if min_mag == 0.0:
+        min_mag = max_mag
+    return min_mag, max_mag
 
 
 def validate_collinear_moments(
@@ -303,31 +327,26 @@ def validate_collinear_moments(
     min_moment: float,
     max_moment: float,
 ) -> np.ndarray:
-    if min_moment < 0.0:
-        raise ValueError(f"min_moment must be non-negative, got {min_moment}.")
-    if max_moment <= min_moment:
-        raise ValueError(
-            f"max_moment must be strictly larger than min_moment; got min_moment={min_moment}, max_moment={max_moment}."
-        )
+    min_mag, max_mag = resolve_collinear_moment_range(min_moment, max_moment)
 
     values = np.asarray(moments, dtype=float).reshape(-1)
     if values.shape != (natoms,):
         raise ValueError(f"Expected {natoms} collinear magnetic moments, got shape {values.shape}.")
 
-    inside_excluded = np.abs(values) < min_moment
+    inside_excluded = np.abs(values) < min_mag
     if np.any(inside_excluded):
         bad_values = values[inside_excluded][:10]
         raise ValueError(
             "Some collinear magnetic moments fall inside the excluded interval "
-            f"(-{min_moment}, +{min_moment}). Examples: {bad_values.tolist()}"
+            f"(-{min_mag}, +{min_mag}). Examples: {bad_values.tolist()}"
         )
 
-    outside_allowed = np.abs(values) > max_moment
+    outside_allowed = np.abs(values) > max_mag
     if np.any(outside_allowed):
         bad_values = values[outside_allowed][:10]
         raise ValueError(
             "Some collinear magnetic moments exceed the allowed magnitude "
-            f"{max_moment}. Examples: {bad_values.tolist()}"
+            f"{max_mag}. Examples: {bad_values.tolist()}"
         )
 
     return values
@@ -365,19 +384,17 @@ def generate_random_collinear_moments(
 ) -> tuple[np.ndarray, dict[str, float | int]]:
     if natoms < 1:
         raise ValueError("Need at least 1 atom to generate a collinear random magnetic configuration.")
-    if min_moment < 0.0:
-        raise ValueError(f"min_moment must be non-negative, got {min_moment}.")
-    if max_moment <= min_moment:
-        raise ValueError(
-            f"max_moment must be strictly larger than min_moment; got min_moment={min_moment}, max_moment={max_moment}."
-        )
+    min_mag, max_mag = resolve_collinear_moment_range(min_moment, max_moment)
 
     rng = np.random.default_rng(seed)
     pair_count = natoms // 2
-    pair_magnitudes = rng.uniform(min_moment, max_moment, size=pair_count)
+    if min_mag == max_mag:
+        pair_magnitudes = np.full(pair_count, min_mag, dtype=float)
+    else:
+        pair_magnitudes = rng.uniform(min_mag, max_mag, size=pair_count)
     moments = np.concatenate([pair_magnitudes, -pair_magnitudes])
     if natoms % 2 == 1:
-        extra_moment = rng.uniform(min_moment, max_moment)
+        extra_moment = min_mag if min_mag == max_mag else rng.uniform(min_mag, max_mag)
         extra_sign = rng.choice(np.array([-1.0, 1.0]))
         moments = np.concatenate([moments, [extra_sign * extra_moment]])
     rng.shuffle(moments)
@@ -784,6 +801,18 @@ def print_generation_diagnostic(
     print(f"Position and velocity labels match exactly: {position_labels == velocity_labels}")
 
 
+def normalize_k_grid(k_grid: tuple[int, ...] | list[int]) -> tuple[int, int, int, int, int, int]:
+    values = tuple(int(value) for value in k_grid)
+    if len(values) == 3:
+        return values + (0, 0, 0)
+    if len(values) == 6:
+        return values
+    raise ValueError(
+        "k_grid must contain either 3 integers (kx, ky, kz) or 6 integers "
+        f"(kx, ky, kz, sx, sy, sz); got {values}."
+    )
+
+
 def build_noncollinear_md_input(
     frac_positions: np.ndarray,
     cell_ang: np.ndarray,
@@ -802,7 +831,7 @@ def build_noncollinear_md_input(
     ecutwfc: float,
     ecutrho: float,
     degauss: float,
-    k_grid: tuple[int, int, int],
+    k_grid: tuple[int, ...],
     angle1: np.ndarray,
     angle2: np.ndarray,
     starting_magnetization: float | np.ndarray,
@@ -815,7 +844,7 @@ def build_noncollinear_md_input(
     if len(species_labels) != natoms:
         raise ValueError(f"Expected {natoms} species labels, got {len(species_labels)}.")
     start_mags = resolve_starting_magnetization_array(starting_magnetization, natoms)
-    kx, ky, kz = k_grid
+    kx, ky, kz, sx, sy, sz = normalize_k_grid(k_grid)
 
     lines = [
         "&control",
@@ -881,7 +910,7 @@ def build_noncollinear_md_input(
     )
     lines.extend(["", "CELL_PARAMETERS angstrom"])
     lines.extend(f"{row[0]:.12f} {row[1]:.12f} {row[2]:.12f}" for row in cell_ang)
-    lines.extend(["", "K_POINTS automatic", f"{kx} {ky} {kz} 0 0 0", ""])
+    lines.extend(["", "K_POINTS automatic", f"{kx} {ky} {kz} {sx} {sy} {sz}", ""])
     return "\n".join(lines)
 
 
@@ -903,7 +932,7 @@ def build_collinear_md_input(
     ecutwfc: float,
     ecutrho: float,
     degauss: float,
-    k_grid: tuple[int, int, int],
+    k_grid: tuple[int, ...],
     starting_magnetization: np.ndarray,
     mixing_beta: float,
     nosym: bool,
@@ -912,7 +941,7 @@ def build_collinear_md_input(
     if len(species_labels) != natoms:
         raise ValueError(f"Expected {natoms} species labels, got {len(species_labels)}.")
     start_mags = resolve_starting_magnetization_array(starting_magnetization, natoms)
-    kx, ky, kz = k_grid
+    kx, ky, kz, sx, sy, sz = normalize_k_grid(k_grid)
 
     lines = [
         "&control",
@@ -972,7 +1001,7 @@ def build_collinear_md_input(
     )
     lines.extend(["", "CELL_PARAMETERS angstrom"])
     lines.extend(f"{row[0]:.12f} {row[1]:.12f} {row[2]:.12f}" for row in cell_ang)
-    lines.extend(["", "K_POINTS automatic", f"{kx} {ky} {kz} 0 0 0", ""])
+    lines.extend(["", "K_POINTS automatic", f"{kx} {ky} {kz} {sx} {sy} {sz}", ""])
     return "\n".join(lines)
 
 
@@ -993,7 +1022,7 @@ def build_collinear_random_test_input_from_frame(
     ecutwfc: float = 71.0,
     ecutrho: float = 496.0,
     degauss: float = 0.02,
-    k_grid: tuple[int, int, int] = (1, 1, 1),
+    k_grid: tuple[int, ...] = (1, 1, 1, 0, 0, 0),
     mixing_beta: float = 0.01,
     nosym: bool = True,
 ) -> tuple[str, dict[str, float | int]]:
@@ -1085,7 +1114,7 @@ def prepare_bcc_qe_input(
     ecutwfc: float = 71.0,
     ecutrho: float = 496.0,
     degauss: float = 0.02,
-    k_grid: tuple[int, int, int] = (4, 4, 4),
+    k_grid: tuple[int, ...] = (4, 4, 4, 0, 0, 0),
     constrained_magnetization: bool = True,
     lambda_value: float = 0.2,
     mixing_beta: float = 0.01,
