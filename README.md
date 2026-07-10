@@ -88,9 +88,14 @@ IronCoreMD/
 │   ├── hcp_phonon_dispersion_overlay.png
 │   ├── hcp_phonon_dos_overlay.png
 │   ├── fcc_free_energy_vs_volume_4000K_5000K.png
+│   ├── fcc_free_energy_vs_volume_4000K_4500K_5000K_5500K_6000K.png
 │   ├── fcc_volume_vs_pressure_4000K_5000K.png
+│   ├── fcc_volume_vs_pressure_4000K_4500K_5000K_5500K_6000K.png
 │   ├── fcc_phonon_dispersion_overlay_4000K.png
+│   ├── fcc_phonon_dispersion_overlay_4500K.png
 │   ├── fcc_phonon_dispersion_overlay.png
+│   ├── fcc_phonon_dispersion_overlay_5500K.png
+│   ├── fcc_phonon_dispersion_overlay_6000K.png
 │   ├── qe_live_dashboard.png
 │   └── ...
 └── codes/
@@ -196,16 +201,16 @@ The current `hcp` thermodynamic summary uses `15` accepted points. The newly add
 
 The active `fcc` TDEP workspace now lives outside the repository in `../dataset/fcc/non-mag` to avoid filling `IronCoreMD/dataset/fcc` with the generated `tdep_*` folders and plots.
 
-The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, `4500 K`, `5000 K`, and `5500 K`, for `32` `tdep_*` folders total. The repo assets below are synced from that external FCC workspace.
+The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`, for `40` `tdep_*` folders total. The repo assets below are synced from that external FCC workspace.
 
-`Free Helmholtz energy vs volume` and `pressure vs volume` across `4000 K`, `4500 K`, `5000 K`, and `5500 K`:
+`Free Helmholtz energy vs volume` and `pressure vs volume` across `4000 K`, `4500 K`, `5000 K`, `5500 K`, and `6000 K`:
 
 <p align="center">
-  <img src="assets/fcc_free_energy_vs_volume_4000K_4500K_5000K_5500K.png" alt="FCC free energy comparison for 4000 K, 4500 K, 5000 K, and 5500 K" width="48%" />
-  <img src="assets/fcc_volume_vs_pressure_4000K_4500K_5000K_5500K.png" alt="FCC pressure-volume comparison for 4000 K, 4500 K, 5000 K, and 5500 K" width="48%" />
+  <img src="assets/fcc_free_energy_vs_volume_4000K_4500K_5000K_5500K_6000K.png" alt="FCC free energy comparison for 4000 K, 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
+  <img src="assets/fcc_volume_vs_pressure_4000K_4500K_5000K_5500K_6000K.png" alt="FCC pressure-volume comparison for 4000 K, 4500 K, 5000 K, 5500 K, and 6000 K" width="48%" />
 </p>
 
-`Phonon dispersion and total DOS overlays` for all four FCC temperatures:
+`Phonon dispersion and total DOS overlays` for all five FCC temperatures:
 
 <p align="center">
   <img src="assets/fcc_phonon_dispersion_overlay_4000K.png" alt="FCC phonon dispersion overlay 4000 K" width="48%" />
@@ -217,7 +222,11 @@ The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, 
   <img src="assets/fcc_phonon_dispersion_overlay_5500K.png" alt="FCC phonon dispersion overlay 5500 K" width="48%" />
 </p>
 
-All eight current `fcc` runs are included at each of the four temperatures in `../dataset/fcc/non-mag`. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
+<p align="center">
+  <img src="assets/fcc_phonon_dispersion_overlay_6000K.png" alt="FCC phonon dispersion overlay 6000 K" width="48%" />
+</p>
+
+All eight current `fcc` runs are represented in `../dataset/fcc/non-mag` at each of the five temperatures. The `6000 K` thermodynamic fit currently accepts `7` points; `tdep_3.20_6000K` is excluded from the free-energy and pressure curves because it shows imaginary modes, but it is still retained in the raw TDEP workspace. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
 
 ## What The Current Scripts Do
 
