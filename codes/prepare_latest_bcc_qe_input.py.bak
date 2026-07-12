@@ -24,7 +24,6 @@ import numpy as np
 
 from generate_qe_maxwell_velocities import (
     format_atomic_velocities_card,
-    finalize_velocities_for_qe,
     read_qe_species_sequence,
     remove_center_of_mass_drift_au,
     replace_or_append_atomic_velocities,
@@ -890,7 +889,6 @@ def build_noncollinear_md_input(
     lines.extend(
         [
             "    conv_thr=1.0d-4",
-            "    electron_maxstep=500",
             f"    mixing_beta={mixing_beta:.4f}d0",
             "/",
             " &ions",
@@ -982,7 +980,6 @@ def build_collinear_md_input(
     lines.extend(
         [
             "    conv_thr=1.0d-4",
-            "    electron_maxstep=500",
             f"    mixing_beta={mixing_beta:.4f}d0",
             "/",
             " &ions",
@@ -1081,9 +1078,14 @@ def build_collinear_random_test_input_from_frame(
 
     masses_amu = np.full(natoms_preview, 55.845, dtype=float)
     velocities_au = sample_maxwell_velocities_au(masses_amu, target_temperature, velocity_seed)
-    velocities_au, velocity_block, _ = finalize_velocities_for_qe(
-        species_labels, velocities_au, masses_amu, target_temperature
+    velocities_au = remove_center_of_mass_drift_au(velocities_au, masses_amu)
+    velocities_au = rescale_to_temperature_au(
+        velocities_au,
+        masses_amu,
+        target_temperature,
+        remove_com=True,
     )
+    velocity_block = format_atomic_velocities_card(species_labels, velocities_au)
     final_text = replace_or_append_atomic_velocities(base_text, velocity_block)
     return final_text, summary
 
@@ -1270,21 +1272,21 @@ def prepare_bcc_qe_input(
 
     labels, masses_amu = read_qe_species_sequence(base_input)
     velocities_au = sample_maxwell_velocities_au(masses_amu, target_temperature, velocity_seed)
-    if remove_com_drift and rescale_exact:
-        velocities_au, velocity_block, measured_temperature = finalize_velocities_for_qe(
-            labels, velocities_au, masses_amu, target_temperature
-        )
-    else:
-        if remove_com_drift:
-            velocities_au = remove_center_of_mass_drift_au(velocities_au, masses_amu)
-        if rescale_exact:
-            velocities_au = rescale_to_temperature_au(
-                velocities_au, masses_amu, target_temperature, remove_com=remove_com_drift
-            )
-        measured_temperature = temperature_from_velocities_au(
-            velocities_au, masses_amu, remove_com=remove_com_drift
-        )
-        velocity_block = format_atomic_velocities_card(labels, velocities_au)
+    if remove_com_drift:
+        velocities_au = remove_center_of_mass_drift_au(velocities_au, masses_amu)
+    if rescale_exact:
+        velocities_au = rescale_to_temperature_au(
+            velocities_au,
+            masses_amu,
+            target_temperature,
+            remove_com=remove_com_drift,
+    )
+    measured_temperature = temperature_from_velocities_au(
+        velocities_au,
+        masses_amu,
+        remove_com=remove_com_drift,
+    )
+    velocity_block = format_atomic_velocities_card(labels, velocities_au)
     velocity_labels = extract_card_labels(velocity_block, "ATOMIC_VELOCITIES", min_fields=4)
     validate_label_consistency(base_species_labels, base_position_labels, velocity_labels)
     velocity_block_path.write_text(velocity_block)

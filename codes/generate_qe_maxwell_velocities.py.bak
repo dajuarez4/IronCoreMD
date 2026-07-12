@@ -18,15 +18,9 @@ from pathlib import Path
 
 import numpy as np
 
-KB_SI = 1.380649e-23  # J/K
-AMU_SI = 1.66053906660e-27  # kg
-BOHR_M = 5.29177210903e-11  # m
-HARTREE_ATOMIC_TIME_S = 2.4188843265864e-17  # s
-RYDBERG_ATOMIC_TIME_S = 2.0 * HARTREE_ATOMIC_TIME_S  # s
-HARTREE_VELOCITY_UNIT_M_PER_S = BOHR_M / HARTREE_ATOMIC_TIME_S
-QE_VELOCITY_UNIT_M_PER_S = BOHR_M / RYDBERG_ATOMIC_TIME_S
-PRE_FORMAT_RELATIVE_TOLERANCE = 1.0e-8
-POST_FORMAT_RELATIVE_TOLERANCE = 1.0e-12
+KB_SI = 1.380649e-23
+AMU_SI = 1.66053906660e-27
+AU_VELOCITY_SI = 2.18769126364e6
 
 CARD_PREFIXES = (
     "&CONTROL",
@@ -158,9 +152,8 @@ def read_qe_species_sequence(path: Path) -> tuple[list[str], np.ndarray]:
 
 
 def sigma_au(mass_amu: np.ndarray, temperature_k: float) -> np.ndarray:
-    """Return Maxwell component widths in QE Rydberg atomic velocity units."""
     sigma_si = np.sqrt(KB_SI * temperature_k / (mass_amu * AMU_SI))
-    return sigma_si / QE_VELOCITY_UNIT_M_PER_S
+    return sigma_si / AU_VELOCITY_SI
 
 
 def sample_maxwell_velocities_au(
@@ -183,9 +176,7 @@ def temperature_from_velocities_au(
     masses_amu: np.ndarray,
     remove_com: bool = True,
 ) -> float:
-    kinetic_joule = 0.5 * np.sum(
-        (masses_amu[:, None] * AMU_SI) * (velocities_au * QE_VELOCITY_UNIT_M_PER_S) ** 2
-    )
+    kinetic_joule = 0.5 * np.sum((masses_amu[:, None] * AMU_SI) * (velocities_au * AU_VELOCITY_SI) ** 2)
     dof = 3 * len(masses_amu) - (3 if remove_com else 0)
     if dof <= 0:
         raise ValueError("Non-positive number of degrees of freedom.")
@@ -209,50 +200,6 @@ def format_atomic_velocities_card(labels: list[str], velocities_au: np.ndarray) 
     for label, velocity in zip(labels, velocities_au):
         lines.append(f"{label:4s} {velocity[0]: .16e} {velocity[1]: .16e} {velocity[2]: .16e}")
     return "\n".join(lines) + "\n"
-
-
-def parse_atomic_velocities(lines: list[str]) -> tuple[list[str], np.ndarray]:
-    start = find_card_start(lines, "ATOMIC_VELOCITIES")
-    end = card_end_index(lines, start)
-    labels: list[str] = []
-    velocities: list[list[float]] = []
-    for line in lines[start + 1 : end]:
-        stripped = line.strip()
-        if not stripped or stripped.startswith(("!", "#")):
-            continue
-        fields = stripped.replace("D", "E").replace("d", "e").split()
-        if len(fields) < 4:
-            continue
-        labels.append(fields[0])
-        velocities.append([float(value) for value in fields[1:4]])
-    if not velocities:
-        raise ValueError("No ATOMIC_VELOCITIES entries found.")
-    return labels, np.asarray(velocities, dtype=float)
-
-
-def finalize_velocities_for_qe(
-    labels: list[str],
-    velocities_au: np.ndarray,
-    masses_amu: np.ndarray,
-    target_temperature_k: float,
-) -> tuple[np.ndarray, str, float]:
-    """Remove COM drift, normalize, and verify the exact values formatted for QE."""
-    finalized = remove_center_of_mass_drift_au(velocities_au, masses_amu)
-    finalized = rescale_to_temperature_au(finalized, masses_amu, target_temperature_k, remove_com=True)
-    calculated_temperature = temperature_from_velocities_au(finalized, masses_amu, remove_com=True)
-    relative_error = abs(calculated_temperature / target_temperature_k - 1.0)
-    if relative_error > PRE_FORMAT_RELATIVE_TOLERANCE:
-        raise ValueError(f"Velocity temperature error before formatting is {relative_error:.3e}.")
-
-    velocity_block = format_atomic_velocities_card(labels, finalized)
-    formatted_labels, formatted = parse_atomic_velocities(velocity_block.splitlines())
-    if formatted_labels != labels:
-        raise ValueError("Velocity labels changed while formatting the QE card.")
-    formatted_temperature = temperature_from_velocities_au(formatted, masses_amu, remove_com=True)
-    formatted_relative_error = abs(formatted_temperature / target_temperature_k - 1.0)
-    if formatted_relative_error > POST_FORMAT_RELATIVE_TOLERANCE:
-        raise ValueError(f"Velocity temperature error after formatting is {formatted_relative_error:.3e}.")
-    return formatted, velocity_block, formatted_temperature
 
 
 def replace_or_append_atomic_velocities(qe_text: str, velocity_block: str) -> str:
@@ -282,22 +229,23 @@ def main() -> None:
     labels, masses_amu = read_qe_species_sequence(args.input_qe)
     velocities = sample_maxwell_velocities_au(masses_amu, args.temperature, args.seed)
 
-    if not args.keep_com_drift and not args.no_rescale_exact:
-        velocities, velocity_block, measured_temperature = finalize_velocities_for_qe(
-            labels, velocities, masses_amu, args.temperature
-        )
-    else:
-        if not args.keep_com_drift:
-            velocities = remove_center_of_mass_drift_au(velocities, masses_amu)
-        if not args.no_rescale_exact:
-            velocities = rescale_to_temperature_au(
-                velocities, masses_amu, args.temperature, remove_com=not args.keep_com_drift
-            )
-        measured_temperature = temperature_from_velocities_au(
-            velocities, masses_amu, remove_com=not args.keep_com_drift
-        )
-        velocity_block = format_atomic_velocities_card(labels, velocities)
+    if not args.keep_com_drift:
+        velocities = remove_center_of_mass_drift_au(velocities, masses_amu)
 
+    if not args.no_rescale_exact:
+        velocities = rescale_to_temperature_au(
+            velocities,
+            masses_amu,
+            args.temperature,
+            remove_com=not args.keep_com_drift,
+        )
+
+    measured_temperature = temperature_from_velocities_au(
+        velocities,
+        masses_amu,
+        remove_com=not args.keep_com_drift,
+    )
+    velocity_block = format_atomic_velocities_card(labels, velocities)
 
     output_block = args.output_block if args.output_block.is_absolute() else args.input_qe.parent / args.output_block
     output_block.write_text(velocity_block)
