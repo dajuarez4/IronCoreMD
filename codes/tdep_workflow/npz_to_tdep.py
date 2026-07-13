@@ -106,6 +106,9 @@ def max_wrapped_difference(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def matching_ideal_npz(path: Path) -> Path:
+    explicit_ideal = path.with_name(f"{path.stem}-ideal.npz")
+    if explicit_ideal.exists():
+        return explicit_ideal
     if not path.name.endswith("-disp.npz"):
         return path
     candidate = path.with_name(path.name.replace("-disp.npz", ".npz"))

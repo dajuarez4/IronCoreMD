@@ -47,7 +47,7 @@ re_pressure = re.compile(r"P=\s*(" + FLOAT_RE + r")")
 re_total_mag = re.compile(r"total magnetization\s*=\s*(" + FLOAT_RE + r")")
 re_abs_mag = re.compile(r"absolute magnetization\s*=\s*(" + FLOAT_RE + r")")
 re_force_line = re.compile(
-    r"atom\s+\d+\s+type\s+\d+\s+force\s*=\s*("
+    r"atom\s+(\d+)\s+type\s+(?:\d+|\*+)\s+force\s*=\s*("
     + FLOAT_RE + r")\s+(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r")"
 )
 re_tau_line = re.compile(
@@ -272,13 +272,14 @@ def parse_atomic_positions_block(lines, start_idx, natoms):
     return np.asarray(pos, dtype=np.float64), np.asarray(syms, dtype="U8"), unit, idx
 
 def parse_forces_block(lines, start_idx, natoms):
-    forces = []
+    forces = {}
     idx = start_idx + 1
 
     while idx < len(lines) and len(forces) < natoms:
         m = re_force_line.search(lines[idx])
         if m:
-            forces.append([float(m.group(1)), float(m.group(2)), float(m.group(3))])
+            atom_index = int(m.group(1))
+            forces[atom_index] = [float(m.group(2)), float(m.group(3)), float(m.group(4))]
         elif len(forces) > 0 and lines[idx].strip() == "":
             break
         idx += 1
@@ -286,7 +287,7 @@ def parse_forces_block(lines, start_idx, natoms):
     if len(forces) != natoms:
         raise ValueError(f"Expected {natoms} forces, found {len(forces)}")
 
-    return np.asarray(forces, dtype=np.float64), idx
+    return np.asarray([forces[atom_index] for atom_index in range(1, natoms + 1)], dtype=np.float64), idx
 
 # ============================================================
 # MAIN PARSER
@@ -593,5 +594,3 @@ if __name__ == "__main__":
         save_fmt=SAVE_FMT,
         choose_mode=CHOOSE_IF_MULTIPLE,
     )
-
-
