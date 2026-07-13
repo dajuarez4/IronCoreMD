@@ -39,6 +39,7 @@ FAKE_SPECIES_LETTERS = string.ascii_uppercase
 MAX_FAKE_SPECIES = len(FAKE_SPECIES_LETTERS) * 99
 SPIN_MODE_RANDOM_ZERO_NET = "random_zero_net"
 SPIN_MODE_QUASI_RANDOM_ZERO_NET = "quasi_random_zero_net"
+SPIN_MODE_MAGNETIC_SQS = "magnetic_sqs"
 MAGNETIC_MODE_NONCOLLINEAR_RANDOM = "noncollinear_random"
 MAGNETIC_MODE_COLLINEAR_RANDOM = "collinear_random"
 QE_FLOAT_RE = r"[+\-]?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[EeDd][+\-]?\d+)?"
@@ -54,6 +55,7 @@ QE_ATOM_SPIN_BLOCK_RE = re.compile(
 SUPPORTED_SPIN_MODES = (
     SPIN_MODE_RANDOM_ZERO_NET,
     SPIN_MODE_QUASI_RANDOM_ZERO_NET,
+    SPIN_MODE_MAGNETIC_SQS,
 )
 SUPPORTED_MAGNETIC_MODES = (
     MAGNETIC_MODE_NONCOLLINEAR_RANDOM,
@@ -501,17 +503,111 @@ def generate_paramagnetic_spins_quasi_random_zero_net(
     return spins_from_directions(directions, m_abs)
 
 
+def magnetic_neighbor_shells(
+    fractional_positions: np.ndarray,
+    cell_ang: np.ndarray,
+    nshells: int = 5,
+    distance_tolerance_ang: float = 1.0e-4,
+) -> list[np.ndarray]:
+    positions = np.asarray(fractional_positions, dtype=float)
+    cell = np.asarray(cell_ang, dtype=float)
+    pairs: list[tuple[float, int, int]] = []
+    for first in range(len(positions)):
+        delta = positions[first + 1 :] - positions[first]
+        delta -= np.rint(delta)
+        distances = np.linalg.norm(delta @ cell, axis=1)
+        pairs.extend((float(distance), first, first + 1 + offset) for offset, distance in enumerate(distances))
+    pairs.sort(key=lambda item: item[0])
+
+    shells: list[list[tuple[int, int]]] = []
+    shell_distance = None
+    for distance, first, second in pairs:
+        if distance < distance_tolerance_ang:
+            continue
+        if shell_distance is None or abs(distance - shell_distance) > distance_tolerance_ang:
+            if len(shells) == nshells:
+                break
+            shells.append([])
+            shell_distance = distance
+        shells[-1].append((first, second))
+    if len(shells) != nshells:
+        raise ValueError(f"Found {len(shells)} magnetic neighbor shells, expected {nshells}.")
+    return [np.asarray(shell, dtype=int) for shell in shells]
+
+
+def magnetic_shell_correlations(directions: np.ndarray, shells: list[np.ndarray]) -> np.ndarray:
+    vectors = np.asarray(directions, dtype=float)
+    return np.asarray(
+        [np.mean(np.sum(vectors[pairs[:, 0]] * vectors[pairs[:, 1]], axis=1)) for pairs in shells],
+        dtype=float,
+    )
+
+
+def magnetic_sqs_objective(directions: np.ndarray, shells: list[np.ndarray]) -> float:
+    correlations = magnetic_shell_correlations(directions, shells)
+    return float(np.mean(correlations**2))
+
+
+def generate_paramagnetic_spins_magnetic_sqs(
+    fractional_positions: np.ndarray,
+    cell_ang: np.ndarray,
+    m_abs: float = 0.35,
+    seed: int | None = None,
+    nshells: int = 5,
+    optimization_steps: int = 20000,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    natoms = len(fractional_positions)
+    if natoms % 2 != 0:
+        raise ValueError("The magnetic SQS generator requires an even number of atoms.")
+    rng = np.random.default_rng(seed)
+    half = natoms // 2
+    indices = np.arange(half, dtype=float)
+    golden_angle = np.pi * (3.0 - np.sqrt(5.0))
+    z = 1.0 - 2.0 * (indices + 0.5) / half
+    radial = np.sqrt(np.clip(1.0 - z * z, 0.0, None))
+    base = np.column_stack((radial * np.cos(golden_angle * indices), radial * np.sin(golden_angle * indices), z))
+    directions = np.vstack([base, -base]) @ random_rotation_matrix(rng).T
+    rng.shuffle(directions, axis=0)
+
+    shells = magnetic_neighbor_shells(fractional_positions, cell_ang, nshells=nshells)
+    score = magnetic_sqs_objective(directions, shells)
+    best = directions.copy()
+    best_score = score
+    initial_temperature = max(score, 1.0e-5)
+    for step in range(optimization_steps):
+        first, second = rng.choice(natoms, size=2, replace=False)
+        directions[[first, second]] = directions[[second, first]]
+        candidate = magnetic_sqs_objective(directions, shells)
+        annealing_temperature = initial_temperature * max(1.0e-4, 1.0 - step / optimization_steps) ** 2
+        if candidate <= score or rng.random() < np.exp((score - candidate) / annealing_temperature):
+            score = candidate
+            if candidate < best_score:
+                best_score = candidate
+                best = directions.copy()
+        else:
+            directions[[first, second]] = directions[[second, first]]
+    return spins_from_directions(best, m_abs)
+
+
 def generate_paramagnetic_spins(
     natoms: int,
     *,
     m_abs: float = 0.35,
     seed: int | None = None,
     mode: str = SPIN_MODE_RANDOM_ZERO_NET,
+    fractional_positions: np.ndarray | None = None,
+    cell_ang: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     if mode == SPIN_MODE_RANDOM_ZERO_NET:
         return generate_paramagnetic_spins_zero_net(natoms, m_abs=m_abs, seed=seed)
     if mode == SPIN_MODE_QUASI_RANDOM_ZERO_NET:
         return generate_paramagnetic_spins_quasi_random_zero_net(natoms, m_abs=m_abs, seed=seed)
+    if mode == SPIN_MODE_MAGNETIC_SQS:
+        if fractional_positions is None or cell_ang is None:
+            raise ValueError("magnetic_sqs requires fractional_positions and cell_ang.")
+        return generate_paramagnetic_spins_magnetic_sqs(
+            fractional_positions, cell_ang, m_abs=m_abs, seed=seed
+        )
     raise ValueError(
         f"Unsupported spin mode {mode!r}. Supported modes: {', '.join(SUPPORTED_SPIN_MODES)}"
     )
@@ -1138,6 +1234,10 @@ def prepare_bcc_qe_input(
     fallback_cell = fixed_cell_angstrom(data)
     cell_ang = frame_cell_angstrom(data, resolved_index, fallback_cell)
     frac_positions = wrap_fractional(frame_positions_fractional(data, resolved_index, cell_ang))
+    ideal_frac_positions = wrap_fractional(
+        np.asarray(data["initial_positions_alat"], dtype=float)
+        @ np.linalg.inv(np.asarray(data["initial_cell_alat"], dtype=float))
+    )
     target_temperature = float(temperature_k) if temperature_k is not None else parse_temperature_from_name(chosen_npz)
 
     structure_tag = infer_structure_tag(natoms)
@@ -1180,7 +1280,17 @@ def prepare_bcc_qe_input(
                 m_abs=m_abs,
                 seed=spin_seed,
                 mode=spin_mode,
+                fractional_positions=ideal_frac_positions,
+                cell_ang=cell_ang,
             )
+            if spin_mode == SPIN_MODE_MAGNETIC_SQS:
+                sqs_shells = magnetic_neighbor_shells(ideal_frac_positions, cell_ang)
+                sqs_correlations = magnetic_shell_correlations(spins_cart / float(m_abs), sqs_shells)
+                print(
+                    "Magnetic SQS shell correlations: "
+                    + " ".join(f"shell{index}={value:+.8f}" for index, value in enumerate(sqs_correlations, start=1))
+                )
+                print(f"Magnetic SQS objective: {np.mean(sqs_correlations**2):.12e}")
             starting_magnetization = np.full(natoms, float(m_abs), dtype=float)
             spin_source = f"generated:{spin_mode}"
         else:
