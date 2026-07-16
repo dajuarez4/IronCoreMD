@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import json
@@ -28,7 +29,7 @@ RY_TO_EV = 13.605693009
 RY_BOHR_TO_EV_ANG = RY_TO_EV / BOHR_TO_ANG
 KBAR_TO_GPA = 0.1
 
-FLOAT_RE = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][-+]?\d+)?"
+FLOAT_RE = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[EeDd][-+]?\d+)?"
 
 # ============================================================
 # REGEX
@@ -47,7 +48,7 @@ re_pressure = re.compile(r"P=\s*(" + FLOAT_RE + r")")
 re_total_mag = re.compile(r"total magnetization\s*=\s*(" + FLOAT_RE + r")")
 re_abs_mag = re.compile(r"absolute magnetization\s*=\s*(" + FLOAT_RE + r")")
 re_force_line = re.compile(
-    r"atom\s+(\d+)\s+type\s+(?:\d+|\*+)\s+force\s*=\s*("
+    r"atom\s+(\d+)\s+type\s+\S+\s+force\s*=\s*("
     + FLOAT_RE + r")\s+(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r")"
 )
 re_tau_line = re.compile(
@@ -79,20 +80,12 @@ def parse_three_floats(line):
     vals = re.findall(FLOAT_RE, line)
     if len(vals) < 3:
         raise ValueError(f"Could not parse 3 floats from line:\n{line}")
-    return np.array([float(vals[0]), float(vals[1]), float(vals[2])], dtype=np.float64)
+    return np.array([parse_qe_float(vals[0]), parse_qe_float(vals[1]), parse_qe_float(vals[2])], dtype=np.float64)
 
 
-# ============================================================
-# cell parameter from input
-# ============================================================
+def parse_qe_float(value):
+    return float(value.replace("D", "E").replace("d", "e"))
 
-FLOAT_RE = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[Ee][-+]?\d+)?"
-
-def parse_three_floats(line):
-    vals = re.findall(FLOAT_RE, line)
-    if len(vals) < 3:
-        raise ValueError(f"Could not parse 3 floats from line:\n{line}")
-    return np.array([float(vals[0]), float(vals[1]), float(vals[2])], dtype=np.float64)
 
 def find_input_file_for_output(out_file):
     out_file = Path(out_file)
@@ -159,7 +152,7 @@ def parse_initial_info(lines):
         if alat_bohr is None:
             m = re_alat.search(line)
             if m:
-                alat_bohr = float(m.group(1))
+                alat_bohr = parse_qe_float(m.group(1))
         if natoms is not None and alat_bohr is not None:
             break
 
@@ -170,7 +163,7 @@ def parse_initial_info(lines):
             for j in range(i + 1, min(i + 8, len(lines))):
                 m = re_ax.search(lines[j])
                 if m:
-                    vecs.append([float(m.group(1)), float(m.group(2)), float(m.group(3))])
+                    vecs.append([parse_qe_float(m.group(1)), parse_qe_float(m.group(2)), parse_qe_float(m.group(3))])
             if len(vecs) == 3:
                 initial_cell_alat = np.asarray(vecs, dtype=np.float64)
                 break
@@ -194,7 +187,7 @@ def parse_initial_info(lines):
                     parts = lj.split()
                     # example: 1 Fe tau(...) = (...)
                     syms.append(parts[1])
-                    pos.append([float(m.group(1)), float(m.group(2)), float(m.group(3))])
+                    pos.append([parse_qe_float(m.group(1)), parse_qe_float(m.group(2)), parse_qe_float(m.group(3))])
                 elif len(pos) > 0:
                     break
 
@@ -263,7 +256,7 @@ def parse_atomic_positions_block(lines, start_idx, natoms):
         if len(parts) < 4:
             break
         syms.append(parts[0])
-        pos.append([float(parts[1]), float(parts[2]), float(parts[3])])
+        pos.append([parse_qe_float(parts[1]), parse_qe_float(parts[2]), parse_qe_float(parts[3])])
         idx += 1
 
     if len(pos) != natoms:
@@ -276,16 +269,35 @@ def parse_forces_block(lines, start_idx, natoms):
     idx = start_idx + 1
 
     while idx < len(lines) and len(forces) < natoms:
-        m = re_force_line.search(lines[idx])
+        line = lines[idx]
+        m = re_force_line.search(line)
         if m:
             atom_index = int(m.group(1))
-            forces[atom_index] = [float(m.group(2)), float(m.group(3)), float(m.group(4))]
-        elif len(forces) > 0 and lines[idx].strip() == "":
+            if not 1 <= atom_index <= natoms:
+                raise ValueError(f"Force atom index {atom_index} is outside 1..{natoms}")
+            forces[atom_index] = [
+                parse_qe_float(m.group(2)),
+                parse_qe_float(m.group(3)),
+                parse_qe_float(m.group(4)),
+            ]
+        elif forces and (
+            "Entering Dynamics:" in line
+            or "ATOMIC_POSITIONS" in line
+            or "CELL_PARAMETERS" in line
+            or "Total force =" in line
+            or "total stress" in line.lower()
+        ):
             break
         idx += 1
 
-    if len(forces) != natoms:
-        raise ValueError(f"Expected {natoms} forces, found {len(forces)}")
+    missing = sorted(set(range(1, natoms + 1)) - forces.keys())
+    if missing:
+        preview = ", ".join(str(value) for value in missing[:12])
+        suffix = "..." if len(missing) > 12 else ""
+        raise ValueError(
+            f"Expected forces for {natoms} atoms, found {len(forces)} unique indices; "
+            f"missing [{preview}{suffix}]"
+        )
 
     return np.asarray([forces[atom_index] for atom_index in range(1, natoms + 1)], dtype=np.float64), idx
 
@@ -293,7 +305,7 @@ def parse_forces_block(lines, start_idx, natoms):
 # MAIN PARSER
 # ============================================================
 
-def parse_qe_aimd_output(filepath):
+def parse_qe_aimd_output(filepath, *, require_forces=True):
     filepath = Path(filepath)
 
     with open(filepath, "r", errors="replace") as f:
@@ -309,6 +321,7 @@ def parse_qe_aimd_output(filepath):
         input_cell_parameters, input_cell_unit = parse_input_cell_parameters(input_file)
     
     frames = []
+    parse_warnings = []
     current = None
     symbols = symbols0.copy()
 
@@ -322,7 +335,8 @@ def parse_qe_aimd_output(filepath):
                 if current["forces_ry_au"] is None:
                     current["forces_ry_au"] = np.full((natoms, 3), np.nan, dtype=np.float64)
                 if current["cell_parameters"] is None:
-                    current["cell_parameters"] = np.full((3, 3), np.nan, dtype=np.float64)
+                    current["cell_parameters"] = initial_cell_alat.copy()
+                    current["cell_parameters_unit"] = "alat"
                 frames.append(current)
 
             current = {
@@ -345,7 +359,7 @@ def parse_qe_aimd_output(filepath):
             if i + 1 < len(lines):
                 mt = re_time_ps.search(lines[i + 1])
                 if mt:
-                    current["time_ps"] = float(mt.group(1))
+                    current["time_ps"] = parse_qe_float(mt.group(1))
 
             i += 1
             continue
@@ -357,8 +371,8 @@ def parse_qe_aimd_output(filepath):
                     current["cell_parameters"] = cellp
                     current["cell_parameters_unit"] = unit
                     continue
-                except Exception:
-                    pass
+                except Exception as exc:
+                    parse_warnings.append(f"iteration {current['iteration']} cell near line {i + 1}: {exc}")
 
             if "ATOMIC_POSITIONS" in line:
                 try:
@@ -367,44 +381,44 @@ def parse_qe_aimd_output(filepath):
                     current["positions_unit"] = unit
                     symbols = syms
                     continue
-                except Exception:
-                    pass
+                except Exception as exc:
+                    parse_warnings.append(f"iteration {current['iteration']} positions near line {i + 1}: {exc}")
 
             if "Forces acting on atoms" in line:
                 try:
                     frc, i = parse_forces_block(lines, i, natoms)
                     current["forces_ry_au"] = frc
                     continue
-                except Exception:
-                    pass
+                except Exception as exc:
+                    parse_warnings.append(f"iteration {current['iteration']} forces near line {i + 1}: {exc}")
 
             mt = re_temperature.search(line)
             if mt:
-                current["temperature_K"] = float(mt.group(1))
+                current["temperature_K"] = parse_qe_float(mt.group(1))
 
             mk = re_ekin.search(line)
             if mk:
-                current["ekin_ry"] = float(mk.group(1))
+                current["ekin_ry"] = parse_qe_float(mk.group(1))
 
             me = re_total_energy.search(line)
             if me:
-                current["energy_ry"] = float(me.group(1))
+                current["energy_ry"] = parse_qe_float(me.group(1))
 
             mie = re_internal_energy.search(line)
             if mie:
-                current["internal_energy_ry"] = float(mie.group(1))
+                current["internal_energy_ry"] = parse_qe_float(mie.group(1))
 
             mp = re_pressure.search(line)
             if mp and "P=" in line:
-                current["pressure_kbar"] = float(mp.group(1))
+                current["pressure_kbar"] = parse_qe_float(mp.group(1))
 
             mm = re_total_mag.search(line)
             if mm:
-                current["mag_total_Bohr"] = float(mm.group(1))
+                current["mag_total_Bohr"] = parse_qe_float(mm.group(1))
 
             mam = re_abs_mag.search(line)
             if mam:
-                current["abs_mag_total_Bohr"] = float(mam.group(1))
+                current["abs_mag_total_Bohr"] = parse_qe_float(mam.group(1))
 
         i += 1
 
@@ -412,7 +426,8 @@ def parse_qe_aimd_output(filepath):
         if current["forces_ry_au"] is None:
             current["forces_ry_au"] = np.full((natoms, 3), np.nan, dtype=np.float64)
         if current["cell_parameters"] is None:
-            current["cell_parameters"] = np.full((3, 3), np.nan, dtype=np.float64)
+            current["cell_parameters"] = initial_cell_alat.copy()
+            current["cell_parameters_unit"] = "alat"
         frames.append(current)
 
     if len(frames) == 0:
@@ -421,6 +436,13 @@ def parse_qe_aimd_output(filepath):
     positions = np.stack([fr["positions"] for fr in frames]).astype(np.float32)
     forces_ry_au = np.stack([fr["forces_ry_au"] for fr in frames]).astype(np.float32)
     cell_parameters = np.stack([fr["cell_parameters"] for fr in frames]).astype(np.float32)
+    force_frame_valid = np.isfinite(forces_ry_au).all(axis=(1, 2))
+    position_frame_valid = np.isfinite(positions).all(axis=(1, 2))
+    frame_valid = force_frame_valid & position_frame_valid
+
+    if require_forces and not force_frame_valid.any():
+        details = parse_warnings[0] if parse_warnings else "no force blocks were found"
+        raise ValueError(f"No complete force frames parsed from {filepath}: {details}")
 
     pos_units = [fr["positions_unit"] for fr in frames]
     cell_units = [fr["cell_parameters_unit"] for fr in frames]
@@ -460,6 +482,9 @@ def parse_qe_aimd_output(filepath):
         "iteration": np.asarray([fr["iteration"] for fr in frames], dtype=np.int32),
         "time_ps": np.asarray([fr["time_ps"] for fr in frames], dtype=np.float32),
         "forces_ry_au": forces_ry_au,
+        "force_frame_valid": force_frame_valid,
+        "position_frame_valid": position_frame_valid,
+        "frame_valid": frame_valid,
         "energy_ry": np.asarray([fr["energy_ry"] for fr in frames], dtype=np.float64),
         "internal_energy_ry": np.asarray([fr["internal_energy_ry"] for fr in frames], dtype=np.float64),
         "temperature_K": np.asarray([fr["temperature_K"] for fr in frames], dtype=np.float32),
@@ -468,6 +493,7 @@ def parse_qe_aimd_output(filepath):
         "mag_total_Bohr": np.asarray([fr["mag_total_Bohr"] for fr in frames], dtype=np.float32),
         "abs_mag_total_Bohr": np.asarray([fr["abs_mag_total_Bohr"] for fr in frames], dtype=np.float32),
         "ekin_ry": np.asarray([fr["ekin_ry"] for fr in frames], dtype=np.float32),
+        "parse_warnings": np.asarray(parse_warnings, dtype="U512"),
     }
 
     return data
@@ -564,6 +590,8 @@ def process_all_simulations(root_dir, output_dir, save_fmt="npz", choose_mode="l
                 "archive": str(outfile),
                 "natoms": int(data["natoms"]),
                 "nsteps": int(data["nsteps"]),
+                "valid_force_frames": int(np.count_nonzero(data["force_frame_valid"])),
+                "parse_warnings": int(len(data["parse_warnings"])),
                 "status": "ok",
             })
 
@@ -587,10 +615,20 @@ def process_all_simulations(root_dir, output_dir, save_fmt="npz", choose_mode="l
 # RUN
 # ============================================================
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Compress Quantum ESPRESSO MD outputs into validated NPZ archives.")
+    parser.add_argument("root_dir", nargs="?", type=Path, default=Path(ROOT_DIR))
+    parser.add_argument("--output-dir", type=Path, default=Path(OUTPUT_DIR))
+    parser.add_argument("--format", choices=("npz", "pkl_xz"), default=SAVE_FMT)
+    parser.add_argument("--choose", choices=("largest", "newest"), default=CHOOSE_IF_MULTIPLE)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
+    args = parse_args()
     process_all_simulations(
-        root_dir=ROOT_DIR,
-        output_dir=OUTPUT_DIR,
-        save_fmt=SAVE_FMT,
-        choose_mode=CHOOSE_IF_MULTIPLE,
+        root_dir=args.root_dir,
+        output_dir=args.output_dir,
+        save_fmt=args.format,
+        choose_mode=args.choose,
     )
