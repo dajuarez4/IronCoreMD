@@ -136,7 +136,7 @@ IronCoreMD/
 
 ## Current Repository State
 
-Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
+Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, a completed collinear-magnetic BCC test case with TDEP phonons at approximately `4000 K`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
 
 ## Current Results
 
@@ -168,6 +168,37 @@ The `bcc` dataset currently includes finite-temperature thermodynamic comparison
   <img src="assets/bcc_phonon_dispersion_overlay_5500K.png" alt="BCC phonon dispersion overlay 5500 K" width="19%" />
   <img src="assets/bcc_phonon_dispersion_overlay_6000K.png" alt="BCC phonon dispersion overlay 6000 K" width="19%" />
 </p>
+
+#### Collinear-magnetic BCC test at 4000 K
+
+A new spin-polarized BCC AIMD trajectory is available under `../dataset/bcc/magnetic-collinear/`. The QE calculation uses a `4 x 4 x 4` conventional BCC supercell with `128` Fe atoms, `nspin=2`, `nosym=.true.`, and atom-resolved randomized initial spin signs with `starting_magnetization(i)=+/-0.35`. This is a collinear disordered-local-moment-style starting configuration; it should not be interpreted as a fully equilibrated magnetic ensemble.
+
+The updated `simulation.npz` archive contains `113` parsed MD frames. One incomplete frame is rejected by the position/force validity filter, leaving `112` frames for TDEP. For the selected frames:
+
+| Quantity | Value |
+|---|---:|
+| Mean temperature | `4038.6 K` |
+| Temperature range | `3510.2-4626.3 K` |
+| Mean pressure | `125.88 GPa` |
+| Pressure range | `123.11-128.46 GPa` |
+| Mean total magnetization | `10.82 Bohr magnetons/cell` |
+| Mean absolute magnetization | `27.32 Bohr magnetons/cell` |
+
+The TDEP conversion uses the ideal BCC lattice stored in `simulation-ideal.npz` as the symmetry reference rather than treating the first thermally displaced AIMD frame as the ideal structure. The resulting force constants have no negative-frequency points on the sampled high-symmetry path.
+
+The figure below compares this collinear-magnetic result with the non-magnetic BCC result at `4000 K` and approximately the same `a = 2.55 A` reference lattice:
+
+<p align="center">
+  <img src="../dataset/bcc/magnetic-collinear/tdep_simulation/phonon_dispersion_magnetic_vs_nonmagnetic_4000K_a2.55.png" alt="BCC collinear-magnetic and non-magnetic phonon dispersion comparison at 4000 K" width="78%" />
+</p>
+
+For this comparison, the magnetic branches extend to `14.103 THz`, compared with `13.924 THz` for the non-magnetic calculation. The mean signed magnetic frequency shift is `+0.260 THz`, and the pointwise RMS difference is `0.497 THz`. TDEP gives vibrational free energies of `-2.50636 eV/atom` for the magnetic trajectory and `-2.51508 eV/atom` for the non-magnetic trajectory. Including the corresponding reference-energy terms, the reported difference is
+
+```text
+Delta F = F_magnetic - F_non-magnetic = +0.01030 eV/atom
+```
+
+At this sampled state, the positive value places the collinear-magnetic result about `10.3 meV/atom` above the non-magnetic result. This is a single-state comparison and not yet a converged magnetic phase boundary; additional independent spin configurations, longer trajectories, and matched volume/pressure sampling are needed for a statistically robust magnetic free-energy estimate.
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
