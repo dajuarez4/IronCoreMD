@@ -200,6 +200,20 @@ Delta F = F_magnetic - F_non-magnetic = +0.01030 eV/atom
 
 At this sampled state, the positive value places the collinear-magnetic result about `10.3 meV/atom` above the non-magnetic result. This is a single-state comparison and not yet a converged magnetic phase boundary; additional independent spin configurations, longer trajectories, and matched volume/pressure sampling are needed for a statistically robust magnetic free-energy estimate.
 
+The updated three-state comparison below also includes the preliminary
+noncollinear calculation:
+
+<p align="center">
+  <img src="../dataset/bcc/magnetic-collinear/tdep_simulation/phonon_dispersion_nonmagnetic_collinear_noncollinear_4000K_a2.55.png" alt="BCC non-magnetic, collinear, and noncollinear phonon comparison at 4000 K" width="92%" />
+</p>
+
+The noncollinear branches extend to `14.347 THz`. Their RMS differences from
+the collinear and non-magnetic dispersions are `0.663 THz` and `0.572 THz`,
+respectively. Unlike the other curves, the noncollinear result contains only
+two complete force snapshots. Its phonons and reported free energy are
+diagnostic and must not yet be interpreted as a converged thermodynamic
+comparison.
+
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
 <p align="center">
