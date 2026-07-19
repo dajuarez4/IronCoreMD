@@ -935,6 +935,9 @@ def build_noncollinear_md_input(
     constrained_magnetization: bool,
     lambda_value: float,
     mixing_beta: float,
+    mixing_mode: str | None,
+    mixing_ndim: int | None,
+    diagonalization: str | None,
     nosym: bool,
 ) -> str:
     natoms = len(frac_positions)
@@ -987,7 +990,17 @@ def build_noncollinear_md_input(
         [
             "    conv_thr=1.0d-4",
             "    electron_maxstep=500",
-            f"    mixing_beta={mixing_beta:.4f}d0",
+        ]
+    )
+    if mixing_mode is not None:
+        lines.append(f"    mixing_mode='{mixing_mode}'")
+    lines.append(f"    mixing_beta={mixing_beta:.4f}d0")
+    if mixing_ndim is not None:
+        lines.append(f"    mixing_ndim={int(mixing_ndim)}")
+    if diagonalization is not None:
+        lines.append(f"    diagonalization='{diagonalization}'")
+    lines.extend(
+        [
             "/",
             " &ions",
             "    pot_extrapolation='second_order'",
@@ -1212,6 +1225,9 @@ def prepare_bcc_qe_input(
     constrained_magnetization: bool = True,
     lambda_value: float = 0.2,
     mixing_beta: float = 0.01,
+    mixing_mode: str | None = None,
+    mixing_ndim: int | None = None,
+    diagonalization: str | None = None,
     remove_com_drift: bool = True,
     rescale_exact: bool = True,
     nosym: bool = True,
@@ -1371,6 +1387,9 @@ def prepare_bcc_qe_input(
             constrained_magnetization=constrained_magnetization,
             lambda_value=lambda_value,
             mixing_beta=mixing_beta,
+            mixing_mode=mixing_mode,
+            mixing_ndim=mixing_ndim,
+            diagonalization=diagonalization,
             nosym=nosym,
         )
     base_species_labels = extract_card_labels(base_text, "ATOMIC_SPECIES", min_fields=3)

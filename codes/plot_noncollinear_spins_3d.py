@@ -226,6 +226,14 @@ def main() -> int:
     spins = magnitudes[:, None] * unit_spins
     net_spin = np.sum(spins, axis=0)
     relative_net_spin = float(np.linalg.norm(net_spin) / np.sum(magnitudes))
+    conventional_repetitions = round((len(labels) / 2.0) ** (1.0 / 3.0))
+    if 2 * conventional_repetitions**3 == len(labels):
+        supercell_label = (
+            f"{conventional_repetitions}×{conventional_repetitions}×"
+            f"{conventional_repetitions}"
+        )
+    else:
+        supercell_label = f"{len(labels)}-atom"
 
     csv_path = args.csv or args.output.with_suffix(".csv")
     write_spin_csv(
@@ -268,7 +276,7 @@ def main() -> int:
             normalize=False,
         )
     real_axis.set_title(
-        "Spin Directions in the 4×4×4 BCC Supercell",
+        f"Spin Directions in the {supercell_label} BCC Supercell",
         fontsize=14,
         fontweight="bold",
         pad=14,
