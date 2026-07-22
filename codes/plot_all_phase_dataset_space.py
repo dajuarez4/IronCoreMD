@@ -268,12 +268,12 @@ def set_publication_style():
     plt.rcParams.update(
         {
             "font.family": "DejaVu Sans",
-            "font.size": 10,
-            "axes.titlesize": 12,
-            "axes.labelsize": 11,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-            "legend.fontsize": 9,
+            "font.size": 15,
+            "axes.titlesize": 18,
+            "axes.labelsize": 17,
+            "xtick.labelsize": 14,
+            "ytick.labelsize": 14,
+            "legend.fontsize": 14,
             "axes.linewidth": 0.8,
             "axes.spines.top": False,
             "axes.spines.right": False,
@@ -293,7 +293,7 @@ def add_panel_label(axis, label):
         1.01,
         label,
         transform=axis.transAxes,
-        fontsize=13,
+        fontsize=19,
         fontweight="bold",
         va="bottom",
     )
@@ -306,6 +306,7 @@ def plot_dataset_space(features, labels, summaries, output_base, dpi):
     states = np.asarray([item[1] for item in labels])
 
     figure = plt.figure(figsize=(15.8, 10.2), constrained_layout=True)
+    figure.get_layout_engine().set(rect=(0.0, 0.0, 1.0, 0.92))
     grid = figure.add_gridspec(2, 2, width_ratios=(1.18, 1.0))
     axis_pca = figure.add_subplot(grid[0, 0])
     axis_pt = figure.add_subplot(grid[0, 1])
@@ -356,7 +357,7 @@ def plot_dataset_space(features, labels, summaries, output_base, dpi):
             xy=(dx, dy),
             xytext=loading_offsets[index],
             textcoords="offset points",
-            fontsize=8.5,
+            fontsize=11,
             color="#222222",
             ha="left" if loading_offsets[index][0] > 0 else "right",
             va="center",
@@ -367,12 +368,29 @@ def plot_dataset_space(features, labels, summaries, output_base, dpi):
     axis_pca.set_xlabel(f"PC1 ({explained[0] * 100:.1f}% variance)")
     axis_pca.set_ylabel(f"PC2 ({explained[1] * 100:.1f}% variance)")
     axis_pca.set_title("Thermodynamic–configurational dataset space", loc="left")
-    axis_pca.legend(
-        loc="upper right",
+    legend_handles, legend_labels = axis_pca.get_legend_handles_labels()
+    phase_legend = axis_pca.legend(
+        legend_handles[:3],
+        legend_labels[:3],
+        loc="lower left",
+        bbox_to_anchor=(0.015, 0.02),
         frameon=True,
         framealpha=0.94,
         borderpad=0.6,
         markerscale=1.5,
+        fontsize=13,
+    )
+    axis_pca.add_artist(phase_legend)
+    axis_pca.legend(
+        legend_handles[3:],
+        legend_labels[3:],
+        loc="lower right",
+        bbox_to_anchor=(0.985, 0.02),
+        frameon=True,
+        framealpha=0.94,
+        borderpad=0.6,
+        markerscale=1.5,
+        fontsize=13,
     )
     add_panel_label(axis_pca, "a")
 
@@ -461,25 +479,25 @@ def plot_dataset_space(features, labels, summaries, output_base, dpi):
             bar.get_y() + bar.get_height() / 2,
             f"{item[3]:,} frames · {item[4]} source{'s' if item[4] != 1 else ''}",
             va="center",
-            fontsize=8.7,
+            fontsize=11,
         )
     axis_count.set_xlim(1, max(counts) * 7.0)
     add_panel_label(axis_count, "d")
 
     total_frames = int(sum(item["valid_frames"] for item in summaries))
-    total_sources = len(summaries)
     figure.suptitle(
-        "IronCoreMD first-principles dataset atlas",
-        fontsize=18,
+        "Dataset Atlas",
+        fontsize=27,
         fontweight="bold",
+        y=0.985,
     )
     figure.text(
         0.5,
-        0.968,
-        f"{total_frames:,} valid configurations · {total_sources} trajectories · BCC, FCC, and HCP iron",
+        0.947,
+        f"{total_frames:,} valid configurations",
         ha="center",
         va="top",
-        fontsize=10.5,
+        fontsize=18,
         color="#444444",
     )
     for suffix in ("png", "pdf", "svg"):

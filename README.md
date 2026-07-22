@@ -83,6 +83,8 @@ IronCoreMD/
 │   ├── bcc_phonon_dispersion_overlay_5000K.png
 │   ├── bcc_phonon_dispersion_overlay_5500K.png
 │   ├── bcc_phonon_dispersion_overlay_6000K.png
+│   ├── bcc_phonons_magnetic_vs_nonmagnetic_4000K_a2.55.png
+│   ├── bcc_phonons_nonmagnetic_collinear_noncollinear_4000K_a2.55.png
 │   ├── hcp_free_energy_vs_volume.png
 │   ├── hcp_volume_vs_pressure_5000K_eos_std.png
 │   ├── hcp_phonon_dispersion_overlay.png
@@ -100,6 +102,8 @@ IronCoreMD/
 │   ├── fcc_phonon_dispersion_overlay_6000K.png
 │   ├── fcc_phonon_dispersion_overlay_6500K.png
 │   ├── qe_live_dashboard.png
+│   ├── iron_all_phases_dataset_space.png
+│   ├── iron_phase_phonons_poster.png
 │   └── ...
 └── codes/
     ├── data_compress.py
@@ -141,6 +145,20 @@ Right now, the repository contains QE parsing and archive-generation utilities, 
 ## Current Results
 
 The figures below summarize the current `bcc`, `hcp`, and `fcc` Fe datasets generated from QE AIMD and TDEP postprocessing.
+
+### Dataset overview
+
+The Dataset Atlas summarizes the thermodynamic and configurational coverage of the current BCC, FCC, and HCP trajectories, including the available collinear and noncollinear BCC calculations:
+
+<p align="center">
+  <img src="assets/iron_all_phases_dataset_space.png" alt="Dataset Atlas for the current BCC, FCC, and HCP iron trajectories" width="92%" />
+</p>
+
+The compact lattice-dynamics summary below combines the BCC magnetic/non-magnetic comparison at `4000 K` with representative FCC and HCP dispersions at `5000 K`. These panels summarize available calculations and are not a matched-condition phase-stability comparison.
+
+<p align="center">
+  <img src="assets/iron_phase_phonons_poster.png" alt="Phase-resolved finite-temperature phonon summary for BCC, FCC, and HCP iron" width="68%" />
+</p>
 
 `Reference pressure-temperature window` used to contextualize the present iron simulations:
 
@@ -189,7 +207,7 @@ The TDEP conversion uses the ideal BCC lattice stored in `simulation-ideal.npz` 
 The figure below compares this collinear-magnetic result with the non-magnetic BCC result at `4000 K` and approximately the same `a = 2.55 A` reference lattice:
 
 <p align="center">
-  <img src="../dataset/bcc/magnetic-collinear/tdep_simulation/phonon_dispersion_magnetic_vs_nonmagnetic_4000K_a2.55.png" alt="BCC collinear-magnetic and non-magnetic phonon dispersion comparison at 4000 K" width="78%" />
+  <img src="assets/bcc_phonons_magnetic_vs_nonmagnetic_4000K_a2.55.png" alt="BCC collinear-magnetic and non-magnetic phonon dispersion comparison at 4000 K" width="78%" />
 </p>
 
 For this comparison, the magnetic branches extend to `14.103 THz`, compared with `13.924 THz` for the non-magnetic calculation. The mean signed magnetic frequency shift is `+0.260 THz`, and the pointwise RMS difference is `0.497 THz`. TDEP gives vibrational free energies of `-2.50636 eV/atom` for the magnetic trajectory and `-2.51508 eV/atom` for the non-magnetic trajectory. Including the corresponding reference-energy terms, the reported difference is
@@ -204,7 +222,7 @@ The updated three-state comparison below also includes the preliminary
 noncollinear calculation:
 
 <p align="center">
-  <img src="../dataset/bcc/magnetic-collinear/tdep_simulation/phonon_dispersion_nonmagnetic_collinear_noncollinear_4000K_a2.55.png" alt="BCC non-magnetic, collinear, and noncollinear phonon comparison at 4000 K" width="92%" />
+  <img src="assets/bcc_phonons_nonmagnetic_collinear_noncollinear_4000K_a2.55.png" alt="BCC non-magnetic, collinear, and noncollinear phonon comparison at 4000 K" width="92%" />
 </p>
 
 The noncollinear branches extend to `14.347 THz`. Their RMS differences from
