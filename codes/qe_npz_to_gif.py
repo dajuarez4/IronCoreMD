@@ -44,6 +44,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--azim", type=float, default=-62.0, help="3D camera azimuth.")
     parser.add_argument("--atom-size", type=float, default=36.0, help="Atom marker size.")
     parser.add_argument("--title", type=str, default=None, help="Optional plot title.")
+    parser.add_argument(
+        "--valid-only",
+        action="store_true",
+        help="Render only frames marked valid by the QE parser.",
+    )
     return parser.parse_args()
 
 
@@ -268,9 +273,21 @@ def main() -> None:
     time_ps = np.asarray(data["time_ps"], dtype=float) if "time_ps" in data else np.full(len(positions), np.nan)
     temperature = np.asarray(data["temperature_K"], dtype=float) if "temperature_K" in data else np.full(len(positions), np.nan)
     pressure = np.asarray(data["pressure_GPa"], dtype=float) if "pressure_GPa" in data else np.full(len(positions), np.nan)
+    magnetization_vector = (
+        np.asarray(data["mag_total_vector_Bohr"], dtype=float)
+        if "mag_total_vector_Bohr" in data
+        else np.full((len(positions), 3), np.nan)
+    )
+    absolute_magnetization = (
+        np.asarray(data["abs_mag_total_Bohr"], dtype=float)
+        if "abs_mag_total_Bohr" in data
+        else np.full(len(positions), np.nan)
+    )
 
     stop = args.stop if args.stop > 0 else len(positions)
     frame_indices = np.arange(args.start, min(stop, len(positions)), args.every, dtype=int)
+    if args.valid_only and "frame_valid" in data:
+        frame_indices = frame_indices[np.asarray(data["frame_valid"], dtype=bool)[frame_indices]]
     if len(frame_indices) == 0:
         raise ValueError("No frames selected. Check --start/--stop/--every.")
 
@@ -293,6 +310,14 @@ def main() -> None:
                 f"T: {safe_text(temperature[iframe], '.1f', ' K')}",
                 f"P: {safe_text(pressure[iframe], '.2f', ' GPa')}",
             ]
+            if np.isfinite(magnetization_vector[iframe]).all():
+                vector = magnetization_vector[iframe]
+                info_lines.extend(
+                    [
+                        f"M: ({vector[0]:.2f}, {vector[1]:.2f}, {vector[2]:.2f}) μB",
+                        f"|M|: {np.linalg.norm(vector):.2f} μB  |  Mabs: {absolute_magnetization[iframe]:.2f} μB",
+                    ]
+                )
             draw_frame(
                 ax=ax,
                 cart_positions=cart,

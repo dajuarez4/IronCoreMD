@@ -1,0 +1,42 @@
+{
+  "source": "IronCoreMD/dataset/bcc/non_collinear/fe1.out",
+  "archive": "IronCoreMD/dataset/bcc/non_collinear/simulation.npz",
+  "natoms": 54,
+  "position_frames": 23,
+  "complete_force_frames": 22,
+  "iterations_complete": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "time_span_ps": 0.020999999716877937,
+  "temperature_K_range": [
+    3297.96142578125,
+    4825.52001953125
+  ],
+  "pressure_GPa_range": [
+    126.83900451660156,
+    138.2410125732422
+  ],
+  "job_complete": false,
+  "note": "fe1.out was still running; the final parsed position frame has no complete force block and is excluded from analysis."
+}

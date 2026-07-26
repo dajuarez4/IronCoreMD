@@ -73,6 +73,17 @@ This means the repository is meant to grow beyond simple compression scripts int
 IronCoreMD/
 ├── LICENSE
 ├── README.md
+├── hpc/
+│   ├── README.md
+│   ├── install_qe_from_source.sh
+│   ├── jakar/
+│   │   ├── README.md
+│   │   ├── qe_pw_template.sbatch
+│   │   └── jobs/
+│   └── lonestar/
+│       ├── README.md
+│       ├── qe_pw_template.sbatch
+│       └── jobs/
 ├── assets/
 │   ├── phase-diag-range-geot.png
 │   ├── bcc_2.40_5000K_qe_md_slow.gif
@@ -137,6 +148,10 @@ IronCoreMD/
         └── tdep_common.py
 
 ```
+
+## HPC submission
+
+The complete Quantum ESPRESSO installation, submission, monitoring, restart, and archival procedure for Jakar and Lonestar6 is documented in [`hpc/README.md`](hpc/README.md). Cluster-specific SBATCH templates and directories for the exact production scripts are included under `hpc/jakar/` and `hpc/lonestar/`.
 
 ## Current Repository State
 

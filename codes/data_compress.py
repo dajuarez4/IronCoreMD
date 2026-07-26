@@ -45,8 +45,15 @@ re_internal_energy = re.compile(r"internal energy E=F\+TS\s*=\s*(" + FLOAT_RE + 
 re_temperature = re.compile(r"temperature\s*=\s*(" + FLOAT_RE + r")\s*K")
 re_ekin = re.compile(r"kinetic energy \(Ekin\)\s*=\s*(" + FLOAT_RE + r")\s*Ry")
 re_pressure = re.compile(r"P=\s*(" + FLOAT_RE + r")")
-re_total_mag = re.compile(r"total magnetization\s*=\s*(" + FLOAT_RE + r")")
+re_total_mag = re.compile(
+    r"total magnetization\s*=\s*(" + FLOAT_RE + r")"
+    r"(?:\s+(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r"))?"
+)
 re_abs_mag = re.compile(r"absolute magnetization\s*=\s*(" + FLOAT_RE + r")")
+re_local_mag_atom = re.compile(r"atom number\s+(\d+)\s+relative position")
+re_local_mag_vector = re.compile(
+    r"^\s*magnetization\s*:\s*(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r")"
+)
 re_force_line = re.compile(
     r"atom\s+(\d+)\s+type\s+\S+\s+force\s*=\s*("
     + FLOAT_RE + r")\s+(" + FLOAT_RE + r")\s+(" + FLOAT_RE + r")"
@@ -352,6 +359,8 @@ def parse_qe_aimd_output(filepath, *, require_forces=True):
                 "temperature_K": np.nan,
                 "pressure_kbar": np.nan,
                 "mag_total_Bohr": np.nan,
+                "mag_total_vector_Bohr": np.full(3, np.nan, dtype=np.float64),
+                "local_magnetization_Bohr": np.full((natoms, 3), np.nan, dtype=np.float64),
                 "abs_mag_total_Bohr": np.nan,
                 "ekin_ry": np.nan,
             }
@@ -392,6 +401,20 @@ def parse_qe_aimd_output(filepath, *, require_forces=True):
                 except Exception as exc:
                     parse_warnings.append(f"iteration {current['iteration']} forces near line {i + 1}: {exc}")
 
+            local_atom = re_local_mag_atom.search(line)
+            if local_atom:
+                atom_index = int(local_atom.group(1))
+                if 1 <= atom_index <= natoms:
+                    for local_index in range(i + 1, min(i + 8, len(lines))):
+                        local_vector = re_local_mag_vector.search(lines[local_index])
+                        if local_vector:
+                            current["local_magnetization_Bohr"][atom_index - 1] = [
+                                parse_qe_float(local_vector.group(1)),
+                                parse_qe_float(local_vector.group(2)),
+                                parse_qe_float(local_vector.group(3)),
+                            ]
+                            break
+
             mt = re_temperature.search(line)
             if mt:
                 current["temperature_K"] = parse_qe_float(mt.group(1))
@@ -415,6 +438,15 @@ def parse_qe_aimd_output(filepath, *, require_forces=True):
             mm = re_total_mag.search(line)
             if mm:
                 current["mag_total_Bohr"] = parse_qe_float(mm.group(1))
+                if mm.group(2) is not None and mm.group(3) is not None:
+                    current["mag_total_vector_Bohr"] = np.asarray(
+                        [
+                            parse_qe_float(mm.group(1)),
+                            parse_qe_float(mm.group(2)),
+                            parse_qe_float(mm.group(3)),
+                        ],
+                        dtype=np.float64,
+                    )
 
             mam = re_abs_mag.search(line)
             if mam:
@@ -439,6 +471,10 @@ def parse_qe_aimd_output(filepath, *, require_forces=True):
     force_frame_valid = np.isfinite(forces_ry_au).all(axis=(1, 2))
     position_frame_valid = np.isfinite(positions).all(axis=(1, 2))
     frame_valid = force_frame_valid & position_frame_valid
+    local_magnetization = np.stack(
+        [fr["local_magnetization_Bohr"] for fr in frames]
+    ).astype(np.float32)
+    local_magnetization_frame_valid = np.isfinite(local_magnetization).all(axis=(1, 2))
 
     if require_forces and not force_frame_valid.any():
         details = parse_warnings[0] if parse_warnings else "no force blocks were found"
@@ -491,6 +527,11 @@ def parse_qe_aimd_output(filepath, *, require_forces=True):
         "pressure_kbar": np.asarray([fr["pressure_kbar"] for fr in frames], dtype=np.float32),
         "pressure_GPa": np.asarray([fr["pressure_kbar"] for fr in frames], dtype=np.float32) * KBAR_TO_GPA,
         "mag_total_Bohr": np.asarray([fr["mag_total_Bohr"] for fr in frames], dtype=np.float32),
+        "mag_total_vector_Bohr": np.stack(
+            [fr["mag_total_vector_Bohr"] for fr in frames]
+        ).astype(np.float32),
+        "local_magnetization_Bohr": local_magnetization,
+        "local_magnetization_frame_valid": local_magnetization_frame_valid,
         "abs_mag_total_Bohr": np.asarray([fr["abs_mag_total_Bohr"] for fr in frames], dtype=np.float32),
         "ekin_ry": np.asarray([fr["ekin_ry"] for fr in frames], dtype=np.float32),
         "parse_warnings": np.asarray(parse_warnings, dtype="U512"),
