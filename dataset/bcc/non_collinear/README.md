@@ -1,26 +1,58 @@
-# Noncollinear BCC Fe AIMD
+# Noncollinear BCC Fe AIMD dataset
 
-This directory contains the processed 3x3x3 noncollinear BCC Fe trajectory at a nominal 4000 K.
+This directory contains the processed 54-atom, `3 x 3 x 3` noncollinear BCC
+iron trajectory at a nominal ionic temperature of `4000 K`.
 
-## Processed data
+## Current trajectory
 
-- `fe1.out`: Quantum ESPRESSO output used as the source.
-- `simulation.npz`: parsed trajectory with positions, forces, thermodynamic observables, converged global magnetization, and atom-resolved local magnetization vectors for each complete MD frame.
-- `md_processing_summary.json`: frame counts and sampled temperature, pressure, and time ranges.
+- Raw Quantum ESPRESSO output: `fe1.out`
+- Parsed position records: `65`
+- Complete force frames: `64`
+- Complete atom-resolved local-spin frames: `64`
+- Synchronized MD iterations: `3--66`
+- Synchronized trajectory span: `0.063 ps`
+- Cell: cubic, `7.65 A`
 
-The current output contains 23 position records and 22 complete force frames (MD iterations 3--24). The final position record is incomplete because `fe1.out` was still running when it was processed, so it is excluded from the plots, GIFs, and HELD fit.
+MD iteration `67` has positions but no completed force or local-magnetization
+evaluation. Quantum ESPRESSO stopped during its SCF with a `cdiaghg` Cholesky
+error, so that frame is excluded by the validity masks in `simulation.npz`.
 
-## Figures and animation
+## Archive contents
 
-- `initial_SQS_spin_directions_3d.png`: atom-resolved starting-spin directions read from the QE input.
-- `initial_SQS_spin_vectors.csv`: Cartesian unit vectors for those starting directions.
-- `noncollinear_md_spin_displacement_results.png`: global magnetization, lattice displacement, temperature, and pressure evolution.
-- `bcc_noncollinear_3x3x3_4000K_no_vito.gif`: 22-frame trajectory animation generated directly with Matplotlib, without OVITO.
+`simulation.npz` includes positions, forces, energies, temperature, pressure,
+global magnetization, absolute magnetization, and the atom-resolved
+noncollinear vectors in `local_magnetization_Bohr`. The synchronized dashboard
+uses
 
-Quantum ESPRESSO reports both the converged total magnetization vector and 54 atom-resolved local magnetization vectors integrated inside atomic spheres for every complete MD step. The initial SQS figure remains useful as the prescribed starting texture, while the HELD dashboard animates the evolved local vectors.
+```text
+frame_valid & local_magnetization_frame_valid
+```
 
-## HELD analysis
+to prevent incomplete ionic, force, spin, or phonon records from being mixed.
+`md_processing_summary.json` records the frame counts and termination state.
 
-The diagnostic HELD case is in `HELD/examples/iron/bcc_noncollinear_4000K_3x3x3`. It uses an ideal 3x3x3 BCC reference lattice rather than the initially displaced coordinates.
+## HELD diagnostic
 
-The 22 complete frames span only 0.021 ps and are consecutive, strongly correlated samples. In addition, the fifth-shell cutoff exceeds half the 7.65-Angstrom box length. The resulting phonons are useful as an early trajectory diagnostic, not as a statistically converged finite-temperature spectrum.
+`held_heatmap_steps_all_complete.npz` stores the step-resolved HELD phonons for
+all 64 complete frames. The cache has shape `(64, 301, 3)`: 64 MD frames, 301
+wave-vector samples, and three BCC branches. The arithmetic-mean dispersion
+extends to approximately `15.08 THz` and has no negative-frequency points on
+the sampled `Gamma-H-N-Gamma-P-H` path.
+
+These frames are consecutive and strongly correlated, and the `3 x 3 x 3`
+supercell is smaller than required for a definitive fifth-shell cutoff test.
+The result is therefore a trajectory diagnostic, not a converged
+finite-temperature phonon spectrum.
+
+## Visualization
+
+The dashboard generator is `../../../codes/make_noncollinear_dashboard.py`.
+It renders the atomic trajectory, transparent ideal BCC sites, evolving QE
+local-spin arrows, global magnetization, temperature, displacement histories,
+and synchronized HELD phonons:
+
+```bash
+python codes/make_noncollinear_dashboard.py
+```
+
+The generated PNG and GIF are stored in `assets/`.

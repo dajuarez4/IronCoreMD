@@ -96,6 +96,8 @@ IronCoreMD/
 │   ├── bcc_phonon_dispersion_overlay_6000K.png
 │   ├── bcc_phonons_magnetic_vs_nonmagnetic_4000K_a2.55.png
 │   ├── bcc_phonons_nonmagnetic_collinear_noncollinear_4000K_a2.55.png
+│   ├── bcc_noncollinear_md_dashboard_final.png
+│   ├── bcc_noncollinear_md_dashboard.gif
 │   ├── hcp_free_energy_vs_volume.png
 │   ├── hcp_volume_vs_pressure_5000K_eos_std.png
 │   ├── hcp_phonon_dispersion_overlay.png
@@ -123,6 +125,7 @@ IronCoreMD/
     ├── generate_qe_maxwell_velocities.py
     ├── live_qe_check.sh
     ├── load_data.py
+    ├── make_noncollinear_dashboard.py
     ├── ml_cpu_regression.py
     ├── ml_gpr.py
     ├── ml_gpr_dataset_workflow.ipynb
@@ -155,7 +158,7 @@ The complete Quantum ESPRESSO installation, submission, monitoring, restart, and
 
 ## Current Repository State
 
-Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, a completed collinear-magnetic BCC test case with TDEP phonons at approximately `4000 K`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
+Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, completed collinear and preliminary noncollinear BCC trajectories at approximately `4000 K`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
 
 ## Current Results
 
@@ -240,12 +243,35 @@ noncollinear calculation:
   <img src="assets/bcc_phonons_nonmagnetic_collinear_noncollinear_4000K_a2.55.png" alt="BCC non-magnetic, collinear, and noncollinear phonon comparison at 4000 K" width="92%" />
 </p>
 
-The noncollinear branches extend to `14.347 THz`. Their RMS differences from
-the collinear and non-magnetic dispersions are `0.663 THz` and `0.572 THz`,
-respectively. Unlike the other curves, the noncollinear result contains only
-two complete force snapshots. Its phonons and reported free energy are
-diagnostic and must not yet be interpreted as a converged thermodynamic
-comparison.
+The original three-state overlay used only the first two complete
+noncollinear snapshots. The tracked noncollinear archive has now been updated
+to `64` synchronized position, force, and local-spin frames spanning MD
+iterations `3--66` (`0.063 ps`). A new HELD diagnostic fitted to all 64 frames
+has a mean sampled dispersion range of approximately `0--15.08 THz`, with no
+negative-frequency points on the selected BCC path.
+
+The dashboard below synchronizes the moving 54-atom `3 x 3 x 3` BCC
+configuration with QE atom-resolved local moments, global magnetization,
+temperature, displacement histories, and the step-resolved HELD phonons:
+
+<p align="center">
+  <img src="assets/bcc_noncollinear_md_dashboard_final.png" alt="Final frame of the 64-frame noncollinear BCC AIMD dashboard" width="92%" />
+</p>
+
+<p align="center">
+  <img src="assets/bcc_noncollinear_md_dashboard.gif" alt="Synchronized 64-frame noncollinear BCC AIMD and HELD dashboard" width="92%" />
+</p>
+
+The source QE run stopped during the SCF following MD iteration `67` with a
+`cdiaghg` Cholesky error, so that incomplete configuration is excluded. The
+64 consecutive frames remain strongly correlated and the `3 x 3 x 3`
+supercell is too small for a definitive cutoff-converged phonon model.
+Therefore, these HELD phonons remain a trajectory diagnostic rather than a
+converged thermodynamic result. Regenerate the dashboard with:
+
+```bash
+python codes/make_noncollinear_dashboard.py
+```
 
 `QE MD trajectory GIF` from the `bcc a = 2.40 Å, 5000 K` run:
 
