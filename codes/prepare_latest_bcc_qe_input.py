@@ -239,6 +239,13 @@ def frame_cell_angstrom(data, frame_index: int, fallback_cell: np.ndarray) -> np
         return cell
     if unit in {"bohr", "a.u.", "au"}:
         return cell * BOHR_TO_ANG
+    if unit == "alat":
+        metadata = load_metadata(data)
+        if "alat_bohr" not in metadata:
+            raise ValueError(
+                "Found CELL_PARAMETERS in alat units, but metadata_json does not contain alat_bohr."
+            )
+        return cell * (float(metadata["alat_bohr"]) * BOHR_TO_ANG)
     raise ValueError(f"Unsupported cell_parameters_unit={unit!r}")
 
 
