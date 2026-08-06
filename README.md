@@ -73,6 +73,19 @@ This means the repository is meant to grow beyond simple compression scripts int
 IronCoreMD/
 ├── LICENSE
 ├── README.md
+├── dataset/
+│   ├── README.md
+│   ├── bcc/
+│   │   ├── non-mag/
+│   │   ├── magnetic-collinear/
+│   │   └── magnetic-noncollinear/
+│   ├── fcc/non-mag/
+│   ├── hcp/
+│   └── figures/
+├── docs/sc26/
+├── tests/
+├── workflows/
+│   └── bcc_ferromagnetic_bands_pdos_pbe/
 ├── hpc/
 │   ├── README.md
 │   ├── install_qe_from_source.sh
@@ -156,9 +169,25 @@ IronCoreMD/
 
 The complete Quantum ESPRESSO installation, submission, monitoring, restart, and archival procedure for Jakar and Lonestar6 is documented in [`hpc/README.md`](hpc/README.md). Cluster-specific SBATCH templates and directories for the exact production scripts are included under `hpc/jakar/` and `hpc/lonestar/`.
 
+## Tests
+
+Run the focused parser and input-generation suite with a Python environment
+that provides NumPy:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 ## Current Repository State
 
-Right now, the repository contains QE parsing and archive-generation utilities, a reusable phase-aware non-magnetic TDEP postprocessing workflow under `codes/tdep_workflow/` for `bcc`, `fcc`, and `hcp`, completed collinear and preliminary noncollinear BCC trajectories at approximately `4000 K`, and several ML-preparation helpers for dataset preview, CPU-side baseline regression, and `extxyz` export. The broader relaxation, MD setup, magnetic-state generation, and production ML-potential training stages described above are still evolving and are not yet fully packaged as a single end-to-end workflow.
+Right now, the repository contains QE parsing and archive-generation utilities,
+curated non-magnetic BCC/FCC/HCP archives, completed collinear and noncollinear
+BCC trajectories at approximately `4000 K`, staged noncollinear HCP inputs, a
+ferromagnetic BCC bands/PDOS workflow, and ML-preparation helpers for dataset
+preview, CPU-side baseline regression, and `extxyz` export. A focused unit-test
+suite covers QE force parsing, velocity generation, BCC frame conversion, and
+magnetic-SQS generation. The broader production ML-potential training stages
+are still evolving and are not yet packaged as one end-to-end workflow.
 
 ## Current Results
 
@@ -207,7 +236,7 @@ The `bcc` dataset currently includes finite-temperature thermodynamic comparison
 
 #### Collinear-magnetic BCC test at 4000 K
 
-A new spin-polarized BCC AIMD trajectory is available under `../dataset/bcc/magnetic-collinear/`. The QE calculation uses a `4 x 4 x 4` conventional BCC supercell with `128` Fe atoms, `nspin=2`, `nosym=.true.`, and atom-resolved randomized initial spin signs with `starting_magnetization(i)=+/-0.35`. This is a collinear disordered-local-moment-style starting configuration; it should not be interpreted as a fully equilibrated magnetic ensemble.
+A spin-polarized BCC AIMD trajectory is available under `dataset/bcc/magnetic-collinear/`. The QE calculation uses a `4 x 4 x 4` conventional BCC supercell with `128` Fe atoms, `nspin=2`, `nosym=.true.`, and atom-resolved randomized initial spin signs with `starting_magnetization(i)=+/-0.35`. This is a collinear disordered-local-moment-style starting configuration; it should not be interpreted as a fully equilibrated magnetic ensemble.
 
 The updated `simulation.npz` archive contains `113` parsed MD frames. One incomplete frame is rejected by the position/force validity filter, leaving `112` frames for TDEP. For the selected frames:
 
@@ -306,7 +335,9 @@ The current `hcp` thermodynamic summary uses `16` accepted points. The newly add
 
 ### FCC Fe
 
-The active `fcc` TDEP workspace now lives outside the repository in `../dataset/fcc/non-mag` to avoid filling `IronCoreMD/dataset/fcc` with the generated `tdep_*` folders and plots.
+The compressed FCC trajectories now live in `dataset/fcc/non-mag`. Generated
+postprocessing workspaces remain outside the repository so the tracked dataset
+stays compact and portable.
 
 The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, `4500 K`, `5000 K`, `5500 K`, `6000 K`, and `6500 K`, for `48` `tdep_*` folders total. The repo assets below are synced from that external FCC workspace.
 
@@ -334,7 +365,14 @@ The current `fcc` set spans `8` lattice points, `a = 2.85-3.20 A`, at `4000 K`, 
   <img src="assets/fcc_phonon_dispersion_overlay_6500K.png" alt="FCC phonon dispersion overlay 6500 K" width="48%" />
 </p>
 
-All eight current `fcc` runs are represented in `../dataset/fcc/non-mag` at each of the six temperatures. The `6000 K` and `6500 K` thermodynamic fits each currently accept `7` points; `tdep_3.20_6000K` and `tdep_3.20_6500K` are excluded from the free-energy and pressure curves because they show imaginary modes, but they are retained in the corresponding phonon overlays for reference. The earlier stray `2.29_4000K` and `2.30_4000K` cases were not part of the FCC workflow because their cell geometry is consistent with `bcc`, not `fcc`.
+All eight current FCC lattice values are represented in
+`dataset/fcc/non-mag` at each of the six temperatures. The `6000 K` and
+`6500 K` thermodynamic fits each currently accept `7` points;
+`tdep_3.20_6000K` and `tdep_3.20_6500K` are excluded from the free-energy and
+pressure curves because they show imaginary modes, but they are retained in
+the corresponding phonon overlays for reference. The earlier stray
+`2.29_4000K` and `2.30_4000K` archives have BCC-like geometry and are isolated
+under `dataset/fcc/legacy_misclassified`, outside the default FCC selectors.
 
 ## What The Current Scripts Do
 
@@ -969,7 +1007,8 @@ If a matching QE input file with the same stem exists beside the output file, th
 ## Current Limitations
 
 - No command-line interface yet; configuration is done by editing constants in the script.
-- No automated tests yet.
+- The automated tests cover the current high-risk parsers and input generators,
+  but they do not yet include end-to-end QE or ML training runs.
 - The parser is tuned for the QE formats currently used in this project and may need adjustment for other output styles.
 - `load_data.py` also uses a hardcoded archive path and is only a lightweight inspection script.
 - `live_qe_check.sh` currently assumes QE text patterns similar to the outputs used in this project and writes its `.dat` files and PNG to the current working directory.
@@ -984,7 +1023,7 @@ Natural extensions for this repository would be:
 - adding relaxation and MD job-generation workflows,
 - adding a CLI with `argparse`,
 - removing hardcoded paths,
-- adding unit tests for representative QE outputs,
+- expanding unit tests with additional representative QE outputs,
 - documenting the archive schema more formally,
 - supporting additional engines or archive backends,
 - and adding dataset assembly tools for graph-kernel-based ML interatomic potential training.

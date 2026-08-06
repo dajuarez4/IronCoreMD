@@ -1,6 +1,6 @@
 {
-  "source_file": "dataset/bcc/non_collinear/fe1.out",
-  "archive": "dataset/bcc/non_collinear/simulation.npz",
+  "source_file": "/Users/dajuarez4/Documents/Fe/dataset/bcc/magnetic-non_coll/fe1.out",
+  "archive": "/Users/dajuarez4/Documents/Fe/dataset/bcc/magnetic-non_coll/simulation.npz",
   "natoms": 54,
   "position_records": 65,
   "complete_force_frames": 64,

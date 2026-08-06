@@ -1,0 +1,2 @@
+Summary word count (abstract through acknowledgment): 739
+SC26 limit: 800 words

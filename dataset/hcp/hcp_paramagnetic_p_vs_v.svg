@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+<rect width="100%" height="100%" fill="white"/>
+<text x="450.0" y="28" text-anchor="middle" font-family="sans-serif" font-size="20">hcp paramagnetic: third-order Birch-Murnaghan EOS</text>
+<line x1="100.00" y1="55" x2="100.00" y2="520" stroke="#ddd"/>
+<text x="100.00" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">49.1</text>
+<line x1="227.50" y1="55" x2="227.50" y2="520" stroke="#ddd"/>
+<text x="227.50" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">56.1</text>
+<line x1="355.00" y1="55" x2="355.00" y2="520" stroke="#ddd"/>
+<text x="355.00" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">63.1</text>
+<line x1="482.50" y1="55" x2="482.50" y2="520" stroke="#ddd"/>
+<text x="482.50" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">70.1</text>
+<line x1="610.00" y1="55" x2="610.00" y2="520" stroke="#ddd"/>
+<text x="610.00" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">77.1</text>
+<line x1="737.50" y1="55" x2="737.50" y2="520" stroke="#ddd"/>
+<text x="737.50" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">84.1</text>
+<line x1="865.00" y1="55" x2="865.00" y2="520" stroke="#ddd"/>
+<text x="865.00" y="545" text-anchor="middle" font-family="sans-serif" font-size="14">91.1</text>
+<line x1="100" y1="520.00" x2="865" y2="520.00" stroke="#ddd"/>
+<text x="88" y="525.00" text-anchor="end" font-family="sans-serif" font-size="14">-14</text>
+<line x1="100" y1="442.50" x2="865" y2="442.50" stroke="#ddd"/>
+<text x="88" y="447.50" text-anchor="end" font-family="sans-serif" font-size="14">46</text>
+<line x1="100" y1="365.00" x2="865" y2="365.00" stroke="#ddd"/>
+<text x="88" y="370.00" text-anchor="end" font-family="sans-serif" font-size="14">106</text>
+<line x1="100" y1="287.50" x2="865" y2="287.50" stroke="#ddd"/>
+<text x="88" y="292.50" text-anchor="end" font-family="sans-serif" font-size="14">167</text>
+<line x1="100" y1="210.00" x2="865" y2="210.00" stroke="#ddd"/>
+<text x="88" y="215.00" text-anchor="end" font-family="sans-serif" font-size="14">227</text>
+<line x1="100" y1="132.50" x2="865" y2="132.50" stroke="#ddd"/>
+<text x="88" y="137.50" text-anchor="end" font-family="sans-serif" font-size="14">287</text>
+<line x1="100" y1="55.00" x2="865" y2="55.00" stroke="#ddd"/>
+<text x="88" y="60.00" text-anchor="end" font-family="sans-serif" font-size="14">347</text>
+<line x1="100" y1="501.98" x2="865" y2="501.98" stroke="black"/>
+<line x1="482.50" y1="55" x2="482.50" y2="520" stroke="#d62728" stroke-dasharray="7 5"/>
+<polyline points="100.00,55.00 106.37,75.40 112.75,94.93 119.12,113.64 125.50,131.56 131.87,148.73 138.25,165.18 144.62,180.94 151.00,196.04 157.38,210.51 163.75,224.38 170.13,237.66 176.50,250.39 182.87,262.60 189.25,274.29 195.62,285.50 202.00,296.24 208.37,306.53 214.75,316.39 221.12,325.84 227.50,334.90 233.87,343.58 240.25,351.90 246.62,359.87 253.00,367.51 259.38,374.83 265.75,381.84 272.12,388.56 278.50,394.99 284.88,401.15 291.25,407.05 297.62,412.71 304.00,418.12 310.38,423.30 316.75,428.26 323.12,433.00 329.50,437.54 335.88,441.89 342.25,446.04 348.63,450.02 355.00,453.82 361.38,457.45 367.75,460.93 374.13,464.24 380.50,467.41 386.87,470.44 393.25,473.33 399.63,476.09 406.00,478.72 412.38,481.22 418.75,483.62 425.13,485.89 431.50,488.06 437.88,490.13 444.25,492.09 450.63,493.96 457.00,495.74 463.38,497.42 469.75,499.02 476.12,500.54 482.50,501.98 488.88,503.34 495.25,504.63 501.62,505.85 508.00,507.00 514.38,508.09 520.75,509.11 527.12,510.07 533.50,510.97 539.88,511.82 546.25,512.62 552.62,513.36 559.00,514.05 565.38,514.70 571.75,515.30 578.12,515.86 584.50,516.37 590.88,516.84 597.25,517.28 603.62,517.67 610.00,518.03 616.38,518.36 622.75,518.65 629.13,518.91 635.50,519.14 641.88,519.34 648.25,519.51 654.63,519.65 661.00,519.77 667.38,519.86 673.75,519.93 680.13,519.97 686.50,520.00 692.88,520.00 699.25,519.98 705.63,519.94 712.00,519.89 718.38,519.81 724.75,519.72 731.12,519.61 737.50,519.49 743.88,519.35 750.25,519.20 756.62,519.03 763.00,518.85 769.38,518.66 775.75,518.45 782.12,518.24 788.50,518.01 794.88,517.77 801.25,517.52 807.62,517.27 814.00,517.00 820.38,516.73 826.75,516.44 833.12,516.15 839.50,515.86 845.88,515.55 852.25,515.24 858.62,514.92 865.00,514.60" fill="none" stroke="#1f77b4" stroke-width="3"/>
+<text x="450.0" y="582" text-anchor="middle" font-family="sans-serif" font-size="17">Volume V (Bohr³)</text>
+<text x="22" y="300.0" text-anchor="middle" font-family="sans-serif" font-size="17" transform="rotate(-90 22 300.0)">Pressure P (GPa)</text>
+<text x="490.50" y="77" font-family="sans-serif" font-size="14" fill="#d62728">V₀ = 70.1 Bohr³</text>
+</svg>

@@ -1,0 +1,7 @@
+&BANDS
+    prefix = 'fe_bcc128_fm_a250'
+    outdir = './tmp'
+    filband = 'bands_down.dat'
+    spin_component = 2
+    lsym = .true.
+/

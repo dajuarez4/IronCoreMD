@@ -1,0 +1,10 @@
+&PROJWFC
+    prefix = 'fe_bcc128_fm_a250'
+    outdir = './tmp'
+    filpdos = 'fe_a250'
+    filproj = 'fe_a250.projwfc'
+    Emin = -20.0
+    Emax = 30.0
+    DeltaE = 0.01
+    lsym = .true.
+/
