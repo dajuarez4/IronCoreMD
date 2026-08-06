@@ -1,9 +1,0 @@
-start_s,end_s,scene,onscreen_callout
-0,10,Earth cutaway,"5,000+ km beneath our feet"
-10,20,HPC and DFT,"DFT: quantum-mechanical accuracy"
-20,26,Computational limits,"Accurate—but expensive"
-26,34,Machine-learning solution,"DFT data → interatomic potential"
-34,44,Graph transformation,"Atomic structure → graph similarity"
-44,50,Model result,"Energy accuracy: ~10 meV/atom"
-50,56,Physical validation,"Forces • EOS • phonons • magnetism"
-56,60,Poster reveal,"Explore the full poster"

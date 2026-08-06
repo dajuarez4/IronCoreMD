@@ -82,7 +82,6 @@ IronCoreMD/
 │   ├── fcc/non-mag/
 │   ├── hcp/
 │   └── figures/
-├── docs/sc26/
 ├── tests/
 ├── workflows/
 │   └── bcc_ferromagnetic_bands_pdos_pbe/

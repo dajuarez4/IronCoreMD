@@ -1,2 +1,0 @@
-8848fc54143001bcaa4d85b6d1ed636cd49875e7a7c1a6b9899c2d718219834d  sc26_submission/SC26_IronCoreMD_Poster_Draft.tar.gz
-98689969e15890993a12c964b07337c3c3d3a56a71f9f896777d60373c4433d8  sc26_submission/SC26_IronCoreMD_IEEE_Summary.tar.gz
