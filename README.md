@@ -83,7 +83,8 @@ IronCoreMD/
 │   └── figures/
 ├── tests/
 ├── workflows/
-│   └── bcc_ferromagnetic_bands_pdos_pbe/
+│   ├── bcc_ferromagnetic_bands_pdos_pbe/
+│   └── bcc_paramagnetic_4000K_convergence/
 ├── hpc/
 │   ├── README.md
 │   ├── install_qe_from_source.sh
@@ -166,6 +167,12 @@ IronCoreMD/
 ## HPC submission
 
 The complete Quantum ESPRESSO installation, submission, monitoring, restart, and archival procedure for Jakar and Lonestar6 is documented in [`hpc/README.md`](hpc/README.md). Cluster-specific SBATCH templates and directories for the exact production scripts are included under `hpc/jakar/` and `hpc/lonestar/`.
+
+The curated 16-atom BCC constrained-paramagnetic convergence study and its
+accepted exploratory-only MD settings are under
+[`workflows/bcc_paramagnetic_4000K_convergence/`](workflows/bcc_paramagnetic_4000K_convergence/).
+The force-accuracy limitations are part of the workflow documentation and
+must be retained when these inputs are reused.
 
 ## Tests
 

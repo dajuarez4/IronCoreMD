@@ -23,6 +23,13 @@ and generated TDEP workspaces are not included.
 - `figures/`: compact CSV and visual summaries of phase coverage, dataset
   quality, and ML-scale demonstrations.
 
+Recent curated additions include:
+
+- `hcp/hcp_mag/lessons_learned/`: compact convergence history and operational
+  lessons from the 54-atom constrained-paramagnetic HCP campaign at 5000 K;
+- `figures/volume_vs_pressure_5000K_bcc_hcp_compare.{csv,png}`: the current
+  BCC-HCP pressure-volume comparison at 5000 K.
+
 ## Data policy
 
 The `.npz` files are the portable training and analysis inputs. Rebuildable

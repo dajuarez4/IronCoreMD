@@ -1,0 +1,7 @@
+round,stage,lambda_ry,target_conv_thr_ry,status,iterations,best_accuracy_ry,final_accuracy_ry,wall_time,notes
+1,stage1,0.020,1.0e-3,converged,380,8.3410e-4,8.3410e-4,3h46m,Weak initial constraint
+1,stage2,0.100,1.0e-4,failed,500,1.3340e-3,1.552512e-2,5h57m,Direct lambda jump became unstable
+2,stage1,0.030,1.0e-3,converged,9,9.2129e-4,9.2129e-4,4m31s,Gentle first increment
+2,stage2,0.050,1.0e-3,converged,125,8.7664e-4,8.7664e-4,1h03m,No band warnings
+2,stage3,0.075,1.0e-3,converged,138,9.6274e-4,9.6274e-4,1h07m,One band warning
+2,stage4,0.100,1.0e-3,failed,300,1.80176e-3,2.77684538,3h21m,Diverged after approaching the target
