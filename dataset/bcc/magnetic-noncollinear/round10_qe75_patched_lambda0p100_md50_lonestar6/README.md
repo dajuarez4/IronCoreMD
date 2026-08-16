@@ -130,3 +130,18 @@ scp \
 
 Do not copy or commit `qe_tmp`, full `.out` files, or scheduler logs. For a
 rerun, preserve the old folder and start from a fresh repository copy.
+
+## Completed result
+
+Round 10 reached all 50 ionic steps and `JOB DONE`. All electronic cycles
+converged below `4e-3 Ry`: the mean was 6.2 electronic iterations per cycle,
+the maximum was 13, and the largest final-cycle accuracy was
+`3.98683e-3 Ry`. No fatal QE or Cholesky error occurred.
+
+The atomic constraint retained the noncollinear local moments: the trajectory
+mean was `1.600 Bohr magneton/Fe` and the final mean was
+`1.623 Bohr magneton/Fe`. Temperature was not yet equilibrated at 4000 K: its
+overall mean was about 3160 K, its final value was about 3265 K, and the final
+10-record mean was about 2973 K. Consequently, the run validates the
+electronic and magnetic setup but is too short for thermodynamic averages.
+Round 11 extends this setup to 400 steps with the requested `nraise = 20`.

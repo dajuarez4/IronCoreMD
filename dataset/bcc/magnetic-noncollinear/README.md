@@ -75,3 +75,7 @@ during ionic motion in the paired 10-step follow-up:
 
 Round 9 selected `lambda=0.10 Ry` for the longer small-cell validation in
 [`round10_qe75_patched_lambda0p100_md50_lonestar6`](round10_qe75_patched_lambda0p100_md50_lonestar6/README.md).
+
+Round 10 completed all 50 steps and validated the electronic and magnetic
+setup. Its 400-step continuation, using the requested SVR `nraise=20`, is in
+[`round11_qe75_patched_lambda0p100_md400_lonestar6`](round11_qe75_patched_lambda0p100_md400_lonestar6/README.md).
