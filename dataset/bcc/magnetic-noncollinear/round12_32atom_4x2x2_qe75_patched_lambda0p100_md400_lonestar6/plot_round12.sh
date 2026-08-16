@@ -18,6 +18,7 @@ prepare_data() {
         : > ".round12_plot/cycles_${index}.dat"
         : > ".round12_plot/temp_${index}.dat"
         : > ".round12_plot/moment_${index}.dat"
+        : > ".round12_plot/totalmag_${index}.dat"
         [[ -f "$output" ]] || continue
         awk '/estimated scf accuracy/{n++; print n,$(NF-1)}' "$output" > ".round12_plot/accuracy_${index}.dat"
         awk '/iteration #/{n++} /convergence has been achieved|convergence NOT achieved/{c++; print c,n; n=0}' "$output" > ".round12_plot/cycles_${index}.dat"
@@ -26,15 +27,20 @@ prepare_data() {
             slot=(n%32); value[slot]=sqrt($3*$3+$4*$4+$5*$5); n++;
             if(n%32==0){sum=0; for(i=0;i<32;i++)sum+=value[i]; record++; mean[record]=sum/32;first=(record>100?record-99:1);tail=0;for(i=first;i<=record;i++)tail+=mean[i];print record,mean[record],tail/(record-first+1)}
         }' "$output" > ".round12_plot/moment_${index}.dat"
+        awk '/total magnetization[[:space:]]*=/{mx=$4;my=$5;mz=$6;have=1}
+             /convergence has been achieved/{
+                 if(have){cycle++;sx+=mx;sy+=my;sz+=mz;
+                     print cycle,mx,my,mz,sqrt(mx*mx+my*my+mz*mz),sqrt((sx/cycle)^2+(sy/cycle)^2+(sz/cycle)^2)}
+             }' "$output" > ".round12_plot/totalmag_${index}.dat"
     done < case_manifest.csv
 }
 
 make_plot() {
     prepare_data
     gnuplot <<'GNUPLOT'
-set terminal pngcairo size 1800,1200 enhanced font "Arial,13"
+set terminal pngcairo size 1800,1700 enhanced font "Arial,13"
 set output "round12_md400_dashboard.png"
-set multiplot layout 2,2 title "BCC Fe 4x2x2 (32 atoms) - Round 12 patched-QE lambda=0.10 MD400, nraise=20" font ",20"
+set multiplot layout 3,2 title "BCC Fe 4x2x2 (32 atoms) - Round 12 patched-QE lambda=0.10 MD400, nraise=20" font ",20"
 set grid ytics lc rgb "#dddddd"
 set key top right
 set logscale y
@@ -70,6 +76,23 @@ plot ".round12_plot/moment_1.dat" u 1:2 w l lw 1 lc rgb "#b998ff" title "instant
      ".round12_plot/moment_1.dat" u 1:3 w l lw 3 lc rgb "#9b00ff" title "trailing mean (up to 100)", \
      2.0 w l dt 2 lc rgb "#555555" title "constraint target", \
      1.0 w l dt 3 lc rgb "#999999" title "acceptance guide"
+
+set xlabel "Converged MD SCF cycle"
+set ylabel "Total magnetization component (Bohr magneton/cell)"
+set xrange [0:402]
+set yrange [-5:5]
+plot ".round12_plot/totalmag_1.dat" u 1:2 w l lw 2 lc rgb "#d62728" title "Mx", \
+     ".round12_plot/totalmag_1.dat" u 1:3 w l lw 2 lc rgb "#2ca02c" title "My", \
+     ".round12_plot/totalmag_1.dat" u 1:4 w l lw 2 lc rgb "#1f77b4" title "Mz", \
+     0 w l dt 2 lc rgb "#555555" title "zero"
+
+set xlabel "Converged MD SCF cycle"
+set ylabel "Total magnetization magnitude (Bohr magneton/cell)"
+set xrange [0:402]
+set yrange [0:5]
+plot ".round12_plot/totalmag_1.dat" u 1:5 w l lw 1 lc rgb "#b998ff" title "instantaneous |M|", \
+     ".round12_plot/totalmag_1.dat" u 1:6 w l lw 3 lc rgb "#9b00ff" title "|cumulative mean vector|", \
+     0 w l lc rgb "#ffffff" notitle
 unset multiplot
 GNUPLOT
     echo "Updated: $ROOT/round12_md400_dashboard.png"

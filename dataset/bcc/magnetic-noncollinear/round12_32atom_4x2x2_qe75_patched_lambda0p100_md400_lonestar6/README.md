@@ -88,6 +88,12 @@ bash check_round12.sh
 bash plot_round12.sh --live 30
 ```
 
+The dashboard includes the converged total-magnetization components `Mx`,
+`My`, and `Mz`, the instantaneous vector magnitude, and the magnitude of the
+cumulative mean vector. For paramagnetic-like behavior, the local moments can
+remain finite while the cumulative total-magnetization vector approaches a
+small value per atom.
+
 Replace `JOB_ID` below with the submitted job number:
 
 ```bash
