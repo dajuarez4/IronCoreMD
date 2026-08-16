@@ -117,3 +117,20 @@ scp \
 Do not copy or commit `qe_tmp`, full `.out` files, or scheduler logs. For a
 rerun, preserve the completed directory and copy a clean repository version to
 a new directory.
+
+## Completed result
+
+Round 11 reached all 400 MD steps and `JOB DONE`. All 400 MD SCF cycles
+converged below `4e-3 Ry`; they required a mean 6.28 electronic iterations and
+a maximum of 12. No fatal QE, Cholesky, `cdiaghg`, or `efermig` error occurred.
+There were 201 recoverable `c_bands` warnings.
+
+The mean local moment remained stable at `1.595 Bohr magneton/Fe`, while the
+norm of the full-trajectory mean total-magnetization vector was only
+`0.0527 Bohr magneton/cell` (`0.0066` per Fe). The trajectory is therefore
+consistent with a small-cell disordered-local-moment paramagnetic state.
+
+Temperature did not equilibrate at the requested 4000 K: the trajectory mean
+was about 2945 K and the final-100-step mean was about 2977 K. Thus Round 11
+validates electronic and magnetic stability, but it must not be used as an
+equilibrated 4000 K thermodynamic trajectory.

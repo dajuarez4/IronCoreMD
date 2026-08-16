@@ -58,7 +58,8 @@ def vector_means(text: str, label: str) -> list[float]:
         text, re.I | re.M,
     )
     magnitudes = [math.sqrt(sum(number(x) ** 2 for x in row)) for row in vectors]
-    return [sum(magnitudes[i:i + 8]) / 8 for i in range(0, len(magnitudes) - 7, 8)]
+    return [sum(magnitudes[i:i + NATOMS]) / NATOMS
+            for i in range(0, len(magnitudes) - NATOMS + 1, NATOMS)]
 
 
 def vector_frames(text: str, label: str) -> list[np.ndarray]:
@@ -231,6 +232,8 @@ def main() -> None:
                          ("pressure_kbar", pressure_series)):
         payload[name], payload[f"{name}_offset"] = flatten(series)
     support = [path for path in (ROOT / "README.md", ROOT / "case_manifest.csv", ROOT / "velocity_summary.json",
+                                  ROOT / "thermalized_start_summary.json",
+                                  ROOT / "magnetic_seed_summary.json",
                                   ROOT / "run_round12_lonestar6.sbatch", ROOT / "check_round12.sh",
                                   ROOT / "plot_round12.sh", ROOT / "generate_round12.py") if path.is_file()]
     payload["support_relative_path"] = uarray([str(path.relative_to(ROOT)) for path in support])
@@ -238,7 +241,8 @@ def main() -> None:
     payload["support_sha256"] = uarray([sha256(path) for path in support])
     payload["metadata_json"] = uarray([json.dumps({
         "safe_load": "numpy.load(path, allow_pickle=False)", "full_outputs_included": False,
-        "qe_tmp_included": False, "positions_thermalized": True, "velocity_seed": 400054,
+        "qe_tmp_included": False, "positions_thermalized": True, "velocity_seed": 320400,
+        "natoms": NATOMS, "supercell": "4x2x2", "nraise": 20,
         "units": {"energy": "Ry", "force": "Ry/Bohr", "pressure": "kbar", "temperature": "K"},
     }, sort_keys=True)])
     output = args.output.expanduser().resolve()

@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=bcc32_r12_md400
+#SBATCH --account=DMR26002
 #SBATCH --partition=normal
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=64

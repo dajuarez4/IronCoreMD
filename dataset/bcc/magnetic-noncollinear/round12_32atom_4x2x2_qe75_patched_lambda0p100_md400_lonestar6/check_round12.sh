@@ -6,7 +6,7 @@ cd "$ROOT"
 vector_mean() {
     awk -v key="$2" '$0 ~ "^[[:space:]]*" key "[[:space:]]*:" {
         for(i=1;i<=NF;i++) if($i==":") {
-            n++; slot=(n-1)%8; value[slot]=sqrt($(i+1)^2+$(i+2)^2+$(i+3)^2); break
+            n++; slot=(n-1)%32; value[slot]=sqrt($(i+1)^2+$(i+2)^2+$(i+3)^2); break
         }
     } END {
         if(n>=32){sum=0; for(i=0;i<32;i++)sum+=value[i]; printf "%.6f",sum/32}

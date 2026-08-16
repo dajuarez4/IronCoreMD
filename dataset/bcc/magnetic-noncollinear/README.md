@@ -79,3 +79,6 @@ Round 9 selected `lambda=0.10 Ry` for the longer small-cell validation in
 Round 10 completed all 50 steps and validated the electronic and magnetic
 setup. Its 400-step continuation, using the requested SVR `nraise=20`, is in
 [`round11_qe75_patched_lambda0p100_md400_lonestar6`](round11_qe75_patched_lambda0p100_md400_lonestar6/README.md).
+
+The corresponding 32-atom BCC `4x2x2` finite-size test is prepared in
+[`round12_32atom_4x2x2_qe75_patched_lambda0p100_md400_lonestar6`](round12_32atom_4x2x2_qe75_patched_lambda0p100_md400_lonestar6/README.md).

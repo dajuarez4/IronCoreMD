@@ -40,7 +40,7 @@ set key top right
 set logscale y
 set xlabel "Electronic accuracy record"
 set ylabel "Estimated SCF accuracy (Ry)"
-set xrange [0:6000]
+set xrange [0:12000]
 set yrange [1e-4:100]
 plot ".round12_plot/accuracy_1.dat" u 1:2 w l lw 2 lc rgb "#9b00ff" title "lambda=0.10", \
      4e-3 w l dt 2 lc rgb "#555555" title "MD conv_thr"
@@ -50,7 +50,7 @@ set autoscale y
 set xlabel "SCF cycle (initial plus ionic steps)"
 set ylabel "Electronic iterations"
 set xrange [0:402]
-set yrange [0:50]
+set yrange [0:100]
 plot ".round12_plot/cycles_1.dat" u 1:2 w l lw 2 lc rgb "#9b00ff" title "lambda=0.10"
 
 set xlabel "Printed ionic-temperature record"
