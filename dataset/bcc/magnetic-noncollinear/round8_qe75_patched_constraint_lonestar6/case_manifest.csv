@@ -1,0 +1,5 @@
+serial_index,case,lattice_a_A,intended_target_Bohr,starting_magnetization,lambda_stage1,lambda_stage2,lambda_stage3,qe_requirement
+0,a2p39_m2_fixed_lambda0p010,2.39,2.0,0.125,0.0025,0.005,0.01,patched qe-7.5 mcons=zv*starting_magnetization
+1,a2p39_m2_fixed_lambda0p020,2.39,2.0,0.125,0.005,0.01,0.02,patched qe-7.5 mcons=zv*starting_magnetization
+2,a2p39_m2_fixed_lambda0p050,2.39,2.0,0.125,0.005,0.02,0.05,patched qe-7.5 mcons=zv*starting_magnetization
+3,a2p39_m2_fixed_lambda0p100,2.39,2.0,0.125,0.005,0.02,0.1,patched qe-7.5 mcons=zv*starting_magnetization

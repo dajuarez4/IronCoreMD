@@ -55,3 +55,16 @@ From the workspace root:
 /opt/anaconda3/bin/python \
   HELD/local_visualizations/bcc_noncollinear_4000K_dashboard/make_dashboard.py
 ```
+
+## Small-cell convergence development
+
+The reproducible Lonestar6 package for validating corrected noncollinear
+atomic-moment constraints is in
+[`round8_qe75_patched_constraint_lonestar6`](round8_qe75_patched_constraint_lonestar6/README.md).
+
+This is an 8-atom BCC Fe `2x2x1` diagnostic at `a = 2.39 angstrom`, not a
+production trajectory. It tests four final constraint strengths with a
+thermally displaced structure before any larger-cell or long-MD calculation is
+attempted. The package includes input generation, a minimal upstream-equivalent
+QE 7.5 source patch, private Lonestar6 build and run scripts, live checking and
+plotting, and a lightweight NPZ collector.

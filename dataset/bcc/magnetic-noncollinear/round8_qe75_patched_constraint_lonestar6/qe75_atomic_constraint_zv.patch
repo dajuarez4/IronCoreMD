@@ -1,0 +1,23 @@
+--- a/PW/src/input.f90
++++ b/PW/src/input.f90
+@@ -1537,16 +1537,16 @@
+            theta = angle1(nt)
+            phi   = angle2(nt)
+            !
+-           mcons(1,nt) = starting_magnetization(nt) * sin( theta ) * cos( phi )
+-           mcons(2,nt) = starting_magnetization(nt) * sin( theta ) * sin( phi )
+-           mcons(3,nt) = starting_magnetization(nt) * cos( theta )
++           mcons(1,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * cos( phi )
++           mcons(2,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * sin( phi )
++           mcons(3,nt) = zv(nt) * starting_magnetization(nt) * cos( theta )
+            !
+         ENDDO
+      ELSE
+         ! collinear case
+         DO nt = 1, nsp
+            !
+-           mcons(1,nt) = starting_magnetization(nt)
++           mcons(1,nt) = zv(nt) * starting_magnetization(nt)
+            !
+         ENDDO
+      ENDIF

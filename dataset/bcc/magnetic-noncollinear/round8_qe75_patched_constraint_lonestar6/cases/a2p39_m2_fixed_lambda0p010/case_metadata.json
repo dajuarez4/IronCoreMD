@@ -1,0 +1,11 @@
+{
+  "serial_index": 0,
+  "case": "a2p39_m2_fixed_lambda0p010",
+  "lattice_a_A": 2.39,
+  "intended_target_Bohr": 2.0,
+  "starting_magnetization": 0.125,
+  "lambda_stage1": 0.0025,
+  "lambda_stage2": 0.005,
+  "lambda_stage3": 0.01,
+  "qe_requirement": "patched qe-7.5 mcons=zv*starting_magnetization"
+}
