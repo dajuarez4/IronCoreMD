@@ -72,3 +72,6 @@ plotting, and a lightweight NPZ collector.
 Round 8 is complete. Its two successful high-retention settings are compared
 during ionic motion in the paired 10-step follow-up:
 [`round9_qe75_patched_constraint_md_lonestar6`](round9_qe75_patched_constraint_md_lonestar6/README.md).
+
+Round 9 selected `lambda=0.10 Ry` for the longer small-cell validation in
+[`round10_qe75_patched_lambda0p100_md50_lonestar6`](round10_qe75_patched_lambda0p100_md50_lonestar6/README.md).

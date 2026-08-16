@@ -40,7 +40,7 @@ set key top right
 set logscale y
 set xlabel "Electronic accuracy record"
 set ylabel "Estimated SCF accuracy (Ry)"
-set xrange [0:1000]
+set xrange [0:100]
 set yrange [1e-4:100]
 plot ".round9_plot/accuracy_1.dat" u 1:2 w l lw 2 lc rgb "#00a878" title "lambda=0.05", \
      ".round9_plot/accuracy_2.dat" u 1:2 w l lw 2 lc rgb "#9b00ff" title "lambda=0.10", \
@@ -51,7 +51,7 @@ set autoscale y
 set xlabel "SCF cycle (initial plus ionic steps)"
 set ylabel "Electronic iterations"
 set xrange [0:12]
-set yrange [0:500]
+set yrange [0:25]
 plot ".round9_plot/cycles_1.dat" u 1:2 w lp lw 2 pt 7 lc rgb "#00a878" title "lambda=0.05", \
      ".round9_plot/cycles_2.dat" u 1:2 w lp lw 2 pt 7 lc rgb "#9b00ff" title "lambda=0.10"
 
@@ -66,7 +66,7 @@ plot ".round9_plot/temp_1.dat" u 1:2 w lp lw 2 pt 7 lc rgb "#00a878" title "lamb
 set autoscale y
 set xlabel "Printed 8-atom magnetic record"
 set ylabel "Mean local moment (Bohr magneton/Fe)"
-set xrange [0:1000]
+set xrange [0:12]
 set yrange [0:2.2]
 plot ".round9_plot/moment_1.dat" u 1:2 w l lw 2 lc rgb "#00a878" title "lambda=0.05", \
      ".round9_plot/moment_2.dat" u 1:2 w l lw 2 lc rgb "#9b00ff" title "lambda=0.10", \

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Collect Round-9 SCF/MD results into a lightweight safe NPZ archive."""
+"""Collect Round-10 SCF/MD50 results into a lightweight safe NPZ archive."""
 
 from __future__ import annotations
 
@@ -16,11 +16,11 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parent
-SCHEMA = "ironcoremd.qe.bcc8_patched_qe75_constraint_md_round9.v1"
+SCHEMA = "ironcoremd.qe.bcc8_patched_qe75_lambda0p100_md50_round10.v1"
 NATOMS = 8
 FLOAT = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[EeDd][-+]?\d+)?"
 SOURCES = (("stage1_4e-3", "scf"), ("stage2_1e-3", "scf"),
-           ("stage3_3e-4", "scf"), ("md_10steps", "md"))
+           ("stage3_3e-4", "scf"), ("md_50steps", "md"))
 
 
 def number(value: str) -> float:
@@ -139,7 +139,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-terminal", action="store_true")
     parser.add_argument("--require-complete", action="store_true")
-    parser.add_argument("-o", "--output", type=Path, default=ROOT / "round9_results_light.npz")
+    parser.add_argument("-o", "--output", type=Path, default=ROOT / "round10_results_light.npz")
     args = parser.parse_args()
     with (ROOT / "case_manifest.csv").open(newline="") as handle:
         cases = list(csv.DictReader(handle))
@@ -231,8 +231,8 @@ def main() -> None:
                          ("pressure_kbar", pressure_series)):
         payload[name], payload[f"{name}_offset"] = flatten(series)
     support = [path for path in (ROOT / "README.md", ROOT / "case_manifest.csv", ROOT / "velocity_summary.json",
-                                  ROOT / "run_round9_serial_lonestar6.sbatch", ROOT / "check_round9.sh",
-                                  ROOT / "plot_round9.sh", ROOT / "generate_round9.py") if path.is_file()]
+                                  ROOT / "run_round10_lonestar6.sbatch", ROOT / "check_round10.sh",
+                                  ROOT / "plot_round10.sh", ROOT / "generate_round10.py") if path.is_file()]
     payload["support_relative_path"] = uarray([str(path.relative_to(ROOT)) for path in support])
     payload["support_text"] = uarray([path.read_text(errors="replace") for path in support])
     payload["support_sha256"] = uarray([sha256(path) for path in support])

@@ -1,0 +1,12 @@
+{
+  "target_temperature_K": 4000.0,
+  "measured_temperature_K": 4000.0,
+  "velocity_seed": 400054,
+  "center_of_mass_velocity_au": [
+    -7.765795845540367e-21,
+    4.65947750732422e-20,
+    5.436057091878257e-20
+  ],
+  "degrees_of_freedom": 21,
+  "source": "established thermalized BCC8 velocity set from Rounds 5-6"
+}

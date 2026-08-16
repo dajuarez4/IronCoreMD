@@ -135,3 +135,31 @@ scp \
 
 Do not copy or commit `qe_tmp`, full `.out` files, or scheduler logs. To rerun,
 preserve the old folder and start from a fresh repository copy.
+
+## Completed results (2026-08-15)
+
+Both cases completed all 10 MD steps. Neither produced a failed SCF, QE
+routine error, Cholesky error, or cdiaghg error.
+
+| Metric | lambda=0.05 | lambda=0.10 |
+|---|---:|---:|
+| Total electronic iterations | 60 | 60 |
+| Mean / maximum iterations per cycle | 6 / 9 | 6 / 9 |
+| Final accuracy (Ry) | 2.45954e-3 | 3.82348e-3 |
+| Mean local moment (Bohr magneton/Fe) | 1.332511 | 1.572667 |
+| Final local moment (Bohr magneton/Fe) | 1.348307 | 1.583517 |
+| Mean / final temperature (K) | 4384 / 5672 | 3850 / 4160 |
+| Mean / maximum total force (Ry/Bohr) | 0.805 / 0.858 | 0.819 / 0.880 |
+| Nonfatal c_bands warnings | 3 | 6 |
+
+`lambda=0.10` retained substantially more moment at the same electronic cost,
+with only a small force increase and better temperature behavior in this short
+comparison. Its final accuracy remained below the accepted `4e-3 Ry` MD
+threshold, although with less margin. It was therefore selected for the
+50-step Round 10 validation.
+
+The original NPZ pressure series contains one false value: the first collector
+pattern also matched `nstep=10`. Excluding that value gives mean pressures of
+approximately 3711 and 3870 kbar for `lambda=0.05` and `0.10`, respectively.
+The collector source is corrected here, and Round 10 uses the corrected
+pattern. This was an analysis-parser issue, not a QE simulation problem.
