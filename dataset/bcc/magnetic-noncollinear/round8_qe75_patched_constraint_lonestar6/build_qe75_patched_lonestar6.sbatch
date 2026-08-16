@@ -27,5 +27,4 @@ mkdir -p "$INSTALL_DIR/bin"
 cp -p bin/pw.x "$INSTALL_DIR/bin/pw.x"
 cp -p ATOMIC_CONSTRAINT_PATCH_INFO.txt "$INSTALL_DIR/"
 sha256sum "$INSTALL_DIR/bin/pw.x" > "$INSTALL_DIR/pw.x.sha256"
-"$INSTALL_DIR/bin/pw.x" -v || true
 echo "Installed patched executable: $INSTALL_DIR/bin/pw.x"

@@ -16,7 +16,8 @@ PWX=${SCRATCH:?}/apps/qe-7.5-atomic-fixed/bin/pw.x
 INFO=${SCRATCH}/apps/qe-7.5-atomic-fixed/ATOMIC_CONSTRAINT_PATCH_INFO.txt
 [[ -x "$PWX" && -s "$INFO" ]] || { echo "Missing verified patched QE executable." >&2; exit 2; }
 command -v ibrun >/dev/null || { echo "ibrun unavailable" >&2; exit 2; }
-"$PWX" -v || true
+echo "Using private patched QE: $PWX"
+sha256sum "$PWX"
 mapfile -t cases < cases.txt
 stages=(stage1_4e-3 stage2_1e-3 stage3_3e-4)
 printf 'case\tstatus\tfinished_at\n' > round8_serial_status.tsv

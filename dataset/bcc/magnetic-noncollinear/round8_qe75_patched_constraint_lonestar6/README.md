@@ -76,7 +76,9 @@ bash prepare_qe75_source.sh "$SCRATCH/q-e-qe-7.5.tar.gz"
 ```
 
 The preparation script refuses an existing target and verifies the source
-change. It creates `$SCRATCH/src/q-e-qe-7.5-atomic-fixed`.
+change. It creates `$SCRATCH/src/q-e-qe-7.5-atomic-fixed`. The finished
+executable is installed under your personal `$SCRATCH/apps` directory, not in
+TACC's shared application tree.
 
 ## 3. Build the private executable
 
@@ -89,8 +91,18 @@ Monitor the build with `squeue -u "$USER"`. After completion:
 
 ```bash
 ls -lh "$SCRATCH/apps/qe-7.5-atomic-fixed/bin/pw.x"
-cat "$SCRATCH/apps/qe-7.5-atomic-fixed/pw.x.sha256"
+sha256sum -c "$SCRATCH/apps/qe-7.5-atomic-fixed/pw.x.sha256"
+cat "$SCRATCH/apps/qe-7.5-atomic-fixed/ATOMIC_CONSTRAINT_PATCH_INFO.txt"
 ```
+
+Warnings such as `ifort ... ignoring unknown option
+'-fallow-argument-mismatch'` and the `scan_ibrav.f90` format remarks are not
+fatal. An older version of this script executed `pw.x -v` after installation;
+QE interpreted it as a calculation with no input and printed `from
+test_input_xml: input file not opened or empty`. That message did not establish
+that compilation failed. This workflow now verifies the installed executable
+with its file, patch marker, and SHA-256 checksum without launching an empty QE
+calculation.
 
 ## 4. Run the four static diagnostics
 
