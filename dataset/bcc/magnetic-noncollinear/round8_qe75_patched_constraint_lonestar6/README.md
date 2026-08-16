@@ -164,3 +164,33 @@ Do not commit `qe_tmp`, full `.out` files, or scheduler logs. The local
 `.gitignore` excludes these heavy/restart artifacts. Do not run MD or increase
 the atom count until `target_print` is near `2.0`, the SCF chain converges, and
 the final per-atom local moment is preferably at least `1 Bohr magneton`.
+
+## Completed results (2026-08-15)
+
+All 12 staged SCFs completed with no QE routine or Cholesky errors. Each output
+contained one nonfatal `c_bands` warning, but all stages reached their requested
+threshold. Every stage printed the corrected `2.0 Bohr magneton/Fe` target,
+proving that the private patched executable—not the affected shared QE
+implementation—was used.
+
+| Final lambda (Ry) | Final-stage iterations | Accuracy (Ry) | Measured local moment (Bohr magneton/Fe) | Retention |
+|---:|---:|---:|---:|---:|
+| 0.01 | 9 | 2.7109e-4 | 0.626003 | 31.30% |
+| 0.02 | 17 | 2.8997e-4 | 0.930252 | 46.51% |
+| 0.05 | 15 | 2.9334e-4 | 1.323047 | 66.15% |
+| 0.10 | 18 | 1.8290e-4 | 1.565806 | 78.29% |
+
+The retained moment increases monotonically with lambda. Both `0.05` and
+`0.10 Ry` meet the static acceptance threshold of at least
+`1 Bohr magneton/Fe`; `0.10 Ry` gives the largest moment and best final
+accuracy without a meaningful iteration penalty. Static SCF alone cannot show
+whether the stronger penalty remains stable and affordable under ionic motion,
+so Round 9 compares these two values in otherwise identical 10-step 4000 K MD
+pilots.
+
+Repository results retained here are deliberately lightweight:
+
+- `round8_final_summary.csv`: human-readable terminal values;
+- `round8_dashboard.png`: convergence and moment comparison;
+- `round8_results_light.npz`: safe `allow_pickle=False` archive;
+- `round8_serial_status.tsv`: Lonestar6 case completion record.

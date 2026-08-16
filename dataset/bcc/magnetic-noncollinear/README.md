@@ -68,3 +68,7 @@ thermally displaced structure before any larger-cell or long-MD calculation is
 attempted. The package includes input generation, a minimal upstream-equivalent
 QE 7.5 source patch, private Lonestar6 build and run scripts, live checking and
 plotting, and a lightweight NPZ collector.
+
+Round 8 is complete. Its two successful high-retention settings are compared
+during ionic motion in the paired 10-step follow-up:
+[`round9_qe75_patched_constraint_md_lonestar6`](round9_qe75_patched_constraint_md_lonestar6/README.md).

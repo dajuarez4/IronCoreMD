@@ -1,0 +1,5 @@
+case,final_lambda_Ry,status,final_stage_iterations,last_accuracy_Ry,printed_target_Bohr_per_Fe,measured_local_moment_Bohr_per_Fe,retention_fraction
+a2p39_m2_fixed_lambda0p010,0.01,DONE,9,0.00027109,2.000000,0.626003,0.3130
+a2p39_m2_fixed_lambda0p020,0.02,DONE,17,0.00028997,2.000000,0.930252,0.4651
+a2p39_m2_fixed_lambda0p050,0.05,DONE,15,0.00029334,2.000000,1.323047,0.6615
+a2p39_m2_fixed_lambda0p100,0.10,DONE,18,0.00018290,2.000000,1.565806,0.7829
