@@ -1009,29 +1009,7 @@ The current parser assumes QE output that contains:
 
 If a matching QE input file with the same stem exists beside the output file, the script also tries to read the original `CELL_PARAMETERS` block from that `.in` file.
 
-## Current Limitations
 
-- No command-line interface yet; configuration is done by editing constants in the script.
-- The automated tests cover the current high-risk parsers and input generators,
-  but they do not yet include end-to-end QE or ML training runs.
-- The parser is tuned for the QE formats currently used in this project and may need adjustment for other output styles.
-- `load_data.py` also uses a hardcoded archive path and is only a lightweight inspection script.
-- `live_qe_check.sh` currently assumes QE text patterns similar to the outputs used in this project and writes its `.dat` files and PNG to the current working directory.
-- `qe_npz_to_gif.py` assumes the `.npz` archive follows the schema produced by `data_compress.py`.
-
-## Suggested Next Steps
-
-Natural extensions for this repository would be:
-
-- adding structure-generation helpers for `bcc`, `fcc`, and `hcp` iron,
-- adding QE input templates for non-magnetic, noncollinear, and paramagnetic runs,
-- adding relaxation and MD job-generation workflows,
-- adding a CLI with `argparse`,
-- removing hardcoded paths,
-- expanding unit tests with additional representative QE outputs,
-- documenting the archive schema more formally,
-- supporting additional engines or archive backends,
-- and adding dataset assembly tools for graph-kernel-based ML interatomic potential training.
 
 ## References
 
