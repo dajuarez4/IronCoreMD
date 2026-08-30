@@ -1,0 +1,6 @@
+cases/*/*.out
+cases/*/qe_tmp/
+logs/*.out
+logs/*.err
+.round12_plot/
+__pycache__/

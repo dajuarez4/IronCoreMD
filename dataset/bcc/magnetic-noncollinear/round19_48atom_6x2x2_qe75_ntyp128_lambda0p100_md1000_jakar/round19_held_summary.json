@@ -1,0 +1,47 @@
+{
+  "phase": "bcc",
+  "method": "HELD per-frame diagnostic",
+  "natoms": 48,
+  "supercell": [
+    6,
+    2,
+    2
+  ],
+  "selected_frames": 26,
+  "first_iteration": 1,
+  "last_iteration": 26,
+  "stride": 1,
+  "num_shells": 5,
+  "shell_distances_ang": [
+    2.0698007150448086,
+    2.39,
+    3.379970414071697,
+    3.963366624474703,
+    4.139601430089617
+  ],
+  "frequency_min_THz": -22.12049215304216,
+  "frequency_max_THz": 38.702920189779014,
+  "imaginary_values": 2143,
+  "source_complete_frames": 26,
+  "source_requested_frames": 1000,
+  "source_job_done": false,
+  "mean_printed_constraint_Bohr": 0.12499999501243497,
+  "limitations": [
+    "The local source contains only 26/1000 complete MD force frames and no valid complete-run marker.",
+    "The run printed a 0.125 Bohr-magneton constraint rather than the requested 2.0.",
+    "The MD forces use conv_thr=4e-3 Ry and have substantial SCF-force corrections.",
+    "The 6x2x2 cell is shorter than twice the default fifth-shell cutoff in y and z.",
+    "The animated HELD branches are qualitative per-frame diagnostics, not publication-quality phonons."
+  ],
+  "outputs": {
+    "trajectory_npz": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_trajectory.npz",
+    "coefficients_csv": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_coefficients.csv",
+    "steps_csv": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_steps.csv",
+    "dispersion_data": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_mean_dispersion.dat",
+    "dispersion_png": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_mean_dispersion.png",
+    "phonon_cache": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_phonon_frames.npz",
+    "heatmap_png": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_heatmap.png",
+    "dashboard_png": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_md_dashboard_final.png",
+    "dashboard_gif": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round19_48atom_6x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/round19_held_md_dashboard.gif"
+  }
+}

@@ -1,0 +1,4 @@
+*.log
+*.out
+qe_tmp/
+__pycache__/

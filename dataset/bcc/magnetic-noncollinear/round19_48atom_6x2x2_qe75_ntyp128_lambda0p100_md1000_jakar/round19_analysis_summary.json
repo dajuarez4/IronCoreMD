@@ -1,0 +1,65 @@
+{
+  "analysis_scope": "partial returned MD output",
+  "source": "md_1000steps.out",
+  "source_sha256": "32fd7d290a0a9787fb2e92854c204e58f6996b0c61ee7fc9d8187f72d3f63851",
+  "source_size_bytes": 2433361,
+  "atoms": 48,
+  "expected_md_steps": 1000,
+  "completed_md_steps": 26,
+  "completion_fraction": 0.026,
+  "simulated_time_ps": 0.02599913629588126,
+  "job_done": false,
+  "complete": false,
+  "unfinished_scf_iterations_after_last_step": 15,
+  "fatal_error_markers": 0,
+  "c_bands_nonconvergence_warnings": 0,
+  "large_scf_force_correction_warnings": 24,
+  "temperature_K": {
+    "mean": 5574.876625186539,
+    "minimum": 3994.00804228,
+    "maximum": 6614.81353823,
+    "final": 6419.68518408
+  },
+  "pressure_GPa": {
+    "mean": 367.3930384615385,
+    "minimum": 350.477,
+    "maximum": 381.57399999999996,
+    "final": 350.477
+  },
+  "scf": {
+    "mean_iterations": 14.26923076923077,
+    "maximum_iterations": 33,
+    "mean_final_accuracy_Ry": 0.0030150076923076926,
+    "maximum_final_accuracy_Ry": 0.0039903
+  },
+  "magnetization": {
+    "mean_local_moment_Bohr_per_Fe": 0.10803336533678706,
+    "final_local_moment_Bohr_per_Fe": 0.10813837268780624,
+    "requested_constraint_magnitude_Bohr_per_Fe": 2.0,
+    "mean_printed_constraint_magnitude": 0.12499999501243497,
+    "constraint_scale_correct": false,
+    "constraint_assessment": "FAIL: QE printed a constrained-vector magnitude of 0.125 rather than 2.0. The expected patched mcons=Zval*starting_magnetization behavior was not active in the executable used for this run.",
+    "mean_total_vector_Bohr_per_cell": [
+      0.023846153846153847,
+      0.014230769230769234,
+      1.3344026738283132e-19
+    ],
+    "mean_total_magnitude_Bohr_per_cell": 0.02998538036262126,
+    "maximum_total_magnitude_Bohr_per_cell": 0.06403124237432849
+  },
+  "structure": {
+    "maximum_rms_displacement_from_start_A": 0.3431874403192936,
+    "final_rms_displacement_from_start_A": 0.3431874403192936,
+    "minimum_periodic_Fe_Fe_distance_A": 1.6544553297723508
+  },
+  "force_quality": {
+    "mean_total_force_Ry_per_Bohr": 2.141039807692308,
+    "mean_scf_correction_ratio": 0.19675885113330652,
+    "maximum_scf_correction_ratio": 0.3582230032758286
+  },
+  "phonons": {
+    "computed": false,
+    "ready_for_tdep_fit": false,
+    "reason": "The returned trajectory has only 26/1000 completed MD steps and ends mid-SCF; it is too short for a converged TDEP force-constant fit or velocity-autocorrelation DOS. The run also used the wrong 0.125 constrained-moment scale, and its MD forces use conv_thr=4e-3 Ry with non-negligible SCF corrections."
+  }
+}

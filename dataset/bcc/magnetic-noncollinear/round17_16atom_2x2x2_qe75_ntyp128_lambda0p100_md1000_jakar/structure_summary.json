@@ -1,0 +1,10 @@
+{
+  "source": "dataset/bcc/magnetic-noncollinear/round15_qe75_patched_lambda0p100_md1000_lonestar6/cases/a2p39_m2_lambda0p100_md1000/md_1000steps.in",
+  "construction": "Round-15 2x2x1 structure tiled once along z",
+  "cell_A": [
+    4.78,
+    4.78,
+    4.78
+  ],
+  "natoms": 16
+}

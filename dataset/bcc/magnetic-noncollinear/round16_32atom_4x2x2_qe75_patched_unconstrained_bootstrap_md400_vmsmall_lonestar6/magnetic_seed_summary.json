@@ -1,0 +1,76 @@
+{
+  "unique_directions": 8,
+  "copies_per_direction": 4,
+  "target_local_moment_Bohr": 2.0,
+  "initial_direction_vector_sum": [
+    -2.220446049250313e-15,
+    -1.5126788710517758e-15,
+    2.220446049250313e-15
+  ],
+  "initial_target_moment_vector_sum_Bohr": [
+    -4.440892098500626e-15,
+    -3.0253577421035516e-15,
+    4.440892098500626e-15
+  ],
+  "label_assignment": {
+    "label_seed": 130032,
+    "strategy": "independent deterministic shuffle; two copies of every direction on each BCC sublattice",
+    "counts_per_sublattice": {
+      "0": {
+        "Fe01": 2,
+        "Fe02": 2,
+        "Fe03": 2,
+        "Fe04": 2,
+        "Fe05": 2,
+        "Fe06": 2,
+        "Fe07": 2,
+        "Fe08": 2
+      },
+      "1": {
+        "Fe01": 2,
+        "Fe02": 2,
+        "Fe03": 2,
+        "Fe04": 2,
+        "Fe05": 2,
+        "Fe06": 2,
+        "Fe07": 2,
+        "Fe08": 2
+      }
+    },
+    "site_labels": [
+      "Fe01",
+      "Fe06",
+      "Fe04",
+      "Fe08",
+      "Fe06",
+      "Fe02",
+      "Fe05",
+      "Fe03",
+      "Fe03",
+      "Fe02",
+      "Fe07",
+      "Fe07",
+      "Fe04",
+      "Fe08",
+      "Fe01",
+      "Fe05",
+      "Fe04",
+      "Fe04",
+      "Fe07",
+      "Fe01",
+      "Fe02",
+      "Fe06",
+      "Fe02",
+      "Fe05",
+      "Fe08",
+      "Fe07",
+      "Fe03",
+      "Fe06",
+      "Fe05",
+      "Fe08",
+      "Fe01",
+      "Fe03"
+    ]
+  },
+  "reason_for_repetition": "QE 7.5 ntypx=10; eight artificial Fe species preserve the existing patched executable"
+}

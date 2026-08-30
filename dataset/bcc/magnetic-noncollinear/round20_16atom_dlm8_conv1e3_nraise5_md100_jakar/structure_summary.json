@@ -1,0 +1,11 @@
+{
+  "source": "dataset/bcc/magnetic-noncollinear/round17_16atom_2x2x2_qe75_ntyp128_lambda0p100_md1000_jakar/cases/a2p39_2x2x2_m2_16species_lambda0p100_md1000/md_1000steps.in",
+  "cell_A": [
+    4.78,
+    4.78,
+    4.78
+  ],
+  "supercell": "2x2x2",
+  "natoms": 16,
+  "same_initial_positions_for_all_replicas": true
+}

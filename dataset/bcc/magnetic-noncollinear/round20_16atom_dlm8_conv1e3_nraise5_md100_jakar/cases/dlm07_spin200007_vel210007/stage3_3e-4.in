@@ -1,0 +1,128 @@
+&CONTROL
+   calculation='scf'
+   restart_mode='from_scratch'
+   prefix='Fe_bcc16_r20_dlm07'
+   pseudo_dir='../../pseudo'
+   outdir='./qe_tmp'
+   disk_io='low'
+   verbosity='high'
+   tstress=.true.
+   tprnfor=.true.
+/
+&SYSTEM
+   ibrav=0
+   nat=16
+   ntyp=16
+   ecutwfc=71.0
+   ecutrho=496.0
+   occupations='smearing'
+   smearing='fd'
+   degauss=0.025334
+   nosym=.true.
+   noncolin=.true.
+   lspinorb=.false.
+   constrained_magnetization='atomic'
+   lambda=0.10000000
+   report=1
+   starting_magnetization(1)=0.12500000
+   angle1(1)=67.0357558740
+   angle2(1)=13.5548408232
+   starting_magnetization(2)=0.12500000
+   angle1(2)=78.0649038416
+   angle2(2)=200.7037054935
+   starting_magnetization(3)=0.12500000
+   angle1(3)=36.2489433029
+   angle2(3)=149.4355735714
+   starting_magnetization(4)=0.12500000
+   angle1(4)=112.9642441260
+   angle2(4)=193.5548408232
+   starting_magnetization(5)=0.12500000
+   angle1(5)=143.7510566971
+   angle2(5)=329.4355735714
+   starting_magnetization(6)=0.12500000
+   angle1(6)=81.6919158440
+   angle2(6)=9.9493069965
+   starting_magnetization(7)=0.12500000
+   angle1(7)=152.9199264384
+   angle2(7)=204.8641970167
+   starting_magnetization(8)=0.12500000
+   angle1(8)=27.0800735616
+   angle2(8)=24.8641970167
+   starting_magnetization(9)=0.12500000
+   angle1(9)=27.3997659467
+   angle2(9)=54.9298597894
+   starting_magnetization(10)=0.12500000
+   angle1(10)=152.6002340533
+   angle2(10)=234.9298597894
+   starting_magnetization(11)=0.12500000
+   angle1(11)=108.2451991545
+   angle2(11)=146.1139003432
+   starting_magnetization(12)=0.12500000
+   angle1(12)=55.5451507884
+   angle2(12)=177.9169254923
+   starting_magnetization(13)=0.12500000
+   angle1(13)=71.7548008455
+   angle2(13)=326.1139003432
+   starting_magnetization(14)=0.12500000
+   angle1(14)=124.4548492116
+   angle2(14)=357.9169254923
+   starting_magnetization(15)=0.12500000
+   angle1(15)=98.3080841560
+   angle2(15)=189.9493069965
+   starting_magnetization(16)=0.12500000
+   angle1(16)=101.9350961584
+   angle2(16)=20.7037054935
+/
+&ELECTRONS
+   startingpot='file'
+   startingwfc='file'
+   conv_thr=3.0e-04
+   electron_maxstep=600
+   scf_must_converge=.true.
+   mixing_mode='local-TF'
+   mixing_beta=0.010d0
+   mixing_ndim=20
+   diagonalization='cg'
+   diago_thr_init=1.0d-3
+   diago_cg_maxiter=200
+/
+ATOMIC_SPECIES
+Fe01 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe02 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe03 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe04 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe05 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe06 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe07 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe08 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe09 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe10 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe11 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe12 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe13 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe14 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe15 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe16 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+ATOMIC_POSITIONS crystal
+Fe08 0.012027047575 0.073702611029 0.484014056623
+Fe10 0.284393727779 0.288436353207 0.236667424441
+Fe06 0.984382264316 0.580798864365 0.015788963064
+Fe13 0.243689253926 0.798996508121 0.250503540039
+Fe16 0.466723054647 0.925974182785 0.497512317729
+Fe02 0.772856652737 0.200137659907 0.259824037552
+Fe03 0.513922214508 0.431229859591 0.009322023019
+Fe01 0.722005784512 0.700724005699 0.246367633343
+Fe05 0.012027047575 0.073702611029 0.984014056623
+Fe04 0.284393727779 0.288436353207 0.736667424441
+Fe15 0.984382264316 0.580798864365 0.515788963064
+Fe09 0.243689253926 0.798996508121 0.750503540039
+Fe11 0.466723054647 0.925974182785 0.997512317729
+Fe14 0.772856652737 0.200137659907 0.759824037552
+Fe12 0.513922214508 0.431229859591 0.509322023019
+Fe07 0.722005784512 0.700724005699 0.746367633343
+CELL_PARAMETERS angstrom
+4.780000000000 0.000000000000 0.000000000000
+0.000000000000 4.780000000000 0.000000000000
+0.000000000000 0.000000000000 4.780000000000
+K_POINTS automatic
+1 1 1 0 0 0

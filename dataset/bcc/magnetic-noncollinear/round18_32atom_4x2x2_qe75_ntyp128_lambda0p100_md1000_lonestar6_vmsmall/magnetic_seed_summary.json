@@ -1,0 +1,53 @@
+{
+  "unique_species": 32,
+  "unique_directions": 32,
+  "one_species_per_atom": true,
+  "target_local_moment_Bohr": 2.0,
+  "first_sixteen_source": "Round 17",
+  "direction_groups": "Round-15 base angles with common azimuth shifts 0, 47, 94, and 141 degrees",
+  "direction_vector_sum": [
+    -2.220446049250313e-16,
+    3.3306690738754696e-16,
+    2.55351295663786e-15
+  ],
+  "target_moment_vector_sum_Bohr": [
+    -4.440892098500626e-16,
+    6.661338147750939e-16,
+    5.10702591327572e-15
+  ],
+  "position_label_seed": 180032,
+  "position_labels": [
+    "Fe04",
+    "Fe13",
+    "Fe15",
+    "Fe06",
+    "Fe08",
+    "Fe03",
+    "Fe02",
+    "Fe11",
+    "Fe09",
+    "Fe12",
+    "Fe10",
+    "Fe05",
+    "Fe01",
+    "Fe16",
+    "Fe14",
+    "Fe07",
+    "Fe24",
+    "Fe29",
+    "Fe32",
+    "Fe22",
+    "Fe17",
+    "Fe26",
+    "Fe28",
+    "Fe31",
+    "Fe30",
+    "Fe18",
+    "Fe27",
+    "Fe23",
+    "Fe20",
+    "Fe21",
+    "Fe19",
+    "Fe25"
+  ]
+}

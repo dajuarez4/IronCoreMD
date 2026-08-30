@@ -1,0 +1,9 @@
+serial_index,case,spin_seed,velocity_seed,label_seed,target_temperature_K,target_local_moment_Bohr,lambda_stage1,lambda_stage2,lambda_stage3_md,md_steps,md_conv_thr_Ry,nraise,natoms,ntyp,unique_spin_directions,one_species_per_atom,supercell,mixing_mode,mixing_beta,mixing_ndim,jakar_account,jakar_qos,jakar_partition,mpi_tasks
+0,dlm00_spin200000_vel210000,200000,210000,220000,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+1,dlm01_spin200001_vel210001,200001,210001,220001,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+2,dlm02_spin200002_vel210002,200002,210002,220002,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+3,dlm03_spin200003_vel210003,200003,210003,220003,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+4,dlm04_spin200004_vel210004,200004,210004,220004,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+5,dlm05_spin200005_vel210005,200005,210005,220005,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+6,dlm06_spin200006_vel210006,200006,210006,220006,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16
+7,dlm07_spin200007_vel210007,200007,210007,220007,4000.0,2.0,0.005,0.02,0.1,100,0.001,5,16,16,16,True,2x2x2,local-TF,0.01,20,jakar_general,jakar_medium_general,medium,16

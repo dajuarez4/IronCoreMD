@@ -1,0 +1,208 @@
+&CONTROL
+   calculation='scf'
+   restart_mode='from_scratch'
+   prefix='Fe_bcc32_r18_a2p39_m2_l0100_md1000'
+   pseudo_dir='../../pseudo'
+   outdir='./qe_tmp'
+   disk_io='low'
+   verbosity='high'
+   tstress=.true.
+   tprnfor=.true.
+/
+&SYSTEM
+   ibrav=0
+   nat=32
+   ntyp=32
+   ecutwfc=71.0
+   ecutrho=496.0
+   occupations='smearing'
+   smearing='fd'
+   degauss=0.025334
+   nosym=.true.
+   noncolin=.true.
+   lspinorb=.false.
+   constrained_magnetization='atomic'
+   lambda=0.00500000
+   report=1
+   starting_magnetization(1)=0.12500000
+   angle1(1)=72.8157590495
+   angle2(1)=72.7795960677
+   starting_magnetization(2)=0.12500000
+   angle1(2)=73.5303944933
+   angle2(2)=92.3546343919
+   starting_magnetization(3)=0.12500000
+   angle1(3)=33.6579186653
+   angle2(3)=331.8844103957
+   starting_magnetization(4)=0.12500000
+   angle1(4)=95.5478199306
+   angle2(4)=0.9655109597
+   starting_magnetization(5)=0.12500000
+   angle1(5)=107.1842409505
+   angle2(5)=252.7795960677
+   starting_magnetization(6)=0.12500000
+   angle1(6)=106.4696055067
+   angle2(6)=272.3546343919
+   starting_magnetization(7)=0.12500000
+   angle1(7)=146.3420813347
+   angle2(7)=151.8844103957
+   starting_magnetization(8)=0.12500000
+   angle1(8)=84.4521800694
+   angle2(8)=180.9655109597
+   starting_magnetization(9)=0.12500000
+   angle1(9)=72.8157590495
+   angle2(9)=119.7795960677
+   starting_magnetization(10)=0.12500000
+   angle1(10)=73.5303944933
+   angle2(10)=139.3546343919
+   starting_magnetization(11)=0.12500000
+   angle1(11)=33.6579186653
+   angle2(11)=18.8844103957
+   starting_magnetization(12)=0.12500000
+   angle1(12)=95.5478199306
+   angle2(12)=47.9655109597
+   starting_magnetization(13)=0.12500000
+   angle1(13)=107.1842409505
+   angle2(13)=299.7795960677
+   starting_magnetization(14)=0.12500000
+   angle1(14)=106.4696055067
+   angle2(14)=319.3546343919
+   starting_magnetization(15)=0.12500000
+   angle1(15)=146.3420813347
+   angle2(15)=198.8844103957
+   starting_magnetization(16)=0.12500000
+   angle1(16)=84.4521800694
+   angle2(16)=227.9655109597
+   starting_magnetization(17)=0.12500000
+   angle1(17)=72.8157590495
+   angle2(17)=166.7795960677
+   starting_magnetization(18)=0.12500000
+   angle1(18)=73.5303944933
+   angle2(18)=186.3546343919
+   starting_magnetization(19)=0.12500000
+   angle1(19)=33.6579186653
+   angle2(19)=65.8844103957
+   starting_magnetization(20)=0.12500000
+   angle1(20)=95.5478199306
+   angle2(20)=94.9655109597
+   starting_magnetization(21)=0.12500000
+   angle1(21)=107.1842409505
+   angle2(21)=346.7795960677
+   starting_magnetization(22)=0.12500000
+   angle1(22)=106.4696055067
+   angle2(22)=6.3546343919
+   starting_magnetization(23)=0.12500000
+   angle1(23)=146.3420813347
+   angle2(23)=245.8844103957
+   starting_magnetization(24)=0.12500000
+   angle1(24)=84.4521800694
+   angle2(24)=274.9655109597
+   starting_magnetization(25)=0.12500000
+   angle1(25)=72.8157590495
+   angle2(25)=213.7795960677
+   starting_magnetization(26)=0.12500000
+   angle1(26)=73.5303944933
+   angle2(26)=233.3546343919
+   starting_magnetization(27)=0.12500000
+   angle1(27)=33.6579186653
+   angle2(27)=112.8844103957
+   starting_magnetization(28)=0.12500000
+   angle1(28)=95.5478199306
+   angle2(28)=141.9655109597
+   starting_magnetization(29)=0.12500000
+   angle1(29)=107.1842409505
+   angle2(29)=33.7795960677
+   starting_magnetization(30)=0.12500000
+   angle1(30)=106.4696055067
+   angle2(30)=53.3546343919
+   starting_magnetization(31)=0.12500000
+   angle1(31)=146.3420813347
+   angle2(31)=292.8844103957
+   starting_magnetization(32)=0.12500000
+   angle1(32)=84.4521800694
+   angle2(32)=321.9655109597
+/
+&ELECTRONS
+   startingpot='atomic'
+   startingwfc='atomic+random'
+   conv_thr=4.0e-03
+   electron_maxstep=500
+   scf_must_converge=.true.
+   mixing_mode='local-TF'
+   mixing_beta=0.010d0
+   mixing_ndim=20
+   diagonalization='cg'
+   diago_thr_init=1.0d-3
+   diago_cg_maxiter=200
+/
+ATOMIC_SPECIES
+Fe01 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe02 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe03 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe04 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe05 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe06 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe07 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe08 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe09 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe10 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe11 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe12 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe13 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe14 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe15 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe16 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe17 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe18 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe19 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe20 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe21 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe22 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe23 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe24 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe25 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe26 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe27 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe28 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe29 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe30 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe31 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+Fe32 55.845 Fe.pbe-spn-kjpaw_psl.1.0.0.UPF
+ATOMIC_POSITIONS crystal
+Fe04 0.006013523787 0.073702611029 0.484014056623
+Fe13 0.142196863890 0.288436353207 0.236667424441
+Fe15 0.492191132158 0.580798864365 0.015788963064
+Fe06 0.121844626963 0.798996508121 0.250503540039
+Fe08 0.233361527323 0.925974182785 0.497512317729
+Fe03 0.386428326368 0.200137659907 0.259824037552
+Fe02 0.256961107254 0.431229859591 0.009322023019
+Fe11 0.361002892256 0.700724005699 0.246367633343
+Fe09 0.006013523787 0.073702611029 0.984014056623
+Fe12 0.142196863890 0.288436353207 0.736667424441
+Fe10 0.492191132158 0.580798864365 0.515788963064
+Fe05 0.121844626963 0.798996508121 0.750503540039
+Fe01 0.233361527323 0.925974182785 0.997512317729
+Fe16 0.386428326368 0.200137659907 0.759824037552
+Fe14 0.256961107254 0.431229859591 0.509322023019
+Fe07 0.361002892256 0.700724005699 0.746367633343
+Fe24 0.506013523787 0.073702611029 0.484014056623
+Fe29 0.642196863890 0.288436353207 0.236667424441
+Fe32 0.992191132158 0.580798864365 0.015788963064
+Fe22 0.621844626963 0.798996508121 0.250503540039
+Fe17 0.733361527324 0.925974182785 0.497512317729
+Fe26 0.886428326368 0.200137659907 0.259824037552
+Fe28 0.756961107254 0.431229859591 0.009322023019
+Fe31 0.861002892256 0.700724005699 0.246367633343
+Fe30 0.506013523787 0.073702611029 0.984014056623
+Fe18 0.642196863890 0.288436353207 0.736667424441
+Fe27 0.992191132158 0.580798864365 0.515788963064
+Fe23 0.621844626963 0.798996508121 0.750503540039
+Fe20 0.733361527324 0.925974182785 0.997512317729
+Fe21 0.886428326368 0.200137659907 0.759824037552
+Fe19 0.756961107254 0.431229859591 0.509322023019
+Fe25 0.861002892256 0.700724005699 0.746367633343
+CELL_PARAMETERS angstrom
+9.560000000000 0.000000000000 0.000000000000
+0.000000000000 4.780000000000 0.000000000000
+0.000000000000 0.000000000000 4.780000000000
+K_POINTS automatic
+1 1 1 0 0 0

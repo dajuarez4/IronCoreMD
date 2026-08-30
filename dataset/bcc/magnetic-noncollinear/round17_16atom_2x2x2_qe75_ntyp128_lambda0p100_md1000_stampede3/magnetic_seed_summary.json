@@ -1,0 +1,37 @@
+{
+  "unique_species": 16,
+  "unique_directions": 16,
+  "one_species_per_atom": true,
+  "target_local_moment_Bohr": 2.0,
+  "first_eight_source": "Round 15",
+  "second_eight_transform": "common +47 degree azimuthal rotation",
+  "direction_vector_sum": [
+    -3.3306690738754696e-16,
+    -4.440892098500626e-16,
+    1.2212453270876722e-15
+  ],
+  "target_moment_vector_sum_Bohr": [
+    -6.661338147750939e-16,
+    -8.881784197001252e-16,
+    2.4424906541753444e-15
+  ],
+  "position_label_seed": 170016,
+  "position_labels": [
+    "Fe05",
+    "Fe06",
+    "Fe07",
+    "Fe01",
+    "Fe08",
+    "Fe02",
+    "Fe03",
+    "Fe04",
+    "Fe16",
+    "Fe13",
+    "Fe14",
+    "Fe11",
+    "Fe15",
+    "Fe10",
+    "Fe12",
+    "Fe09"
+  ]
+}

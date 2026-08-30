@@ -1,0 +1,4 @@
+logs/*.out
+logs/*.err
+test_ntyp16.out
+test_ntyp16_tmp/

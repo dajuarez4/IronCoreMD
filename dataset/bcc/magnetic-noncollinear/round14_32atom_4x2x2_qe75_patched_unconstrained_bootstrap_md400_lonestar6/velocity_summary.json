@@ -1,0 +1,12 @@
+{
+  "target_temperature_K": 4000.0,
+  "measured_temperature_K": 4000.0,
+  "velocity_seed": 320400,
+  "center_of_mass_velocity_au": [
+    -7.765795845540367e-20,
+    -3.8828979227701834e-21,
+    3.494608130493165e-20
+  ],
+  "degrees_of_freedom": 93,
+  "generator": "Maxwell-Boltzmann; COM removed; exactly rescaled"
+}

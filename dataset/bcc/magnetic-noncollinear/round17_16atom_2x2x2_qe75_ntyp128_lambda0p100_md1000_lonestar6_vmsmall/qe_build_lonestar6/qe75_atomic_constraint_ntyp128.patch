@@ -1,0 +1,34 @@
+--- a/Modules/parameters.f90
++++ b/Modules/parameters.f90
+@@ -13,7 +13,7 @@
+   SAVE
+   INTEGER, PARAMETER :: npk = 40000
+   !! max number of k-points
+-  INTEGER, PARAMETER :: ntypx = 10
++  INTEGER, PARAMETER :: ntypx = 128
+   !! max number of different types of atom
+   INTEGER, PARAMETER :: nsx = ntypx
+   !! max number of atomic species (CP)
+--- a/PW/src/input.f90
++++ b/PW/src/input.f90
+@@ -1537,16 +1537,16 @@
+            theta = angle1(nt)
+            phi   = angle2(nt)
+            !
+-           mcons(1,nt) = starting_magnetization(nt) * sin( theta ) * cos( phi )
+-           mcons(2,nt) = starting_magnetization(nt) * sin( theta ) * sin( phi )
+-           mcons(3,nt) = starting_magnetization(nt) * cos( theta )
++           mcons(1,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * cos( phi )
++           mcons(2,nt) = zv(nt) * starting_magnetization(nt) * sin( theta ) * sin( phi )
++           mcons(3,nt) = zv(nt) * starting_magnetization(nt) * cos( theta )
+            !
+         ENDDO
+      ELSE
+         ! collinear case
+         DO nt = 1, nsp
+            !
+-           mcons(1,nt) = starting_magnetization(nt)
++           mcons(1,nt) = zv(nt) * starting_magnetization(nt)
+            !
+         ENDDO
+      ENDIF

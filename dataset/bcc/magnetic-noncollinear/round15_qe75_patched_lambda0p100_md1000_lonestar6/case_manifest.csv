@@ -1,0 +1,2 @@
+serial_index,case,lattice_a_A,target_temperature_K,target_local_moment_Bohr,starting_magnetization,lambda_stage1,lambda_stage2,lambda_stage3_md,md_steps,velocity_seed,qe_requirement
+0,a2p39_m2_lambda0p100_md1000,2.39,4000.0,2.0,0.125,0.005,0.02,0.1,1000,400054,private patched QE 7.5 mcons=zv*starting_magnetization

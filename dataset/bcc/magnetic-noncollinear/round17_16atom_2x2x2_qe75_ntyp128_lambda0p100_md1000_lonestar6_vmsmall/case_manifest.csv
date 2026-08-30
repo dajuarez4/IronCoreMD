@@ -1,0 +1,2 @@
+serial_index,case,lattice_a_A,target_temperature_K,target_local_moment_Bohr,starting_magnetization,lambda_stage1,lambda_stage2,lambda_stage3_md,md_steps,qe_requirement,supercell,natoms,ntyp,unique_spin_directions,one_species_per_atom,nraise,mixing_mode,mixing_beta,mixing_ndim,lonestar6_partition,mpi_tasks
+0,a2p39_2x2x2_m2_16species_lambda0p100_md1000,2.39,4000.0,2.0,0.125,0.005,0.02,0.1,1000,QE 7.5 private patch mcons=zv*starting_magnetization and ntypx=128,2x2x2,16,16,16,True,20,local-TF,0.01,20,vm-small,16

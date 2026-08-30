@@ -1,0 +1,7 @@
+cases/*/*.out
+cases/*/qe_tmp/
+logs/*.out
+logs/*.err
+*.log
+round17_status.tsv
+__pycache__/

@@ -118,6 +118,54 @@ Do not copy or commit `qe_tmp`, full `.out` files, or scheduler logs. For a
 rerun, preserve the completed directory and copy a clean repository version to
 a new directory.
 
+## Component-magnetization dashboard
+
+`round11_component_magnetization_dashboard.gif` follows the visual design of
+the repository's 54-atom noncollinear dashboard. For visual clarity it shows
+the moving eight-atom `2x2x1` simulation cell together with one translucent
+periodic copy along z, producing a `2x2x2` display without claiming 16 unique
+atoms. The visualization origin is shifted into an empty interstitial region
+and all displayed atoms are wrapped inside the drawn periodic box, preventing atoms or
+spin arrows from being clipped at a cell boundary. This changes only the
+periodic representation, not the Round-11 coordinates.
+The dashboard includes atom-resolved local-spin arrows, the global
+magnetization arrow, and the complete Round-11 histories of:
+
+- global `Mx`, `My`, `Mz`, and `|M|`;
+- ionic temperature;
+- mean local-moment magnitude;
+- maximum local-spin angular deflection from configuration 0;
+- SCF iteration count and final accuracy;
+- RMS and maximum structural displacements.
+
+The animated status box prints `Mx`, `My`, `Mz`, `|M|`, temperature, pressure,
+mean local moment, SCF iterations, accuracy, and displacement. The histories
+contain all 400 converged MD SCF configurations. To keep the GIF practical,
+the animation displays every fourth configuration plus the final one, for 101
+frames total at 8 frames/s. The final-frame still image is
+`round11_component_magnetization_dashboard_final.png`.
+
+The corrected animation is also saved as
+`round11_component_magnetization_dashboard_corrected.gif` to avoid viewers
+showing a cached copy of the earlier clipped GIF. Both GIF names now contain
+the same corrected 101 frames with the complete periodic structure visible.
+
+Rebuild both files with:
+
+```bash
+/opt/anaconda3/bin/python make_round11_component_dashboard.py
+```
+
+Use `--stride 1` to animate every configuration, or adjust `--fps` and `--dpi`
+for a different playback rate and output size.
+
+The arrow directions are not visually exaggerated. Round 11 uses
+`constrained_magnetization='atomic'` at `lambda=0.10 Ry`, which constrains the
+full local-magnetization vectors. The observed maximum rotation of each atom
+over the trajectory is only about `2.2--3.4 degrees`, and the mean stepwise
+rotation is about `0.17 degrees`; nearly stationary arrows are therefore the
+physical result of this constrained calculation rather than an animation bug.
+
 ## Completed result
 
 Round 11 reached all 400 MD steps and `JOB DONE`. All 400 MD SCF cycles

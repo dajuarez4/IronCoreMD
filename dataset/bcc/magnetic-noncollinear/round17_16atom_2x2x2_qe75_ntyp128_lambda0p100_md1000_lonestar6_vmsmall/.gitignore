@@ -1,0 +1,9 @@
+cases/*/*.out
+cases/*/qe_tmp/
+logs/*.out
+logs/*.err
+round17_status.tsv
+*.log
+qe_build_lonestar6/test_ntyp16.out
+qe_build_lonestar6/test_ntyp16_tmp/
+__pycache__/

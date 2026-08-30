@@ -1,0 +1,12 @@
+{
+  "target_temperature_K": 4000.0,
+  "temperature_before_rescaling_K": 3829.7872340425515,
+  "measured_temperature_K": 4000.0,
+  "center_of_mass_velocity_au": [
+    5.1771972303602436e-21,
+    5.1771972303602436e-21,
+    5.1771972303602436e-21
+  ],
+  "degrees_of_freedom": 141,
+  "source": "Round-17 16-atom velocity set; second and third tiles use deterministic row/axis permutations; COM removed and exactly rescaled"
+}
