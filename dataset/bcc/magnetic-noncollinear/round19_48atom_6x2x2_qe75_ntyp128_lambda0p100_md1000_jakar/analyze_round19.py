@@ -283,7 +283,8 @@ def main() -> int:
             "computed": False,
             "ready_for_tdep_fit": phonon_ready,
             "reason": (
-                "The returned trajectory has only 26/1000 completed MD steps and ends mid-SCF; "
+                f"The returned trajectory has only {steps}/{EXPECTED_STEPS} completed MD steps "
+                "and ends mid-SCF; "
                 "it is too short for a converged TDEP force-constant fit or velocity-autocorrelation DOS. "
                 "The run also used the wrong 0.125 constrained-moment scale, and its MD forces use "
                 "conv_thr=4e-3 Ry with non-negligible SCF corrections."

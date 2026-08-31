@@ -67,37 +67,38 @@ output is `cases/.../stage1_4e-3.out`.
 
 Do not mix old `*.out` files or a previous `qe_tmp` directory into this round.
 
-## Partial result checked 2026-08-29
+## Partial result checked 2026-08-30
 
 The returned root-level `md_1000steps.out` is incomplete. Its SHA-256 is
-`32fd7d290a0a9787fb2e92854c204e58f6996b0c61ee7fc9d8187f72d3f63851`.
-It contains 26 of the requested 1000 converged MD SCFs and 26 `Entering
+`573a595cdeab18203ad7b376c1123cfa5a678076a6b51d8f99a0d36cb01674ca`.
+It contains 59 of the requested 1000 converged MD SCFs and 59 `Entering
 Dynamics` records, but no `JOB DONE`. The file ends during the following SCF
-after 15 electronic iterations. There are no QE-routine, Cholesky, `cdiaghg`,
-or explicit electronic-convergence failure markers in the returned text, so
-this looks like an interrupted or truncated run rather than a recorded QE
-fatal error.
+after its first electronic iteration. There are no QE-routine, Cholesky,
+`cdiaghg`, or explicit electronic-convergence failure markers in the returned
+text. QE printed one recoverable `c_bands` warning.
 
 The short segment already exposes several concerns:
 
-- mean ionic temperature: `5574.88 K`, rising to `6419.69 K` at the last
-  completed step, versus the `4000 K` target;
-- mean pressure: `367.39 GPa`, falling from about `379` to `350 GPa`;
-- mean printed local moment: only `0.10803 Bohr magneton/Fe`;
+- mean ionic temperature: `5387.51 K`, but the thermostat has turned the
+  trajectory downward; the final value is `3677.21 K` and the final-10 mean is
+  `3769.92 K`, now reasonably close to the `4000 K` target;
+- mean pressure: `353.46 GPa`; the final value is `342.67 GPa`;
+- mean printed local moment: only `0.10715 Bohr magneton/Fe`, with a final
+  value of `0.10537`;
 - more decisively, every printed constrained vector has magnitude `0.125 Bohr
   magneton`, not the requested `2.0 Bohr magneton`. Rounds 15 and 17 print
   magnitude `2.0` from the same `starting_magnetization=0.125` input because
   their corrected builds apply `mcons = Zval * starting_magnetization`;
-- mean final SCF accuracy: `3.015e-3 Ry`, with a maximum of `3.9903e-3 Ry`,
+- mean final SCF accuracy: `2.914e-3 Ry`, with a maximum of `3.9903e-3 Ry`,
   just inside the `4e-3 Ry` MD threshold;
-- mean electronic iterations per completed MD SCF: `14.27`, maximum `33`;
-- the printed SCF-force correction averages `0.197` of the total-force
-  magnitude and triggers the large-correction warning in 24 of 26 steps;
+- mean electronic iterations per completed MD SCF: `16.61`, maximum `46`;
+- the printed SCF-force correction averages `0.211` of the total-force
+  magnitude and triggers the large-correction warning in 57 of 59 steps;
 - minimum periodic Fe--Fe separation: `1.654 A`; maximum RMS displacement
-  from the starting configuration: `0.343 A`.
+  from the starting configuration: `0.533 A`.
 
 No quantitative phonon dispersion, phonon DOS, or TDEP force constants can be
-obtained from this file. A 26-configuration, `0.026 ps` interrupted trajectory
+obtained from this file. A 59-configuration, `0.059 ps` interrupted trajectory
 cannot support a defensible TDEP fit or velocity-autocorrelation spectrum, and
 the loose-SCF MD forces are not suitable for quantitative fitting. The HELD
 section below therefore presents only the requested per-frame diagnostic
@@ -129,7 +130,7 @@ frame it synchronizes:
 - magnetization, temperature, and displacement histories;
 - the frame-specific HELD dispersion along `Gamma-H-N-Gamma-P-H`.
 
-The current GIF has 26 frames at 5 frames/s and is `2550x1500` pixels. The HELD
+The current GIF has 59 frames at 5 frames/s and is `2550x1500` pixels. The HELD
 frequencies span approximately `-22.12` to `38.70 THz`; the negative branches
 are shown, not suppressed. These are qualitative diagnostic branches from the
 incomplete, incorrectly constrained, loose-force trajectory described above,

@@ -33,6 +33,22 @@ MPI tasks = 16 per replica
 QE        = /gpfs/scratch/dajuarez4/qe-7.5/bin/pw.x
 ```
 
+The executable was repaired and runtime-validated on 2026-08-31:
+
+```text
+SHA256 = 5aff2e0b9f36cd1dda210b5fb155b6573b6136612cf235ddc543477f41939abf
+ntypx  = 128
+mcons  = zv(nt) * starting_magnetization(nt) * direction
+test   = 16/16 pilot constrained-vector norms were 2.000000 mu_B
+```
+
+The earlier executable hash
+`dbbc2ea192a3fbddd19bff4c9d63131f57a918ceb46129047bb4364071cba842`
+printed `0.125000 mu_B` constraints and must not be used. Replica outputs
+created with that build are legacy results and cannot be mixed with the
+repaired pilot. Rebuild instructions and verification scripts are in
+[`../../../../hpc/jakar/README.md`](../../../../hpc/jakar/README.md).
+
 ## Submission order
 
 Copy the complete folder to Jakar and submit only the pilot:
