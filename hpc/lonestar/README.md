@@ -41,6 +41,122 @@ bash /path/to/IronCoreMD/hpc/install_qe_from_source.sh
 
 Do not copy the Jakar executable to Lonestar6. Recompile on Lonestar6 so QE links against the compiler, MPI, and numerical libraries available there.
 
+## Private QE 7.5 build: atomic constraint fix and 128 species
+
+The constrained-DLM calculations need the same two private changes validated
+on Jakar:
+
+- `Modules/parameters.f90`: `ntypx=128`;
+- `PW/src/input.f90`:
+  `mcons = zv(nt) * starting_magnetization(nt) * direction`.
+
+For the Fe PAW pseudopotential used by this project, `zv=16`, so
+`starting_magnetization=0.125` must print a constrained-vector norm of
+`2.000000 mu_B`. A successful compilation is not sufficient without this
+runtime test.
+
+The reusable Lonestar6 files are:
+
+```text
+qe75_atomic_constraint_ntyp128.patch
+prepare_qe75_atomic_fixed_ntyp128_lonestar6.sh
+build_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+verify_qe75_atomic_fixed_ntyp128_lonestar6.sh
+test_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+test_ntyp16.in
+SCALING_16_TO_128.md
+```
+
+Before building, inspect the current TACC environment:
+
+```bash
+qlimits
+module spider intel
+module spider impi
+```
+
+Prepare a clean source tree:
+
+```bash
+cd /path/to/IronCoreMD/hpc/lonestar
+
+bash prepare_qe75_atomic_fixed_ntyp128_lonestar6.sh \
+  "$SCRATCH/software/q-e-qe-7.5.tar.gz" \
+  "$SCRATCH/src"
+```
+
+The preparation script refuses to overwrite an existing tree. For a later
+rebuild, choose new source and installation names explicitly:
+
+```bash
+TARGET_DIR="$SCRATCH/src/q-e-qe-7.5-atomic-fixed-ntyp128-v2" \
+bash prepare_qe75_atomic_fixed_ntyp128_lonestar6.sh \
+  "$SCRATCH/software/q-e-qe-7.5.tar.gz" \
+  "$SCRATCH/src"
+
+sbatch \
+  --export=ALL,SOURCE_DIR="$SCRATCH/src/q-e-qe-7.5-atomic-fixed-ntyp128-v2",INSTALL_DIR="$SCRATCH/apps/qe-7.5-atomic-fixed-ntyp128-v2" \
+  build_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+```
+
+Compile in `vm-small`:
+
+```bash
+sbatch build_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+```
+
+The script defaults to the unversioned `intel` and `impi` modules, records the
+resolved build environment, and installs:
+
+```text
+$SCRATCH/apps/qe-7.5-atomic-fixed-ntyp128/bin/pw.x
+```
+
+If the desired modules are versioned, export them explicitly:
+
+```bash
+sbatch --export=ALL,COMPILER_MODULE=intel/19.1.1,MPI_MODULE=impi/19.0.9 \
+  build_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+```
+
+After the build, verify provenance and libraries using the same module stack:
+
+```bash
+COMPILER_MODULE=intel MPI_MODULE=impi \
+bash verify_qe75_atomic_fixed_ntyp128_lonestar6.sh \
+  "$SCRATCH/apps/qe-7.5-atomic-fixed-ntyp128"
+```
+
+Copy the trusted Fe PAW pseudopotential beside `test_ntyp16.in`, then submit
+the included smoke test:
+
+```bash
+cp /path/to/Fe.pbe-spn-kjpaw_psl.1.0.0.UPF .
+sbatch test_qe75_atomic_fixed_ntyp128_lonestar6.sbatch
+```
+
+The final line of the Slurm output must be:
+
+```text
+PASS: QE parsed 16 species and printed 2.0-mu_B atomic constraints.
+```
+
+Run a short 16-species SCF through `ibrun`, then validate its output:
+
+```bash
+COMPILER_MODULE=intel MPI_MODULE=impi EXPECTED_NORM=2.0 \
+bash verify_qe75_atomic_fixed_ntyp128_lonestar6.sh \
+  "$SCRATCH/apps/qe-7.5-atomic-fixed-ntyp128" \
+  /absolute/path/to/stage1_4e-3.out
+```
+
+The verification must report `PASS` and norms of `2.000000 mu_B`. Record the
+new executable SHA256; it is expected to differ from the Jakar hash because the
+compiler, MPI, and linked libraries differ.
+
+See [`SCALING_16_TO_128.md`](SCALING_16_TO_128.md) before submitting larger
+cells.
+
 ## Prepare and submit
 
 ```bash
