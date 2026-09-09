@@ -46,3 +46,26 @@ the dependencies listed in `../HELD/requirements.txt`:
 The full dataset contains many 128-atom, 400-frame trajectories and can take a
 long time. Run the notebook's smoke test first. Existing results are cached;
 set `overwrite=True` only when a deliberate refit is required.
+
+## Phonopy dispersion workflow
+
+`phonon_dispersion_phonopy.ipynb` and `phonopy_bcc_workflow.py` convert a
+completed HELD result into the folder layout used by the original workflow:
+
+- primitive BCC `POSCAR`;
+- full supercell `FORCE_CONSTANTS` in Phonopy text format;
+- `band.conf` for the `Gamma-H-N-Gamma-P-H` path;
+- Phonopy `band.yaml`;
+- `phonon_dispersion.npz`, `.dat`, and `.png`;
+- `metadata.json` with the atom-order map and validation error.
+
+The exporter supports the trajectory mean or an individual MD step. It maps
+the AIMD atom ordering to Phonopy ordering and verifies every generated band
+against HELD's direct dynamical matrix. Derived folders are stored under
+`ForceConstants/phonopy/<case_id>/<mean-or-md-step>/`.
+
+The original command can also be rerun inside any generated folder:
+
+```bash
+/opt/anaconda3/bin/phonopy -p -s band.conf
+```
