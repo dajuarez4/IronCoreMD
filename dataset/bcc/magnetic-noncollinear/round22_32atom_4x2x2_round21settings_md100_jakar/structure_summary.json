@@ -1,0 +1,11 @@
+{
+  "source": "round21_dlm01_scf_stabilization_jakar/cases/conv1e-4_beta1e-2/md_100steps.in",
+  "construction": "Round-21 2x2x2 state tiled once along x",
+  "supercell": "4x2x2 conventional BCC",
+  "cell_A": [
+    9.56,
+    4.78,
+    4.78
+  ],
+  "natoms": 32
+}

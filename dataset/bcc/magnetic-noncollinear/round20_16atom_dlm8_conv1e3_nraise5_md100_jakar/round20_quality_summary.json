@@ -1,0 +1,15 @@
+{
+  "archive": "round20_results_light.npz",
+  "replicas": 8,
+  "completed_replicas": 7,
+  "failed_replicas": [
+    "dlm01_spin200001_vel210001"
+  ],
+  "usable_md_steps": 786,
+  "completed_mean_last50_temperature_K": 3465.7726133396854,
+  "completed_std_last50_temperature_K_across_replicas": 215.848109879454,
+  "completed_mean_last50_local_moment_Bohr": 1.5852025192124501,
+  "force_correction_warnings": 657,
+  "assessment": "magnetically stable but electronic/force convergence unsuitable for longer production",
+  "recommended_next_step": "controlled stabilization pilots on the failed dlm01 seed"
+}

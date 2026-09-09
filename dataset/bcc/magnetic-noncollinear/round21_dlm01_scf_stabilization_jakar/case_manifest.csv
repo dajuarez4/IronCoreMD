@@ -1,0 +1,4 @@
+serial_index,case,source_round,source_case,spin_seed,velocity_seed,md_steps,md_conv_thr_Ry,mixing_mode,mixing_beta,mixing_ndim,electron_maxstep,nraise,mpi_tasks
+0,conv3e-4_beta1e-2,20,dlm01_spin200001_vel210001,200001,210001,100,0.0003,local-TF,0.01,20,800,5,16
+1,conv1e-4_beta1e-2,20,dlm01_spin200001_vel210001,200001,210001,100,0.0001,local-TF,0.01,20,1000,5,16
+2,conv3e-4_beta5e-3,20,dlm01_spin200001_vel210001,200001,210001,100,0.0003,local-TF,0.005,20,1000,5,16

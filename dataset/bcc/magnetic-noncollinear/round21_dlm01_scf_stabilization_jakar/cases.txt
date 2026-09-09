@@ -1,0 +1,3 @@
+conv3e-4_beta1e-2
+conv1e-4_beta1e-2
+conv3e-4_beta5e-3

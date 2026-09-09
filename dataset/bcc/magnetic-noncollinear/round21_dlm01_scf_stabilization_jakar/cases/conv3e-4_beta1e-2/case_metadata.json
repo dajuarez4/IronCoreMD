@@ -1,0 +1,16 @@
+{
+  "serial_index": 0,
+  "case": "conv3e-4_beta1e-2",
+  "source_round": 20,
+  "source_case": "dlm01_spin200001_vel210001",
+  "spin_seed": 200001,
+  "velocity_seed": 210001,
+  "md_steps": 100,
+  "md_conv_thr_Ry": 0.0003,
+  "mixing_mode": "local-TF",
+  "mixing_beta": 0.01,
+  "mixing_ndim": 20,
+  "electron_maxstep": 800,
+  "nraise": 5,
+  "mpi_tasks": 16
+}

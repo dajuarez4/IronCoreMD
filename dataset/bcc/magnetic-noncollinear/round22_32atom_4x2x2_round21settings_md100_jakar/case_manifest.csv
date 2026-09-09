@@ -1,0 +1,2 @@
+case,source_round,supercell,natoms,ntyp,md_steps,md_conv_thr_Ry,mixing_mode,mixing_beta,mixing_ndim,electron_maxstep,lambda,nraise,target_temperature_K,mpi_tasks,qe_requirement
+conv1e-4_beta1e-2_32atom,21,4x2x2,32,32,100,0.0001,local-TF,0.01,20,1000,0.1,5,4000.0,32,QE 7.5 atomic-constraint fix with ntypx=128
