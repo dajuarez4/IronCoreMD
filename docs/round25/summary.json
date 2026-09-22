@@ -1,0 +1,40 @@
+{
+  "completed_steps": 92,
+  "requested_steps": 400,
+  "job_done": false,
+  "source": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar",
+  "source_sha256": "9521f4076c042bc26485067573b06d05483892a565c1cfbab6af126d104c4d6b",
+  "segments": [
+    {
+      "file": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar/md_400steps.run000.out",
+      "sha256": "98aede131de44457a338ea101931fb1982e5d9c298e70380ce9179b7d0ea9e64",
+      "completed_frames": 22,
+      "job_done": true
+    },
+    {
+      "file": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar/md_400steps.run002.out",
+      "sha256": "5d8373256d87a5b8f1c815cf226faa70563d84ca789ededc9255d8ea106223a5",
+      "completed_frames": 70,
+      "job_done": false
+    }
+  ],
+  "ignored": [
+    "md_400steps.run002.out: first force frame omitted: header coordinates do not verify restart geometry"
+  ],
+  "cutoff_A": 2.3422,
+  "dt_fs": 0.9999667806108178,
+  "fits": {
+    "all": {
+      "frames": 92,
+      "first_step": 1,
+      "minimum_frequency_THz": 0.0,
+      "imaginary_path_percent": 0.0
+    }
+  },
+  "limitations": [
+    "Short partial trajectory; thermal and sampling convergence not established.",
+    "4x2x2 cell: cutoff below half shortest cell length includes only nearest neighbors.",
+    "Constrained noncollinear forces; conclusion applies to this constrained short-range model."
+  ],
+  "force_alignment": "Initial output tau positions for first force, previous propagated positions thereafter."
+}

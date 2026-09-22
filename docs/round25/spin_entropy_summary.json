@@ -1,0 +1,42 @@
+{
+  "method": "Independent local-moment high-temperature proxy: mean_i ln(1+|m_i|/muB); g approximately 2, orbital contribution neglected",
+  "source_sha256": "9521f4076c042bc26485067573b06d05483892a565c1cfbab6af126d104c4d6b",
+  "segments": [
+    {
+      "file": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar/md_400steps.run000.out",
+      "sha256": "98aede131de44457a338ea101931fb1982e5d9c298e70380ce9179b7d0ea9e64",
+      "completed_frames": 22,
+      "job_done": true
+    },
+    {
+      "file": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar/md_400steps.run002.out",
+      "sha256": "5d8373256d87a5b8f1c815cf226faa70563d84ca789ededc9255d8ea106223a5",
+      "completed_frames": 70,
+      "job_done": false
+    }
+  ],
+  "excluded": [
+    "md_400steps.run002.out: first force frame omitted: header coordinates do not verify restart geometry"
+  ],
+  "frames": 92,
+  "mean_local_moment_muB": 1.6025945019594832,
+  "mean_entropy_kB_per_Fe": 0.9564334258069433,
+  "frame_standard_deviation_kB_per_Fe": 0.005043305334547391,
+  "frame_range_kB_per_Fe": [
+    0.9497415982300255,
+    0.966977594299843
+  ],
+  "mean_entropy_eV_per_K_per_Fe": 8.241905573233465e-05,
+  "mean_entropy_J_per_molFe_K": 7.9522299656240705,
+  "assumed_temperature_K": 4000,
+  "minus_T_S_proxy_eV_per_Fe_at_4000K": -0.32967622292933857,
+  "limitations": [
+    "Constrained atomic magnetization: no equilibrium sampling of spin configurations.",
+    "This is an assumed independent-local-moment degeneracy model, not entropy inferred from spin probabilities.",
+    "Noninteger DFT moments depend on local projection; model uncertainty is not quantified.",
+    "Frame standard deviation describes trajectory variation, not an uncertainty of the mean; frames are correlated.",
+    "No magnetic short-range correlations, orbital entropy, or calibrated longitudinal-spin measure included.",
+    "Do not automatically add -T*S to Helmholtz free energy; assess magnetic model and double counting first."
+  ],
+  "reference": "https://arxiv.org/abs/1709.03868"
+}

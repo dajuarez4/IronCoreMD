@@ -19,6 +19,23 @@ At the moment the repository is still in an early, script-first stage rather tha
 - saving compact archives as `.npz` or `.pkl.xz`,
 - and quickly inspecting the saved datasets.
 
+## Round25 results — September 21, 2026
+
+The [Round25 report](docs/round25/README.md) includes the updated phonon
+animation and a spin-entropy estimate for 32-atom BCC Fe at a 4000 K target.
+Analysis uses 92 validated configurations from restart segments `000` and `002`.
+Ensemble TDEP and mean HELD show no imaginary modes on the calculated path,
+while some individual HELD frames do; equilibrium stability remains unproven.
+
+The independent-local-moment entropy estimate is **0.95643 kB/Fe**
+(**7.95223 J/(mol Fe K)**). Because the spins are constrained, this is a model
+estimate rather than a measured equilibrium magnetic entropy. It has not been
+added to Helmholtz free energies.
+
+[Phonon GIF](docs/round25/round25_dashboard.gif) ·
+[Spin entropy plot](docs/round25/round25_spin_entropy.png) ·
+[Methods, exclusions, and numerical results](docs/round25/README.md)
+
 ## Project Scope
 
 The planned role of this repository is to host the end-to-end workflow for generating, organizing, and preparing first-principles iron data for ML potential development.
