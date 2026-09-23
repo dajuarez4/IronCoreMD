@@ -1,0 +1,20 @@
+{
+  "case": "conv1e-4_beta1e-2_32atom",
+  "source_round": 22,
+  "supercell": "4x2x2",
+  "natoms": 32,
+  "ntyp": 32,
+  "md_steps": 400,
+  "md_conv_thr_Ry": 0.0001,
+  "mixing_mode": "local-TF",
+  "mixing_beta": 0.01,
+  "mixing_ndim": 20,
+  "electron_maxstep": 1000,
+  "lambda": 0.1,
+  "nraise": 20,
+  "target_temperature_K": 4000.0,
+  "mpi_tasks": 32,
+  "qe_requirement": "QE 7.5 atomic-constraint fix with ntypx=128",
+  "initial_state": "final printed positions of round22 step162; new Maxwell velocities",
+  "velocity_seed": 250032
+}

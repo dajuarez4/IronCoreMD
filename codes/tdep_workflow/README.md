@@ -296,3 +296,48 @@ Two workflow rules are built into the discovery helpers:
 ## Recommended Commit Scope
 
 If you want to keep repository history clean, treat this directory as the reusable workflow layer and keep large generated `tdep_*` folders or refreshed plot products in separate commits.
+
+## Incremental BCC updates outside the repository
+
+For the non-magnetic BCC dataset, use:
+
+```bash
+python3 IronCoreMD/codes/tdep_workflow/update_bcc_free_energy.py --temperature 4000
+```
+
+Run from the parent `Fe` workspace, or use the script's absolute path. Defaults:
+
+- Read NPZ files from `IronCoreMD/dataset/bcc/non-mag`.
+- Copy new/changed NPZ files and write all TDEP folders, plots, CSVs and logs to
+  the sibling `Fe/dataset/bcc/non-mag`, never inside IronCoreMD.
+- Use 4x4x4 BCC cells, rc2=5 Å, a 32x32x32 DOS grid, skip=0, every=1,
+  and drop invalid frames, matching the pre-existing curve workflow.
+
+This performs conversion, force-constant fitting, path dispersion, DOS/free energy,
+individual phonon plots, free-energy/pressure curves, and temperature comparison
+plots. `update_4000K_report.json` records processed/cached cases, failures and
+invalid free-energy results. Invalid free energies are excluded by the existing
+plotting policy; a saved TDEP output is not automatically a physically valid point.
+
+Per-case fingerprints include input NPZ, settings, converter/phase definitions,
+TDEP binary hashes and output hashes. New/changed cases are recomputed; matching
+cases are reused. On first use, pre-existing results can be adopted if generated
+inputs match byte-for-byte and the requested options match the legacy defaults.
+This adopts historical binary/grid provenance from the existing workflow; it is
+not a retrospective proof of the exact binary originally used. Use `--force`
+when a full recomputation is required. In-progress markers prevent failed reruns
+from being mistaken for valid legacy caches; a lock prevents concurrent updates
+of the same output temperature.
+
+Future points should use names like `2.70_4000K.npz`. Place them in the source
+directory, then rerun the same command. To process data already outside the repo:
+
+```bash
+python3 IronCoreMD/codes/tdep_workflow/update_bcc_free_energy.py \
+  --source-dir /Users/dajuarez4/Documents/Fe/dataset/bcc/non-mag \
+  --temperature 4000
+```
+
+Python dependencies are those of the existing workflow (NumPy, SciPy, Matplotlib).
+The local TDEP build and MPI runtime must be usable. This is a 128-atom 4x4x4
+non-magnetic BCC updater, not the small noncollinear round24/25 workflow.

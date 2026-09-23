@@ -1,0 +1,71 @@
+{
+  "round": 24,
+  "natoms": 48,
+  "completed_steps": 6,
+  "job_done": false,
+  "errors": 0,
+  "scf_failure_count": 0,
+  "force_warning_count": 0,
+  "last_reported_cpu_hours": 19.68236111111111,
+  "step": {
+    "mean": 3.5,
+    "min": 1.0,
+    "max": 6.0,
+    "last": 6.0
+  },
+  "temperature_K": {
+    "mean": 4364.864363746667,
+    "min": 3949.60432882,
+    "max": 5074.3917972,
+    "last": 5074.3917972
+  },
+  "pressure_GPa": {
+    "mean": 427.15916666666664,
+    "min": 423.401,
+    "max": 429.215,
+    "last": 423.401
+  },
+  "scf_iterations": {
+    "mean": 186.16666666666666,
+    "min": 19.0,
+    "max": 724.0,
+    "last": 110.0
+  },
+  "net_moment_muB": {
+    "mean": 0.16576230895988422,
+    "min": 0.13152946437965907,
+    "max": 0.20223748416156684,
+    "last": 0.20223748416156684
+  },
+  "absolute_moment_muB": {
+    "mean": 85.71833333333332,
+    "min": 85.56,
+    "max": 85.98,
+    "last": 85.98
+  },
+  "local_moment_mean_muB": {
+    "mean": 1.583976970432454,
+    "min": 1.582560224038022,
+    "max": 1.5872644808580525,
+    "last": 1.5872644808580525
+  },
+  "scf_correction_percent": {
+    "mean": 1.6586164656949702,
+    "min": 1.2092707640933502,
+    "max": 1.903295210055486,
+    "last": 1.6536934560516239
+  },
+  "energy_Ry": {
+    "mean": -15785.829452771664,
+    "min": -15786.1627317,
+    "max": -15785.64993186,
+    "last": -15786.1627317
+  },
+  "scf_accuracy_Ry": {
+    "mean": 9.1425e-05,
+    "min": 7.819e-05,
+    "max": 9.942e-05,
+    "last": 9.513e-05
+  },
+  "max_net_to_absolute_percent": 0.2352145663660931
+}

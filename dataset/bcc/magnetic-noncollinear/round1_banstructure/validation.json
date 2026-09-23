@@ -1,0 +1,20 @@
+{
+  "status": "local checks passed",
+  "example_inputs": 4,
+  "path_kpoints": 11,
+  "mock_checkpoint_imports": 2,
+  "checks": [
+    "spin parameters and cutoffs retained",
+    "ASE input parsing",
+    "shell syntax",
+    "active source lock rejection",
+    "independent checkpoint copies",
+    "overwrite refusal",
+    "bands.dat parser",
+    "dashboard matches prior audit",
+    "GIF 37 frames"
+  ],
+  "real_wavefunctions_available_locally": false,
+  "bands_computed": false,
+  "jobs_submitted": false
+}

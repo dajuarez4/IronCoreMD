@@ -1,0 +1,40 @@
+{
+  "natoms": 32,
+  "repetitions": [
+    4,
+    2,
+    2
+  ],
+  "frames": 162,
+  "source_complete_frames": 162,
+  "requested_frames": 100,
+  "source_outputs": [
+    "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round22_32atom_4x2x2_round21settings_md100_jakar/md_100steps-0.out",
+    "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round22_32atom_4x2x2_round21settings_md100_jakar/md_100steps.out"
+  ],
+  "source_job_done": true,
+  "num_shells": 1,
+  "cutoff_angstrom": 2.0698007150448086,
+  "force_position_alignment": "Force frame 1 uses input positions; frame k uses propagated positions k-1. Temperature is the pre-propagation value. Time starts at 0 fs.",
+  "source_sha256": "7e8b7fc7ac113ec68a1caa15ef57fa09d684ae092d9c2d5710d8179ee1f82b3e",
+  "model": "Cubic-symmetry, first-neighbor HELD per-frame harmonic force fit; mean curve uses mean force constants.",
+  "limitations": [
+    "Combined initial segment and completed 100-step restart; 162 force frames.",
+    "First-neighbor truncation: longer-range interactions are omitted to avoid minimum-image ambiguity in the 4x2x2 cell.",
+    "Instantaneous diagnostic phonons; not an equilibrated finite-temperature spectrum. Negative frequencies denote imaginary modes."
+  ],
+  "independent_coefficients": 2,
+  "minimum_fit_rank": 2,
+  "maximum_condition_number": 7.160729369311738,
+  "gamma_max_abs_THz": 2.3721106183526255e-07,
+  "frequency_range_THz": [
+    -10.26422136837233,
+    17.28228988381325
+  ],
+  "fit_rmse_eV_A_range": [
+    1.5519630454809714,
+    4.055444902028614
+  ],
+  "source_output": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round22_32atom_4x2x2_round21settings_md100_jakar/md_100steps.out",
+  "source_input": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round22_32atom_4x2x2_round21settings_md100_jakar/cases/conv1e-4_beta1e-2_32atom/md_100steps.in"
+}

@@ -1,0 +1,20 @@
+{
+  "source_output": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round22_32atom_4x2x2_round21settings_md100_jakar/md_100steps.out",
+  "source_sha256": "5c084d1212bda58b53d9285f29c56f81db646560b7b2ae97b31fcbbdeb4b3939",
+  "source_step": 162,
+  "source_final_temperature_K": 3332.76438622,
+  "positions": "final printed propagated configuration, unwrapped fractional coordinates preserved",
+  "velocities": "new Gaussian Maxwell sample; COM removed and kinetic temperature normalized",
+  "velocity_seed": 250032,
+  "new_temperature_K": 4000.0,
+  "COM_velocity_au": [
+    2.795208725939191e-20,
+    -3.3881317890172014e-20,
+    3.3881317890172014e-21
+  ],
+  "nstep": 400,
+  "nraise": 20,
+  "exact_checkpoint_restart": false,
+  "local_input_checks": "passed",
+  "remote_execution_tested": false
+}

@@ -1,0 +1,7 @@
+&BANDS
+ prefix='Fe_bcc48_r24_conv1e4_beta1e2'
+ outdir='./qe_tmp'
+ filband='bands.dat'
+ lsym=.false.
+ no_overlap=.true.
+/

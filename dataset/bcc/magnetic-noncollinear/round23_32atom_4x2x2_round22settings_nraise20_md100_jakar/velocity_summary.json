@@ -1,0 +1,12 @@
+{
+  "target_temperature_K": 4000.0,
+  "temperature_before_rescaling_K": 3870.967741935485,
+  "measured_temperature_K": 3999.9999999999995,
+  "center_of_mass_velocity_au": [
+    -4.319723939081829e-20,
+    -2.135593857523601e-20,
+    3.8828979227701834e-21
+  ],
+  "degrees_of_freedom": 93,
+  "source": "Round-21 16-atom difficult-seed velocities; the second tile uses a deterministic row and Cartesian-axis permutation; center-of-mass motion removed and the full 32-atom set rescaled to 4000 K"
+}

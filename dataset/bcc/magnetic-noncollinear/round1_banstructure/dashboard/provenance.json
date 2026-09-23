@@ -1,0 +1,18 @@
+[
+  {
+    "round": 24,
+    "natoms": 48,
+    "source": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round24_48atom_6x2x2_round23settings_nraise20_md400_jakar/md_400steps.run001.out",
+    "source_sha256": "4016152f08b46301be91b812b5a8a32b2eae3c4712ac696b606ae48d44b36802",
+    "job_done": false,
+    "completed_steps": 6
+  },
+  {
+    "round": 25,
+    "natoms": 32,
+    "source": "/Users/dajuarez4/Documents/Fe/IronCoreMD/dataset/bcc/magnetic-noncollinear/round25_32atom_round22final_nraise20_md400_jakar/md_400steps.run001.out",
+    "source_sha256": "9f4523e4316e26913cb86000d2b52058f9d673279c1305086c3122f09648cbca",
+    "job_done": false,
+    "completed_steps": 37
+  }
+]

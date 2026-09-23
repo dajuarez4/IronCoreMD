@@ -1,0 +1,51 @@
+{
+  "unique_species": 32,
+  "unique_directions": 32,
+  "one_species_per_atom": true,
+  "target_local_moment_Bohr": 2.0,
+  "direction_vector_sum": [
+    -2.220446049250313e-16,
+    3.3306690738754696e-16,
+    2.55351295663786e-15
+  ],
+  "target_moment_vector_sum_Bohr": [
+    -4.440892098500626e-16,
+    6.661338147750939e-16,
+    5.10702591327572e-15
+  ],
+  "position_label_seed": 220032,
+  "position_labels": [
+    "Fe08",
+    "Fe04",
+    "Fe32",
+    "Fe23",
+    "Fe31",
+    "Fe10",
+    "Fe12",
+    "Fe27",
+    "Fe29",
+    "Fe16",
+    "Fe02",
+    "Fe14",
+    "Fe28",
+    "Fe03",
+    "Fe06",
+    "Fe01",
+    "Fe19",
+    "Fe26",
+    "Fe21",
+    "Fe22",
+    "Fe18",
+    "Fe17",
+    "Fe25",
+    "Fe20",
+    "Fe30",
+    "Fe24",
+    "Fe13",
+    "Fe09",
+    "Fe07",
+    "Fe05",
+    "Fe15",
+    "Fe11"
+  ]
+}

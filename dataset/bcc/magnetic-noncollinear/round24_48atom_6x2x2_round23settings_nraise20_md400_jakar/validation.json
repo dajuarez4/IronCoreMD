@@ -1,0 +1,11 @@
+{
+  "input_files": 4,
+  "natoms": 48,
+  "md_steps": 400,
+  "nraise": 20,
+  "parameter_comparison": "Round23 ELECTRONS and IONS identical; SYSTEM identical except nat/ntyp and 16 additional spin species",
+  "target_spin_sum_norm_muB": 8.337767523300326e-15,
+  "velocity_temperature_K": 4000.000000000001,
+  "workflow_mock": "first 100 + remaining 300; third submission does not rerun",
+  "remote_QE_tested": false
+}

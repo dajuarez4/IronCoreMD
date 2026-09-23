@@ -1,0 +1,11 @@
+{
+  "source": "Round23 original 32-atom configuration extended by its first 16-atom tile along x",
+  "cell_A": [
+    14.34,
+    4.78,
+    4.78
+  ],
+  "a_A": 2.39,
+  "supercell": "6x2x2",
+  "natoms": 48
+}

@@ -1,0 +1,12 @@
+{
+  "target_temperature_K": 4000.0,
+  "temperature_before_rescaling_K": 3957.4468085106378,
+  "measured_temperature_K": 4000.000000000001,
+  "center_of_mass_velocity_au": [
+    1.8767339960055883e-20,
+    1.6178741344875762e-20,
+    1.0354394460720487e-20
+  ],
+  "degrees_of_freedom": 141,
+  "source": "Round23 initial 32-atom velocities plus row/axis-permuted first 16; COM removed and full 48-atom set rescaled to 4000 K"
+}
