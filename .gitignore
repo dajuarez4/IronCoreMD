@@ -7,3 +7,9 @@ __pycache__/
 *.log
 *.out
 ml-results/**/*.pkl
+
+# TDEP calculations and tooling live in ../dataset/hcp, outside this repository.
+/dataset/hcp/tdep*/
+/codes/tdep_workflow/
+/tests/test_hcp_reference.py
+/assets/archive/

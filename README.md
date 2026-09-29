@@ -88,21 +88,18 @@ TDEP phonon and DOS overlays: 4000/4500 K, 5000/5500 K and 6000/6500 K, by row.
 ### HCP
 
 <p align="center">
-  <img src="assets/hcp_free_energy_vs_volume.png" alt="HCP free energy" width="48%" />
-  <img src="assets/hcp_volume_vs_pressure_5000K_eos_std.png" alt="HCP pressure-volume EOS" width="48%" />
+  <img src="assets/hcp_phonon_dispersion_overlay.png" alt="Corrected HCP TDEP dispersion and DOS for 21 existing AIMD trajectories" width="90%" />
 </p>
 
-Nonmagnetic Helmholtz free energy and pressure–volume curves at 5000 K.
+TDEP calculations and tooling are stored externally in `/Users/dajuarez4/Documents/Fe/dataset/hcp`; only current figures and documentation are kept here.
 
-<p align="center">
-  <img src="assets/hcp_phonon_dispersion_overlay.png" alt="HCP phonon dispersion overlay" width="78%" />
-</p>
+Recomputed with consistent HCP primitive/supercell references and explicit Γ–M–K–Γ–A–L–H–A | L–M | K–H paths. The existing AIMD archives and forces are unchanged. The upper panel shows three cases with small mean-position reference offsets; the lower panel retains the other 18 refits. Sampling sensitivity remains measurable. See [results, diagnostics, and reproduction commands](dataset/hcp/TDEP_REFERENCE_CORRECTION.md).
 
-TDEP phonon and DOS overlays across the sampled HCP geometries.
+Earlier HCP free-energy/EOS figures predate this reference correction and are no longer presented here as validated results.
 
 ## Documentation
 
-[Dataset](dataset/README.md) · [TDEP workflow](codes/tdep_workflow/README.md) · [HPC setup and submission](hpc/README.md) · [Scripts and usage](docs/usage.md)
+[Dataset](dataset/README.md) · [TDEP results and external workflow](dataset/hcp/TDEP_REFERENCE_CORRECTION.md) · [HPC setup and submission](hpc/README.md) · [Scripts and usage](docs/usage.md)
 
 ## References
 

@@ -463,27 +463,13 @@ result = ml_gpr.run_ml_gpr(...)
 
 then the notebook kernel itself must inherit the CUDA-enabled environment. In practice that means launching Jupyter from the already configured `idev` shell or restarting the kernel after opening the notebook from that environment.
 
-### `codes/tdep_workflow/`
+### External TDEP workflow
 
-Reusable phase-aware non-magnetic TDEP postprocessing workflow.
+TDEP scripts, generated inputs, fitted force constants, and phonon outputs are maintained outside this repository in:
 
-This directory collects the scripts used to:
+`/Users/dajuarez4/Documents/Fe/dataset/hcp`
 
-- convert QE AIMD `.npz` archives into `tdep_*` folders,
-- run harmonic TDEP force-constant, phonon-dispersion, and free-energy calculations,
-- summarize the resulting thermodynamics,
-- regenerate free-energy, pressure-volume, and phonon-dispersion figures,
-- and handle duplicate replacement points such as `tdep_2.52_5000-new`.
-
-The entry point for the full workflow is:
-
-- `codes/tdep_workflow/run_bcc_harmonic_tdep.py`
-- `codes/tdep_workflow/run_fcc_harmonic_tdep.py`
-- `codes/tdep_workflow/run_hcp_harmonic_tdep.py`
-
-The workflow-specific documentation lives in:
-
-- `codes/tdep_workflow/README.md`
+The scripts are under `codes/tdep_workflow/` within that external directory. See [the HCP correction report](../dataset/hcp/TDEP_REFERENCE_CORRECTION.md) for commands and result locations. Current summary figures remain in `assets/`.
 
 ## Requirements
 
