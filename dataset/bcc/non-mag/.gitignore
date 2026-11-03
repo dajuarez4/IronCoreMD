@@ -1,0 +1,10 @@
+# Track dataset NPZ files and this ignore file only.
+*
+!*/
+!*.npz
+!/.gitignore
+
+# Temporary exports must never be staged while a dataset is being written.
+tmp*.npz
+.*.npz
+*.tmp
